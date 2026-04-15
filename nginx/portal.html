@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kong Admin Portal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b1222;
+    --surface: #111b2e;
+    --surface-2: #162035;
+    --border: rgba(255,255,255,0.06);
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --accent: #00d09c;
+    --accent-dim: rgba(0,208,156,0.12);
+    --danger: #ef4444;
+    --danger-dim: rgba(239,68,68,0.12);
+    --warn: #f59e0b;
+    --blue: #3b82f6;
+    --radius: 10px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ─── Top Bar ─── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .topbar-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), #003459);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: #fff;
+  }
+  .topbar-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .topbar-title span { color: var(--text-dim); font-weight: 400; margin-left: 8px; font-size: 13px; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+  .topbar-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .topbar-status .dot.off { background: var(--danger); }
+  .btn-logout {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-dim);
+    cursor: pointer; text-decoration: none; transition: all 0.15s;
+  }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ─── Layout ─── */
+  .layout { display: flex; min-height: calc(100vh - 56px); }
+  .sidebar {
+    width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+    padding: 16px 0; flex-shrink: 0;
+  }
+  .sidebar-section { padding: 0 16px; margin-bottom: 6px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px; cursor: pointer; font-size: 13px; font-weight: 500;
+    color: var(--text-dim); transition: all 0.15s; border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .sidebar-item.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); }
+  .sidebar-item .icon { width: 18px; text-align: center; font-size: 14px; }
+  .sidebar-item .badge {
+    margin-left: auto; background: rgba(255,255,255,0.08); color: var(--text-dim);
+    padding: 1px 7px; border-radius: 8px; font-size: 11px;
+  }
+
+  .main { flex: 1; padding: 24px; overflow-x: auto; }
+
+  /* ─── Status Cards ─── */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .stat-card .label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; letter-spacing: -1px; }
+  .stat-card .value.green { color: var(--accent); }
+  .stat-card .value.blue { color: var(--blue); }
+  .stat-card .value.warn { color: var(--warn); }
+
+  /* ─── Section ─── */
+  .section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .section-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-header h2 { font-size: 15px; font-weight: 600; }
+  .section-body { padding: 0; }
+
+  /* ─── Buttons ─── */
+  .btn {
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-accent { background: var(--accent); color: #003459; }
+  .btn-accent:hover { filter: brightness(1.1); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+  .btn-danger { background: var(--danger-dim); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-icon { padding: 6px 8px; }
+
+  /* ─── Table ─── */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    text-align: left; padding: 10px 16px; font-size: 11px; font-weight: 600;
+    color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;
+    background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-size: 13px; vertical-align: middle;
+  }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .data-table .mono { font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 12px; color: var(--accent); }
+  .data-table .actions { display: flex; gap: 6px; }
+  .data-table .empty-row td { text-align: center; color: var(--text-dim); padding: 40px; }
+
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  }
+  .tag-green { background: var(--accent-dim); color: var(--accent); }
+  .tag-red { background: var(--danger-dim); color: var(--danger); }
+  .tag-blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+  .tag-gray { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+
+  /* ─── Modal ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 200; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px; width: 520px; max-width: 94%;
+    max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+  .modal .form-group { margin-bottom: 16px; }
+  .modal .form-group label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .modal .form-group input, .modal .form-group select, .modal .form-group textarea {
+    width: 100%; padding: 10px 14px;
+    background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px; font-family: inherit;
+  }
+  .modal .form-group input:focus, .modal .form-group select:focus, .modal .form-group textarea:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+  .modal .form-group textarea { min-height: 80px; resize: vertical; }
+  .modal .form-group small { color: var(--text-dim); font-size: 11px; margin-top: 4px; display: block; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .form-row { display: flex; gap: 14px; }
+  .form-row .form-group { flex: 1; }
+
+  /* ─── Toast ─── */
+  .toast-container { position: fixed; top: 70px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    padding: 12px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3); animation: slideIn 0.25s ease-out;
+    max-width: 360px;
+  }
+  .toast-success { background: #065f46; color: #6ee7b7; border: 1px solid rgba(110,231,183,0.2); }
+  .toast-error { background: #7f1d1d; color: #fca5a5; border: 1px solid rgba(252,165,165,0.2); }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ─── Detail view ─── */
+  .detail-grid { display: grid; grid-template-columns: 140px 1fr; gap: 0; padding: 16px 20px; }
+  .detail-grid .label { font-size: 12px; color: var(--text-dim); padding: 6px 0; font-weight: 600; }
+  .detail-grid .val { font-size: 13px; padding: 6px 0; word-break: break-all; }
+  .detail-grid .val.mono { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--accent); }
+
+  /* ─── JSON viewer ─── */
+  .json-view {
+    background: rgba(0,0,0,0.3); border-radius: 8px; padding: 14px;
+    font-family: 'SF Mono', monospace; font-size: 12px; line-height: 1.5;
+    overflow-x: auto; white-space: pre-wrap; color: #94a3b8; max-height: 300px; overflow-y: auto;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ─── Credential tabs ─── */
+  .cred-tab.active { background: var(--accent-dim) !important; color: var(--accent) !important; border-color: var(--accent) !important; }
+  .cred-key-display {
+    background: rgba(0,0,0,0.3); border-radius: 6px; padding: 6px 12px;
+    font-family: 'SF Mono', monospace; font-size: 12px; color: var(--accent);
+    display: inline-flex; align-items: center; gap: 8px; max-width: 360px;
+    word-break: break-all;
+  }
+  .cred-key-display .copy-btn {
+    background: none; border: none; color: var(--text-dim); cursor: pointer;
+    font-size: 14px; padding: 2px; flex-shrink: 0;
+  }
+  .cred-key-display .copy-btn:hover { color: var(--accent); }
+  .reveal-btn { background: none; border: 1px dashed var(--border); border-radius: 4px; color: var(--text-dim); cursor: pointer; font-size: 11px; padding: 3px 8px; }
+  .reveal-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .form-row { flex-direction: column; gap: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">K</div>
+    <div class="topbar-title">Kong Admin Portal <span id="kongVersion"></span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-status">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+    <a href="/auth/logout" class="btn-logout">Logout</a>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section" style="margin-top:4px;">Overview</div>
+    <div class="sidebar-item active" data-tab="dashboard">
+      <span class="icon">&#9632;</span> Dashboard
+    </div>
+    <div class="sidebar-section" style="margin-top:14px;">Gateway</div>
+    <div class="sidebar-item" data-tab="services">
+      <span class="icon">&#9881;</span> Services <span class="badge" id="countServices">0</span>
+    </div>
+    <div class="sidebar-item" data-tab="routes">
+      <span class="icon">&#10140;</span> Routes <span class="badge" id="countRoutes">0</span>
+    </div>
+    <div class="sidebar-item" data-tab="plugins">
+      <span class="icon">&#9879;</span> Plugins <span class="badge" id="countPlugins">0</span>
+    </div>
+    <div class="sidebar-item" data-tab="consumers">
+      <span class="icon">&#9787;</span> Consumers <span class="badge" id="countConsumers">0</span>
+    </div>
+    <div class="sidebar-section" style="margin-top:14px;">Infrastructure</div>
+    <div class="sidebar-item" data-tab="upstreams">
+      <span class="icon">&#8693;</span> Upstreams <span class="badge" id="countUpstreams">0</span>
+    </div>
+    <div class="sidebar-item" data-tab="certificates">
+      <span class="icon">&#9951;</span> Certificates <span class="badge" id="countCerts">0</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Dashboard -->
+    <div id="tab-dashboard" class="tab-content">
+      <div class="stats-row" id="statsRow"></div>
+      <div class="section">
+        <div class="section-header"><h2>Node Information</h2></div>
+        <div id="nodeInfo" class="detail-grid"></div>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div id="tab-services" class="tab-content hidden">
+      <div class="section">
+        <div class="section-header">
+          <h2>Services</h2>
+          <button class="btn btn-accent" onclick="openModal('service')">+ Add Service</button>
+        </div>
+        <div class="section-body">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Protocol</th><th>Host</th><th>Port</th><th>Path</th><th>Enabled</th><th>Actions</th></tr></thead>
+            <tbody id="servicesBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Routes -->
+    <div id="tab-routes" class="tab-content hidden">
+      <div class="section">
+        <div class="section-header">
+          <h2>Routes</h2>
+          <button class="btn btn-accent" onclick="openModal('route')">+ Add Route</button>
+        </div>
+        <div class="section-body">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Protocols</th><th>Hosts</th><th>Paths</th><th>Methods</th><th>Service</th><th>Actions</th></tr></thead>
+            <tbody id="routesBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plugins -->
+    <div id="tab-plugins" class="tab-content hidden">
+      <div class="section">
+        <div class="section-header">
+          <h2>Plugins</h2>
+          <button class="btn btn-accent" onclick="openModal('plugin')">+ Add Plugin</button>
+        </div>
+        <div class="section-body">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Scope</th><th>Service</th><th>Route</th><th>Enabled</th><th>Actions</th></tr></thead>
+            <tbody id="pluginsBody"><tr class="empty-row"><td colspan="6">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consumers -->
+    <div id="tab-consumers" class="tab-content hidden">
+      <div class="section">
+        <div class="section-header">
+          <h2>Consumers</h2>
+          <button class="btn btn-accent" onclick="openModal('consumer')">+ Add Consumer</button>
+        </div>
+        <div class="section-body">
+          <table class="data-table">
+            <thead><tr><th>Username</th><th>Custom ID</th><th>Credentials</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="consumersBody"><tr class="empty-row"><td colspan="5">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Consumer Credentials Panel (shown when managing a consumer) -->
+      <div id="credentialsPanel" class="hidden" style="margin-top:20px;">
+        <div class="section">
+          <div class="section-header">
+            <h2><span id="credConsumerName"></span> — Credentials</h2>
+            <button class="btn btn-ghost" onclick="closeCredentials()">Back to Consumers</button>
+          </div>
+          <div class="section-body" style="padding:20px;">
+
+            <!-- Credential Type Tabs -->
+            <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+              <button class="btn btn-ghost cred-tab active" data-cred="key-auth" onclick="switchCredTab(this,'key-auth')">API Keys</button>
+              <button class="btn btn-ghost cred-tab" data-cred="basic-auth" onclick="switchCredTab(this,'basic-auth')">Basic Auth</button>
+              <button class="btn btn-ghost cred-tab" data-cred="jwt" onclick="switchCredTab(this,'jwt')">JWT</button>
+              <button class="btn btn-ghost cred-tab" data-cred="hmac-auth" onclick="switchCredTab(this,'hmac-auth')">HMAC Auth</button>
+              <button class="btn btn-ghost cred-tab" data-cred="acls" onclick="switchCredTab(this,'acls')">ACL Groups</button>
+              <button class="btn btn-ghost cred-tab" data-cred="oauth2" onclick="switchCredTab(this,'oauth2')">OAuth2</button>
+            </div>
+
+            <!-- API Keys -->
+            <div id="cred-key-auth" class="cred-content">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span class="tag tag-blue" style="font-size:13px;padding:4px 12px;">API Keys</span>
+                <button class="btn btn-accent btn-sm" onclick="openCredModal('key-auth')">+ Add API Key</button>
+              </div>
+              <table class="data-table"><thead><tr><th>Key</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="cred-key-auth-body"><tr class="empty-row"><td colspan="3">Loading...</td></tr></tbody></table>
+            </div>
+
+            <!-- Basic Auth -->
+            <div id="cred-basic-auth" class="cred-content hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span class="tag tag-blue" style="font-size:13px;padding:4px 12px;">Basic Auth Credentials</span>
+                <button class="btn btn-accent btn-sm" onclick="openCredModal('basic-auth')">+ Add Basic Auth</button>
+              </div>
+              <table class="data-table"><thead><tr><th>Username</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="cred-basic-auth-body"><tr class="empty-row"><td colspan="3">Loading...</td></tr></tbody></table>
+            </div>
+
+            <!-- JWT -->
+            <div id="cred-jwt" class="cred-content hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span class="tag tag-blue" style="font-size:13px;padding:4px 12px;">JWT Credentials</span>
+                <button class="btn btn-accent btn-sm" onclick="openCredModal('jwt')">+ Add JWT</button>
+              </div>
+              <table class="data-table"><thead><tr><th>Key (ISS)</th><th>Algorithm</th><th>Secret</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="cred-jwt-body"><tr class="empty-row"><td colspan="5">Loading...</td></tr></tbody></table>
+            </div>
+
+            <!-- HMAC Auth -->
+            <div id="cred-hmac-auth" class="cred-content hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span class="tag tag-blue" style="font-size:13px;padding:4px 12px;">HMAC Auth Credentials</span>
+                <button class="btn btn-accent btn-sm" onclick="openCredModal('hmac-auth')">+ Add HMAC Auth</button>
+              </div>
+              <table class="data-table"><thead><tr><th>Username</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="cred-hmac-auth-body"><tr class="empty-row"><td colspan="3">Loading...</td></tr></tbody></table>
+            </div>
+
+            <!-- ACL Groups -->
+            <div id="cred-acls" class="cred-content hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span class="tag tag-blue" style="font-size:13px;padding:4px 12px;">ACL Group Memberships</span>
+                <button class="btn btn-accent btn-sm" onclick="openCredModal('acls')">+ Add to Group</button>
+              </div>
+              <table class="data-table"><thead><tr><th>Group</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="cred-acls-body"><tr class="empty-row"><td colspan="3">Loading...</td></tr></tbody></table>
+            </div>
+
+            <!-- OAuth2 -->
+            <div id="cred-oauth2" class="cred-content hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span class="tag tag-blue" style="font-size:13px;padding:4px 12px;">OAuth2 Applications</span>
+                <button class="btn btn-accent btn-sm" onclick="openCredModal('oauth2')">+ Add OAuth2 App</button>
+              </div>
+              <table class="data-table"><thead><tr><th>Name</th><th>Client ID</th><th>Client Secret</th><th>Redirect URIs</th><th>Actions</th></tr></thead>
+              <tbody id="cred-oauth2-body"><tr class="empty-row"><td colspan="5">Loading...</td></tr></tbody></table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upstreams -->
+    <div id="tab-upstreams" class="tab-content hidden">
+      <div class="section">
+        <div class="section-header">
+          <h2>Upstreams</h2>
+          <button class="btn btn-accent" onclick="openModal('upstream')">+ Add Upstream</button>
+        </div>
+        <div class="section-body">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Algorithm</th><th>Slots</th><th>Targets</th><th>Actions</th></tr></thead>
+            <tbody id="upstreamsBody"><tr class="empty-row"><td colspan="5">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certificates -->
+    <div id="tab-certificates" class="tab-content hidden">
+      <div class="section">
+        <div class="section-header">
+          <h2>Certificates</h2>
+          <button class="btn btn-accent" onclick="openModal('certificate')">+ Add Certificate</button>
+        </div>
+        <div class="section-body">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>SNIs</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="certsBody"><tr class="empty-row"><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modalTitle">Add</h3>
+    <div id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent" id="modalSave" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="modal" style="width:620px;">
+    <h3 id="detailTitle">Details</h3>
+    <div id="detailBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let currentTab = 'dashboard';
+let allData = {};
+let currentModal = null;
+let editingId = null;
+let serviceMap = {};
+
+// ─── API helper ──────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: {} };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const res = await fetch(API + path, opts);
+  if (res.status === 401) { window.location.href = '/auth/login'; return null; }
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = text; }
+  if (!res.ok) throw new Error(data?.message || data?.name || `Error ${res.status}`);
+  return data;
+}
+
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts * 1000).toLocaleString();
+}
+
+function truncId(id) { return id ? id.substring(0, 8) + '...' : '—'; }
+
+// ─── Tabs ────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.sidebar-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    const tab = el.dataset.tab;
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    currentTab = tab;
+  });
+});
+
+// ─── Dashboard ───────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [info, status] = await Promise.all([api('GET', '/'), api('GET', '/status')]);
+    document.getElementById('kongVersion').textContent = 'v' + (info.version || '?');
+    document.getElementById('statusDot').className = 'dot';
+    document.getElementById('statusText').textContent = status.database?.reachable ? 'Healthy' : 'DB Unreachable';
+    if (!status.database?.reachable) document.getElementById('statusDot').classList.add('off');
+
+    const s = status.server || {};
+    document.getElementById('statsRow').innerHTML = `
+      <div class="stat-card"><div class="label">Active Connections</div><div class="value green">${s.connections_active || 0}</div></div>
+      <div class="stat-card"><div class="label">Total Requests</div><div class="value blue">${(s.total_requests || 0).toLocaleString()}</div></div>
+      <div class="stat-card"><div class="label">Accepted</div><div class="value">${(s.connections_accepted || 0).toLocaleString()}</div></div>
+      <div class="stat-card"><div class="label">Handled</div><div class="value">${(s.connections_handled || 0).toLocaleString()}</div></div>
+      <div class="stat-card"><div class="label">Reading</div><div class="value">${s.connections_reading || 0}</div></div>
+      <div class="stat-card"><div class="label">Writing</div><div class="value">${s.connections_writing || 0}</div></div>
+      <div class="stat-card"><div class="label">Waiting</div><div class="value warn">${s.connections_waiting || 0}</div></div>
+      <div class="stat-card"><div class="label">Database</div><div class="value ${status.database?.reachable ? 'green' : ''}">${status.database?.reachable ? 'Reachable' : 'Down'}</div></div>
+    `;
+
+    document.getElementById('nodeInfo').innerHTML = `
+      <div class="label">Node ID</div><div class="val mono">${info.node_id || '—'}</div>
+      <div class="label">Version</div><div class="val">${info.version || '—'}</div>
+      <div class="label">Edition</div><div class="val">${info.edition || '—'}</div>
+      <div class="label">Lua Version</div><div class="val">${info.lua_version || '—'}</div>
+      <div class="label">Hostname</div><div class="val">${info.hostname || '—'}</div>
+      <div class="label">Tagline</div><div class="val">${info.tagline || '—'}</div>
+      <div class="label">Plugins</div><div class="val">${(info.plugins?.available_on_server || []).length} available</div>
+    `;
+  } catch (e) {
+    document.getElementById('statusDot').className = 'dot off';
+    document.getElementById('statusText').textContent = 'Error';
+    toast(e.message, 'error');
+  }
+}
+
+// ─── Services ────────────────────────────────────────────────────────────────
+async function loadServices() {
+  try {
+    const res = await api('GET', '/services');
+    allData.services = res.data || [];
+    serviceMap = {};
+    allData.services.forEach(s => { serviceMap[s.id] = s.name || s.host; });
+    document.getElementById('countServices').textContent = allData.services.length;
+    const body = document.getElementById('servicesBody');
+    if (!allData.services.length) { body.innerHTML = '<tr class="empty-row"><td colspan="7">No services configured</td></tr>'; return; }
+    body.innerHTML = allData.services.map(s => `<tr>
+      <td><strong>${s.name || '—'}</strong></td>
+      <td><span class="tag tag-blue">${s.protocol}</span></td>
+      <td class="mono">${s.host}</td>
+      <td>${s.port}</td>
+      <td class="mono">${s.path || '/'}</td>
+      <td>${s.enabled ? '<span class="tag tag-green">ON</span>' : '<span class="tag tag-red">OFF</span>'}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="viewDetail('service','${s.id}')">View</button>
+        <button class="btn btn-ghost btn-sm" onclick="editItem('service','${s.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('services','${s.id}','${s.name||s.host}')">Del</button>
+      </td>
+    </tr>`).join('');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Routes ──────────────────────────────────────────────────────────────────
+async function loadRoutes() {
+  try {
+    const res = await api('GET', '/routes');
+    allData.routes = res.data || [];
+    document.getElementById('countRoutes').textContent = allData.routes.length;
+    const body = document.getElementById('routesBody');
+    if (!allData.routes.length) { body.innerHTML = '<tr class="empty-row"><td colspan="7">No routes configured</td></tr>'; return; }
+    body.innerHTML = allData.routes.map(r => `<tr>
+      <td><strong>${r.name || '—'}</strong></td>
+      <td>${(r.protocols||[]).map(p=>'<span class="tag tag-blue">'+p+'</span>').join(' ')}</td>
+      <td class="mono">${(r.hosts||[]).join(', ') || '—'}</td>
+      <td class="mono">${(r.paths||[]).join(', ') || '—'}</td>
+      <td>${(r.methods||[]).map(m=>'<span class="tag tag-gray">'+m+'</span>').join(' ') || 'ALL'}</td>
+      <td>${serviceMap[r.service?.id] || truncId(r.service?.id) || '—'}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="viewDetail('route','${r.id}')">View</button>
+        <button class="btn btn-ghost btn-sm" onclick="editItem('route','${r.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('routes','${r.id}','${r.name||'route'}')">Del</button>
+      </td>
+    </tr>`).join('');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Plugins ─────────────────────────────────────────────────────────────────
+async function loadPlugins() {
+  try {
+    const res = await api('GET', '/plugins');
+    allData.plugins = res.data || [];
+    document.getElementById('countPlugins').textContent = allData.plugins.length;
+    const body = document.getElementById('pluginsBody');
+    if (!allData.plugins.length) { body.innerHTML = '<tr class="empty-row"><td colspan="6">No plugins configured</td></tr>'; return; }
+    body.innerHTML = allData.plugins.map(p => {
+      let scope = 'Global';
+      if (p.service) scope = 'Service';
+      else if (p.route) scope = 'Route';
+      else if (p.consumer) scope = 'Consumer';
+      return `<tr>
+        <td><strong>${p.name}</strong>${p.instance_name ? ' <span class="tag tag-gray">'+p.instance_name+'</span>' : ''}</td>
+        <td><span class="tag tag-blue">${scope}</span></td>
+        <td>${p.service ? (serviceMap[p.service.id] || truncId(p.service.id)) : '—'}</td>
+        <td>${p.route ? truncId(p.route.id) : '—'}</td>
+        <td>${p.enabled ? '<span class="tag tag-green">ON</span>' : '<span class="tag tag-red">OFF</span>'}</td>
+        <td class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="viewDetail('plugin','${p.id}')">View</button>
+          <button class="btn btn-ghost btn-sm" onclick="togglePlugin('${p.id}',${!p.enabled})">${p.enabled ? 'Disable' : 'Enable'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('plugins','${p.id}','${p.name}')">Del</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function togglePlugin(id, enabled) {
+  try {
+    await api('PATCH', '/plugins/' + id, { enabled });
+    toast(`Plugin ${enabled ? 'enabled' : 'disabled'}`);
+    loadPlugins();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Consumers ───────────────────────────────────────────────────────────────
+async function loadConsumers() {
+  try {
+    const res = await api('GET', '/consumers');
+    allData.consumers = res.data || [];
+    document.getElementById('countConsumers').textContent = allData.consumers.length;
+    const body = document.getElementById('consumersBody');
+    if (!allData.consumers.length) { body.innerHTML = '<tr class="empty-row"><td colspan="5">No consumers configured</td></tr>'; return; }
+    body.innerHTML = allData.consumers.map(c => `<tr>
+      <td><strong>${c.username || '—'}</strong></td>
+      <td class="mono">${c.custom_id || '—'}</td>
+      <td><button class="btn btn-accent btn-sm" onclick="openCredentials('${c.id}','${c.username||c.custom_id||"consumer"}')">Manage Credentials</button></td>
+      <td>${fmtDate(c.created_at)}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="viewDetail('consumer','${c.id}')">View</button>
+        <button class="btn btn-ghost btn-sm" onclick="editItem('consumer','${c.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('consumers','${c.id}','${c.username||c.custom_id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Consumer Credentials ────────────────────────────────────────────────────
+let currentConsumerId = null;
+let currentConsumerName = null;
+let currentCredTab = 'key-auth';
+
+function openCredentials(consumerId, consumerName) {
+  currentConsumerId = consumerId;
+  currentConsumerName = consumerName;
+  document.getElementById('credConsumerName').textContent = consumerName;
+  document.getElementById('credentialsPanel').classList.remove('hidden');
+  // Reset to key-auth tab
+  switchCredTab(document.querySelector('.cred-tab[data-cred="key-auth"]'), 'key-auth');
+}
+
+function closeCredentials() {
+  document.getElementById('credentialsPanel').classList.add('hidden');
+  currentConsumerId = null;
+}
+
+function switchCredTab(btn, type) {
+  currentCredTab = type;
+  document.querySelectorAll('.cred-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.cred-content').forEach(c => c.classList.add('hidden'));
+  document.getElementById('cred-' + type).classList.remove('hidden');
+  loadCredentials(type);
+}
+
+async function loadCredentials(type) {
+  if (!currentConsumerId) return;
+  const bodyId = 'cred-' + type + '-body';
+  const body = document.getElementById(bodyId);
+  body.innerHTML = '<tr class="empty-row"><td colspan="5">Loading...</td></tr>';
+
+  try {
+    const res = await api('GET', '/consumers/' + currentConsumerId + '/' + type);
+    const items = res.data || [];
+
+    if (!items.length) {
+      body.innerHTML = `<tr class="empty-row"><td colspan="5">No ${type} credentials</td></tr>`;
+      return;
+    }
+
+    if (type === 'key-auth') {
+      body.innerHTML = items.map(k => `<tr>
+        <td><div class="cred-key-display">
+          <span id="key-${k.id}">${k.key}</span>
+          <button class="copy-btn" onclick="copyKey('${k.key}')" title="Copy">&#9998;</button>
+        </div></td>
+        <td>${fmtDate(k.created_at)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCred('key-auth','${k.id}')">Delete</button></td>
+      </tr>`).join('');
+
+    } else if (type === 'basic-auth') {
+      body.innerHTML = items.map(k => `<tr>
+        <td><div class="cred-key-display"><span>${k.username}</span></div></td>
+        <td>${fmtDate(k.created_at)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCred('basic-auth','${k.id}')">Delete</button></td>
+      </tr>`).join('');
+
+    } else if (type === 'jwt') {
+      body.innerHTML = items.map(k => `<tr>
+        <td><div class="cred-key-display"><span>${k.key}</span><button class="copy-btn" onclick="copyKey('${k.key}')" title="Copy">&#9998;</button></div></td>
+        <td><span class="tag tag-gray">${k.algorithm || 'HS256'}</span></td>
+        <td><div class="cred-key-display"><span>${k.secret || '—'}</span><button class="copy-btn" onclick="copyKey('${k.secret||''}')" title="Copy">&#9998;</button></div></td>
+        <td>${fmtDate(k.created_at)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCred('jwt','${k.id}')">Delete</button></td>
+      </tr>`).join('');
+
+    } else if (type === 'hmac-auth') {
+      body.innerHTML = items.map(k => `<tr>
+        <td><div class="cred-key-display"><span>${k.username}</span></div></td>
+        <td>${fmtDate(k.created_at)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCred('hmac-auth','${k.id}')">Delete</button></td>
+      </tr>`).join('');
+
+    } else if (type === 'acls') {
+      body.innerHTML = items.map(k => `<tr>
+        <td><span class="tag tag-green" style="font-size:13px;padding:4px 12px;">${k.group}</span></td>
+        <td>${fmtDate(k.created_at)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCred('acls','${k.id}')">Remove</button></td>
+      </tr>`).join('');
+
+    } else if (type === 'oauth2') {
+      body.innerHTML = items.map(k => `<tr>
+        <td><strong>${k.name}</strong></td>
+        <td><div class="cred-key-display"><span>${k.client_id}</span><button class="copy-btn" onclick="copyKey('${k.client_id}')" title="Copy">&#9998;</button></div></td>
+        <td><div class="cred-key-display"><span>${k.client_secret}</span><button class="copy-btn" onclick="copyKey('${k.client_secret}')" title="Copy">&#9998;</button></div></td>
+        <td style="font-size:12px;">${(k.redirect_uris||[]).join(', ') || '—'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCred('oauth2','${k.id}')">Delete</button></td>
+      </tr>`).join('');
+    }
+  } catch (e) {
+    // Plugin might not be enabled — show helpful message
+    if (e.message.includes('404') || e.message.includes('Not found')) {
+      body.innerHTML = `<tr class="empty-row"><td colspan="5" style="color:var(--warn);">Plugin "${type}" not enabled. Add the plugin first to use these credentials.</td></tr>`;
+    } else {
+      body.innerHTML = `<tr class="empty-row"><td colspan="5" style="color:var(--danger);">${e.message}</td></tr>`;
+    }
+  }
+}
+
+function copyKey(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard')).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    toast('Copied to clipboard');
+  });
+}
+
+async function deleteCred(type, credId) {
+  if (!confirm('Delete this credential?')) return;
+  try {
+    await api('DELETE', '/consumers/' + currentConsumerId + '/' + type + '/' + credId);
+    toast('Credential deleted');
+    loadCredentials(type);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openCredModal(type) {
+  currentModal = 'credential';
+  editingId = type; // store cred type in editingId
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+
+  if (type === 'key-auth') {
+    title.textContent = 'Add API Key';
+    body.innerHTML = `
+      <div class="form-group"><label>API Key (optional)</label><input id="f_cred_key" placeholder="Leave blank to auto-generate"><small>If blank, Kong generates a random key</small></div>
+      <div class="form-group"><label>TTL (seconds, optional)</label><input id="f_cred_ttl" type="number" placeholder="0 = no expiry"><small>Time-to-live in seconds. 0 or blank = never expires</small></div>
+    `;
+  } else if (type === 'basic-auth') {
+    title.textContent = 'Add Basic Auth';
+    body.innerHTML = `
+      <div class="form-group"><label>Username</label><input id="f_cred_username" placeholder="api-user" required></div>
+      <div class="form-group"><label>Password</label><input id="f_cred_password" type="password" placeholder="password" required></div>
+    `;
+  } else if (type === 'jwt') {
+    title.textContent = 'Add JWT Credential';
+    body.innerHTML = `
+      <div class="form-group"><label>Key / Issuer (optional)</label><input id="f_cred_key" placeholder="Leave blank to auto-generate"><small>This becomes the "iss" claim in the JWT</small></div>
+      <div class="form-group"><label>Algorithm</label><select id="f_cred_algorithm"><option>HS256</option><option>HS384</option><option>HS512</option><option>RS256</option><option>RS384</option><option>RS512</option><option>ES256</option><option>ES384</option><option>ES512</option></select></div>
+      <div class="form-group"><label>Secret (optional)</label><input id="f_cred_secret" placeholder="Leave blank to auto-generate"><small>For HS* algorithms</small></div>
+      <div class="form-group"><label>RSA Public Key (optional)</label><textarea id="f_cred_rsa_public_key" rows="3" placeholder="For RS*/ES* algorithms"></textarea></div>
+    `;
+  } else if (type === 'hmac-auth') {
+    title.textContent = 'Add HMAC Auth';
+    body.innerHTML = `
+      <div class="form-group"><label>Username</label><input id="f_cred_username" placeholder="hmac-user" required></div>
+      <div class="form-group"><label>Secret (optional)</label><input id="f_cred_secret" placeholder="Leave blank to auto-generate"></div>
+    `;
+  } else if (type === 'acls') {
+    title.textContent = 'Add to ACL Group';
+    body.innerHTML = `
+      <div class="form-group"><label>Group Name</label><input id="f_cred_group" placeholder="my-group" required><small>The ACL group to add this consumer to</small></div>
+    `;
+  } else if (type === 'oauth2') {
+    title.textContent = 'Add OAuth2 Application';
+    body.innerHTML = `
+      <div class="form-group"><label>Application Name</label><input id="f_cred_name" placeholder="My App" required></div>
+      <div class="form-group"><label>Client ID (optional)</label><input id="f_cred_client_id" placeholder="Leave blank to auto-generate"></div>
+      <div class="form-group"><label>Client Secret (optional)</label><input id="f_cred_client_secret" placeholder="Leave blank to auto-generate"></div>
+      <div class="form-group"><label>Redirect URIs</label><input id="f_cred_redirect_uris" placeholder="https://example.com/callback"><small>Comma-separated</small></div>
+    `;
+  }
+
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+async function saveCredential() {
+  const type = editingId; // cred type
+  let payload = {};
+
+  try {
+    if (type === 'key-auth') {
+      const key = document.getElementById('f_cred_key').value.trim();
+      const ttl = document.getElementById('f_cred_ttl').value.trim();
+      if (key) payload.key = key;
+      if (ttl && parseInt(ttl) > 0) payload.ttl = parseInt(ttl);
+
+    } else if (type === 'basic-auth') {
+      payload.username = document.getElementById('f_cred_username').value.trim();
+      payload.password = document.getElementById('f_cred_password').value;
+      if (!payload.username || !payload.password) { toast('Username and password required', 'error'); return; }
+
+    } else if (type === 'jwt') {
+      const key = document.getElementById('f_cred_key').value.trim();
+      const secret = document.getElementById('f_cred_secret').value.trim();
+      const rsa = document.getElementById('f_cred_rsa_public_key').value.trim();
+      payload.algorithm = document.getElementById('f_cred_algorithm').value;
+      if (key) payload.key = key;
+      if (secret) payload.secret = secret;
+      if (rsa) payload.rsa_public_key = rsa;
+
+    } else if (type === 'hmac-auth') {
+      payload.username = document.getElementById('f_cred_username').value.trim();
+      const secret = document.getElementById('f_cred_secret').value.trim();
+      if (!payload.username) { toast('Username required', 'error'); return; }
+      if (secret) payload.secret = secret;
+
+    } else if (type === 'acls') {
+      payload.group = document.getElementById('f_cred_group').value.trim();
+      if (!payload.group) { toast('Group name required', 'error'); return; }
+
+    } else if (type === 'oauth2') {
+      payload.name = document.getElementById('f_cred_name').value.trim();
+      if (!payload.name) { toast('Application name required', 'error'); return; }
+      const cid = document.getElementById('f_cred_client_id').value.trim();
+      const csec = document.getElementById('f_cred_client_secret').value.trim();
+      const uris = document.getElementById('f_cred_redirect_uris').value.trim();
+      if (cid) payload.client_id = cid;
+      if (csec) payload.client_secret = csec;
+      if (uris) payload.redirect_uris = uris.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    await api('POST', '/consumers/' + currentConsumerId + '/' + type, payload);
+    toast('Credential created');
+    closeModal();
+    loadCredentials(type);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Upstreams ───────────────────────────────────────────────────────────────
+async function loadUpstreams() {
+  try {
+    const res = await api('GET', '/upstreams');
+    allData.upstreams = res.data || [];
+    document.getElementById('countUpstreams').textContent = allData.upstreams.length;
+    const body = document.getElementById('upstreamsBody');
+    if (!allData.upstreams.length) { body.innerHTML = '<tr class="empty-row"><td colspan="5">No upstreams configured</td></tr>'; return; }
+    body.innerHTML = allData.upstreams.map(u => `<tr>
+      <td><strong>${u.name}</strong></td>
+      <td><span class="tag tag-blue">${u.algorithm || 'round-robin'}</span></td>
+      <td>${u.slots || 10000}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="viewTargets('${u.id}','${u.name}')">View Targets</button></td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="viewDetail('upstream','${u.id}')">View</button>
+        <button class="btn btn-ghost btn-sm" onclick="editItem('upstream','${u.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('upstreams','${u.id}','${u.name}')">Del</button>
+      </td>
+    </tr>`).join('');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Certificates ────────────────────────────────────────────────────────────
+async function loadCerts() {
+  try {
+    const res = await api('GET', '/certificates');
+    allData.certs = res.data || [];
+    document.getElementById('countCerts').textContent = allData.certs.length;
+    const body = document.getElementById('certsBody');
+    if (!allData.certs.length) { body.innerHTML = '<tr class="empty-row"><td colspan="4">No certificates configured</td></tr>'; return; }
+    body.innerHTML = allData.certs.map(c => `<tr>
+      <td class="mono">${truncId(c.id)}</td>
+      <td>${(c.snis||[]).join(', ') || '—'}</td>
+      <td>${fmtDate(c.created_at)}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="viewDetail('certificate','${c.id}')">View</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('certificates','${c.id}','certificate')">Del</button>
+      </td>
+    </tr>`).join('');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── View Detail ─────────────────────────────────────────────────────────────
+async function viewDetail(type, id) {
+  const typeMap = { service: 'services', route: 'routes', plugin: 'plugins', consumer: 'consumers', upstream: 'upstreams', certificate: 'certificates' };
+  try {
+    const data = await api('GET', '/' + typeMap[type] + '/' + id);
+    document.getElementById('detailTitle').textContent = (type.charAt(0).toUpperCase() + type.slice(1)) + ' Details';
+    document.getElementById('detailBody').innerHTML = '<div class="json-view">' + JSON.stringify(data, null, 2) + '</div>';
+    document.getElementById('detailOverlay').classList.add('active');
+  } catch (e) { toast(e.message, 'error'); }
+}
+function closeDetail() { document.getElementById('detailOverlay').classList.remove('active'); }
+
+async function viewTargets(upstreamId, name) {
+  try {
+    const data = await api('GET', '/upstreams/' + upstreamId + '/targets');
+    const targets = data.data || [];
+    let html = `<p style="margin-bottom:12px;color:var(--text-dim)">Targets for <strong>${name}</strong></p>`;
+    if (!targets.length) { html += '<p style="color:var(--text-dim)">No targets</p>'; }
+    else {
+      html += '<table class="data-table"><thead><tr><th>Target</th><th>Weight</th></tr></thead><tbody>';
+      targets.forEach(t => { html += `<tr><td class="mono">${t.target}</td><td>${t.weight}</td></tr>`; });
+      html += '</tbody></table>';
+    }
+    html += `<div style="margin-top:16px"><button class="btn btn-accent btn-sm" onclick="openModal('target','${upstreamId}')">+ Add Target</button></div>`;
+    document.getElementById('detailTitle').textContent = 'Upstream Targets';
+    document.getElementById('detailBody').innerHTML = html;
+    document.getElementById('detailOverlay').classList.add('active');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Delete ──────────────────────────────────────────────────────────────────
+async function deleteItem(type, id, name) {
+  if (!confirm(`Delete ${name}?`)) return;
+  try {
+    await api('DELETE', '/' + type + '/' + id);
+    toast(`Deleted ${name}`);
+    loadAll();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Modal Forms ─────────────────────────────────────────────────────────────
+function openModal(type, extraId) {
+  currentModal = type;
+  editingId = null;
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+
+  if (type === 'service') {
+    title.textContent = 'Add Service';
+    body.innerHTML = `
+      <div class="form-group"><label>Name</label><input id="f_name" placeholder="my-service"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Protocol</label><select id="f_protocol"><option>http</option><option>https</option><option>grpc</option><option>grpcs</option><option>tcp</option><option>tls</option></select></div>
+        <div class="form-group"><label>Port</label><input id="f_port" type="number" value="80"></div>
+      </div>
+      <div class="form-group"><label>Host</label><input id="f_host" placeholder="httpbin.org"></div>
+      <div class="form-group"><label>Path</label><input id="f_path" placeholder="/" value="/"></div>
+      <div class="form-group"><label>Retries</label><input id="f_retries" type="number" value="5"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Connect Timeout (ms)</label><input id="f_connect_timeout" type="number" value="60000"></div>
+        <div class="form-group"><label>Read Timeout (ms)</label><input id="f_read_timeout" type="number" value="60000"></div>
+      </div>
+    `;
+  } else if (type === 'route') {
+    const svcOpts = (allData.services || []).map(s => `<option value="${s.id}">${s.name || s.host}</option>`).join('');
+    title.textContent = 'Add Route';
+    body.innerHTML = `
+      <div class="form-group"><label>Name</label><input id="f_name" placeholder="my-route"></div>
+      <div class="form-group"><label>Service</label><select id="f_service"><option value="">— Select Service —</option>${svcOpts}</select></div>
+      <div class="form-group"><label>Protocols</label><input id="f_protocols" value="http,https" placeholder="http,https"><small>Comma-separated</small></div>
+      <div class="form-group"><label>Hosts</label><input id="f_hosts" placeholder="example.com"><small>Comma-separated (optional)</small></div>
+      <div class="form-group"><label>Paths</label><input id="f_paths" placeholder="/api"><small>Comma-separated</small></div>
+      <div class="form-group"><label>Methods</label><input id="f_methods" placeholder="GET,POST"><small>Comma-separated (optional, blank = ALL)</small></div>
+      <div class="form-group"><label>Strip Path</label><select id="f_strip_path"><option value="true">Yes</option><option value="false">No</option></select></div>
+    `;
+  } else if (type === 'plugin') {
+    const svcOpts = (allData.services || []).map(s => `<option value="${s.id}">${s.name || s.host}</option>`).join('');
+    const routeOpts = (allData.routes || []).map(r => `<option value="${r.id}">${r.name || (r.paths||[]).join(',') || r.id.substring(0,8)}</option>`).join('');
+    title.textContent = 'Add Plugin';
+    body.innerHTML = `
+      <div class="form-group"><label>Plugin Name</label><input id="f_name" placeholder="rate-limiting, key-auth, cors, ..."><small>See Kong docs for available plugins</small></div>
+      <div class="form-row">
+        <div class="form-group"><label>Service (optional)</label><select id="f_service"><option value="">Global</option>${svcOpts}</select></div>
+        <div class="form-group"><label>Route (optional)</label><select id="f_route"><option value="">None</option>${routeOpts}</select></div>
+      </div>
+      <div class="form-group"><label>Config (JSON)</label><textarea id="f_config" placeholder='{"minute": 5}'></textarea><small>Plugin-specific config as JSON object</small></div>
+    `;
+  } else if (type === 'consumer') {
+    title.textContent = 'Add Consumer';
+    body.innerHTML = `
+      <div class="form-group"><label>Username</label><input id="f_username" placeholder="my-consumer"></div>
+      <div class="form-group"><label>Custom ID (optional)</label><input id="f_custom_id" placeholder="external-id-123"></div>
+    `;
+  } else if (type === 'upstream') {
+    title.textContent = 'Add Upstream';
+    body.innerHTML = `
+      <div class="form-group"><label>Name</label><input id="f_name" placeholder="my-upstream"><small>Must match a service host</small></div>
+      <div class="form-row">
+        <div class="form-group"><label>Algorithm</label><select id="f_algorithm"><option>round-robin</option><option>consistent-hashing</option><option>least-connections</option><option>latency</option></select></div>
+        <div class="form-group"><label>Slots</label><input id="f_slots" type="number" value="10000"></div>
+      </div>
+    `;
+  } else if (type === 'target') {
+    currentModal = 'target';
+    editingId = extraId; // upstream id
+    title.textContent = 'Add Target';
+    body.innerHTML = `
+      <div class="form-group"><label>Target</label><input id="f_target" placeholder="192.168.1.100:8080"><small>host:port</small></div>
+      <div class="form-group"><label>Weight</label><input id="f_weight" type="number" value="100"><small>0-65535, 0 = disabled</small></div>
+    `;
+  } else if (type === 'certificate') {
+    title.textContent = 'Add Certificate';
+    body.innerHTML = `
+      <div class="form-group"><label>Certificate (PEM)</label><textarea id="f_cert" rows="5" placeholder="-----BEGIN CERTIFICATE-----"></textarea></div>
+      <div class="form-group"><label>Private Key (PEM)</label><textarea id="f_key" rows="5" placeholder="-----BEGIN PRIVATE KEY-----"></textarea></div>
+      <div class="form-group"><label>SNIs</label><input id="f_snis" placeholder="example.com,*.example.com"><small>Comma-separated</small></div>
+    `;
+  }
+
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  currentModal = null;
+  editingId = null;
+}
+
+function csvToArr(id) {
+  const v = document.getElementById(id)?.value?.trim();
+  return v ? v.split(',').map(s => s.trim()).filter(Boolean) : null;
+}
+
+async function saveModal() {
+  if (currentModal === 'credential') { return saveCredential(); }
+  try {
+    let path, payload;
+
+    if (currentModal === 'service') {
+      path = editingId ? '/services/' + editingId : '/services';
+      payload = {
+        name: document.getElementById('f_name').value.trim() || undefined,
+        protocol: document.getElementById('f_protocol').value,
+        host: document.getElementById('f_host').value.trim(),
+        port: parseInt(document.getElementById('f_port').value) || 80,
+        path: document.getElementById('f_path').value.trim() || '/',
+        retries: parseInt(document.getElementById('f_retries').value) || 5,
+        connect_timeout: parseInt(document.getElementById('f_connect_timeout').value) || 60000,
+        read_timeout: parseInt(document.getElementById('f_read_timeout').value) || 60000,
+      };
+      if (!payload.host) { toast('Host is required', 'error'); return; }
+
+    } else if (currentModal === 'route') {
+      path = editingId ? '/routes/' + editingId : '/routes';
+      payload = {
+        name: document.getElementById('f_name').value.trim() || undefined,
+        protocols: csvToArr('f_protocols') || ['http', 'https'],
+        hosts: csvToArr('f_hosts'),
+        paths: csvToArr('f_paths'),
+        methods: csvToArr('f_methods'),
+        strip_path: document.getElementById('f_strip_path').value === 'true',
+      };
+      const svc = document.getElementById('f_service').value;
+      if (svc) payload.service = { id: svc };
+      if (!payload.hosts && !payload.paths && !payload.methods) { toast('At least one of hosts, paths, or methods is required', 'error'); return; }
+
+    } else if (currentModal === 'plugin') {
+      path = '/plugins';
+      const configStr = document.getElementById('f_config').value.trim();
+      let config = {};
+      if (configStr) { try { config = JSON.parse(configStr); } catch { toast('Invalid JSON config', 'error'); return; } }
+      payload = { name: document.getElementById('f_name').value.trim(), config };
+      const svc = document.getElementById('f_service').value;
+      const route = document.getElementById('f_route').value;
+      if (svc) payload.service = { id: svc };
+      if (route) payload.route = { id: route };
+      if (!payload.name) { toast('Plugin name is required', 'error'); return; }
+
+    } else if (currentModal === 'consumer') {
+      path = editingId ? '/consumers/' + editingId : '/consumers';
+      payload = {
+        username: document.getElementById('f_username').value.trim() || undefined,
+        custom_id: document.getElementById('f_custom_id').value.trim() || undefined,
+      };
+      if (!payload.username && !payload.custom_id) { toast('Username or Custom ID required', 'error'); return; }
+
+    } else if (currentModal === 'upstream') {
+      path = editingId ? '/upstreams/' + editingId : '/upstreams';
+      payload = {
+        name: document.getElementById('f_name').value.trim(),
+        algorithm: document.getElementById('f_algorithm').value,
+        slots: parseInt(document.getElementById('f_slots').value) || 10000,
+      };
+      if (!payload.name) { toast('Name is required', 'error'); return; }
+
+    } else if (currentModal === 'target') {
+      path = '/upstreams/' + editingId + '/targets';
+      payload = {
+        target: document.getElementById('f_target').value.trim(),
+        weight: parseInt(document.getElementById('f_weight').value),
+      };
+      if (!payload.target) { toast('Target is required', 'error'); return; }
+
+    } else if (currentModal === 'certificate') {
+      path = '/certificates';
+      payload = {
+        cert: document.getElementById('f_cert').value.trim(),
+        key: document.getElementById('f_key').value.trim(),
+        snis: csvToArr('f_snis') || [],
+      };
+      if (!payload.cert || !payload.key) { toast('Certificate and key required', 'error'); return; }
+    }
+
+    const method = editingId && currentModal !== 'target' ? 'PATCH' : 'POST';
+    await api(method, path, payload);
+    toast(editingId && currentModal !== 'target' ? 'Updated successfully' : 'Created successfully');
+    closeModal();
+    closeDetail();
+    loadAll();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Edit (prefill modal) ────────────────────────────────────────────────────
+async function editItem(type, id) {
+  const typeMap = { service: 'services', route: 'routes', consumer: 'consumers', upstream: 'upstreams' };
+  try {
+    const data = await api('GET', '/' + typeMap[type] + '/' + id);
+    openModal(type);
+    editingId = id;
+    document.getElementById('modalTitle').textContent = 'Edit ' + type.charAt(0).toUpperCase() + type.slice(1);
+
+    if (type === 'service') {
+      document.getElementById('f_name').value = data.name || '';
+      document.getElementById('f_protocol').value = data.protocol || 'http';
+      document.getElementById('f_host').value = data.host || '';
+      document.getElementById('f_port').value = data.port || 80;
+      document.getElementById('f_path').value = data.path || '/';
+      document.getElementById('f_retries').value = data.retries || 5;
+      document.getElementById('f_connect_timeout').value = data.connect_timeout || 60000;
+      document.getElementById('f_read_timeout').value = data.read_timeout || 60000;
+    } else if (type === 'route') {
+      document.getElementById('f_name').value = data.name || '';
+      document.getElementById('f_protocols').value = (data.protocols || []).join(',');
+      document.getElementById('f_hosts').value = (data.hosts || []).join(',');
+      document.getElementById('f_paths').value = (data.paths || []).join(',');
+      document.getElementById('f_methods').value = (data.methods || []).join(',');
+      document.getElementById('f_strip_path').value = data.strip_path ? 'true' : 'false';
+      if (data.service?.id) document.getElementById('f_service').value = data.service.id;
+    } else if (type === 'consumer') {
+      document.getElementById('f_username').value = data.username || '';
+      document.getElementById('f_custom_id').value = data.custom_id || '';
+    } else if (type === 'upstream') {
+      document.getElementById('f_name').value = data.name || '';
+      document.getElementById('f_algorithm').value = data.algorithm || 'round-robin';
+      document.getElementById('f_slots').value = data.slots || 10000;
+    }
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Load All ────────────────────────────────────────────────────────────────
+async function loadAll() {
+  await loadServices();
+  loadRoutes();
+  loadPlugins();
+  loadConsumers();
+  loadUpstreams();
+  loadCerts();
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+loadDashboard();
+loadAll();
+setInterval(loadDashboard, 30000);
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

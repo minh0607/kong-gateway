@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kong - User Management</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; }
+
+  .header { background: #003459; color: white; padding: 20px 30px; display: flex; align-items: center; gap: 15px; }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header .logo { width: 36px; height: 36px; background: #00d09c; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+  .header-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+  .header-right a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 13px; font-weight: 500; }
+  .header-right a:hover { color: #fff; }
+
+  .container { max-width: 700px; margin: 30px auto; padding: 0 20px; }
+
+  .card { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .card-body { padding: 20px; }
+
+  .user-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+  .user-row:last-child { border-bottom: none; }
+  .user-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 12px; font-size: 14px; }
+  .user-icon.admin { background: #fff3e0; color: #e65100; }
+  .user-icon.user { background: #e8f4f8; color: #003459; }
+  .user-info { display: flex; align-items: center; flex: 1; }
+  .user-name { font-weight: 500; }
+  .user-role { margin-left: 8px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+  .role-admin { background: #fff3e0; color: #e65100; }
+  .role-user { background: #e8f4f8; color: #003459; }
+  .user-actions { display: flex; gap: 6px; }
+
+  .btn { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+  .btn-primary { background: #003459; color: white; }
+  .btn-primary:hover { background: #004a7c; }
+  .btn-warning { background: #ff9800; color: white; }
+  .btn-warning:hover { background: #e68900; }
+  .btn-danger { background: #f44336; color: white; }
+  .btn-danger:hover { background: #d32f2f; }
+  .btn-role { background: #e8f4f8; color: #003459; }
+  .btn-role:hover { background: #d0e8f0; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
+  .form-group input, .form-group select { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+  .form-group input:focus, .form-group select:focus { outline: none; border-color: #003459; box-shadow: 0 0 0 2px rgba(0,52,89,0.15); }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-group { flex: 1; }
+
+  .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; display: none; }
+  .alert-success { background: #e8f5e9; color: #2e7d32; }
+  .alert-error { background: #fce4ec; color: #c62828; }
+
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: white; border-radius: 10px; padding: 24px; width: 400px; max-width: 90%; }
+  .modal h3 { margin-bottom: 16px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+  .empty { text-align: center; padding: 30px; color: #999; }
+  .count-badge { background: #e8f4f8; color: #003459; padding: 2px 10px; border-radius: 12px; font-size: 13px; }
+  .access-denied { text-align: center; padding: 60px 20px; }
+  .access-denied h2 { color: #c62828; margin-bottom: 10px; }
+  .access-denied p { color: #666; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">K</div>
+  <h1>Kong - User Management</h1>
+  <div class="header-right">
+    <a href="/">&#9664; Back to Kong Manager</a>
+  </div>
+</div>
+
+<div class="container">
+  <div id="alert" class="alert"></div>
+  <div id="accessDenied" class="access-denied" style="display:none;">
+    <h2>Access Denied</h2>
+    <p>Only admin users can manage accounts.</p>
+    <p style="margin-top:16px;"><a href="/" style="color:#003459;">Back to Kong Manager</a></p>
+  </div>
+
+  <div id="mainContent">
+    <!-- Add User -->
+    <div class="card">
+      <div class="card-header">Add New User</div>
+      <div class="card-body">
+        <form id="addForm" onsubmit="addUser(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="newUsername" placeholder="Enter username" required minlength="3">
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="newPassword" placeholder="Enter password" required minlength="6">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="newRole">
+              <option value="user">User — Kong Manager access only</option>
+              <option value="admin">Admin — Kong Manager + User Management</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Add User</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- User List -->
+    <div class="card">
+      <div class="card-header">
+        <span>Users</span>
+        <span class="count-badge" id="userCount">0</span>
+      </div>
+      <div class="card-body" id="userList">
+        <div class="empty">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal">
+    <h3>Change Password</h3>
+    <div class="form-group">
+      <label>New password for <strong id="modalUser"></strong></label>
+      <input type="password" id="modalPassword" placeholder="Enter new password" minlength="6">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()" style="background:#eee">Cancel</button>
+      <button class="btn btn-warning" onclick="savePassword()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showAlert(msg, type) {
+  const el = document.getElementById('alert');
+  el.className = 'alert alert-' + type;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+async function api(method, url, body) {
+  const opts = { method, headers: {} };
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(url, opts);
+  if (res.status === 403) {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('accessDenied').style.display = 'block';
+    throw new Error('Access denied');
+  }
+  if (res.status === 401) {
+    window.location.href = '/auth/login';
+    throw new Error('Not authenticated');
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+async function loadUsers() {
+  try {
+    const data = await api('GET', 'api/users');
+    const list = document.getElementById('userList');
+    const count = document.getElementById('userCount');
+    count.textContent = data.users.length;
+
+    if (data.users.length === 0) {
+      list.innerHTML = '<div class="empty">No users found</div>';
+      return;
+    }
+
+    list.innerHTML = data.users.map(u => `
+      <div class="user-row">
+        <div class="user-info">
+          <div class="user-icon ${u.role}">${u.username[0].toUpperCase()}</div>
+          <span class="user-name">${u.username}</span>
+          <span class="user-role role-${u.role}">${u.role}</span>
+        </div>
+        <div class="user-actions">
+          <button class="btn btn-role btn-sm" onclick="toggleRole('${u.username}','${u.role}')">${u.role === 'admin' ? 'Demote' : 'Promote'}</button>
+          <button class="btn btn-warning btn-sm" onclick="openPasswordModal('${u.username}')">Password</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.username}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    if (e.message !== 'Access denied' && e.message !== 'Not authenticated')
+      showAlert(e.message, 'error');
+  }
+}
+
+async function addUser(e) {
+  e.preventDefault();
+  const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newPassword').value.trim();
+  const role = document.getElementById('newRole').value;
+  try {
+    const data = await api('POST', 'api/users', { username, password, role });
+    showAlert(data.message, 'success');
+    document.getElementById('addForm').reset();
+    loadUsers();
+  } catch (e) {
+    showAlert(e.message, 'error');
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm(`Delete user "${username}"?`)) return;
+  try {
+    const data = await api('DELETE', `api/users/${username}`);
+    showAlert(data.message, 'success');
+    loadUsers();
+  } catch (e) {
+    showAlert(e.message, 'error');
+  }
+}
+
+async function toggleRole(username, currentRole) {
+  const newRole = currentRole === 'admin' ? 'user' : 'admin';
+  const action = newRole === 'admin' ? 'Promote' : 'Demote';
+  if (!confirm(`${action} "${username}" to ${newRole}?`)) return;
+  try {
+    const data = await api('PUT', `api/users/${username}/role`, { role: newRole });
+    showAlert(data.message, 'success');
+    loadUsers();
+  } catch (e) {
+    showAlert(e.message, 'error');
+  }
+}
+
+function openPasswordModal(username) {
+  document.getElementById('modalUser').textContent = username;
+  document.getElementById('modalPassword').value = '';
+  document.getElementById('passwordModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('passwordModal').classList.remove('active');
+}
+
+async function savePassword() {
+  const username = document.getElementById('modalUser').textContent;
+  const password = document.getElementById('modalPassword').value.trim();
+  if (!password) return;
+  try {
+    const data = await api('PUT', `api/users/${username}/password`, { password });
+    showAlert(data.message, 'success');
+    closeModal();
+  } catch (e) {
+    showAlert(e.message, 'error');
+  }
+}
+
+loadUsers();
+</script>
+</body>
+</html>
