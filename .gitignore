@@ -1,3 +1,10 @@
 *.tar
 *.tar.gz
 offline-package/images/
+data/
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
