@@ -19,6 +19,7 @@ def create_app() -> Flask:
 
     import audit
     audit.configure(cfg)
+    audit.start_housekeeping_thread()
 
     import mailer
     mailer.configure(cfg)
