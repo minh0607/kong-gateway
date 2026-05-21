@@ -22,6 +22,9 @@ def create_app() -> Flask:
 
     import mailer
     mailer.configure(cfg)
+
+    import mfa
+    mfa.configure(cfg)
     audit.write("startup", actor="system", ip="-",
                 details={"mfa_enforced": cfg.mfa_enforced})
     audit.write("mfa.enforced.state", actor="system", ip="-",
