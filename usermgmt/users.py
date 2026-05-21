@@ -21,13 +21,14 @@ bp = Blueprint("users", __name__)
 def _audit(event, target=None, details=None):
     """Log an audit event with the current session user as actor."""
     from auth import get_session_user
+    from utils import client_ip
 
     s = get_session_user() or {"u": "anonymous", "r": None}
     audit.write(
         event,
         actor=s["u"],
         actor_role=s["r"],
-        ip=request.remote_addr or "-",
+        ip=client_ip(),
         target=target,
         details=details,
     )

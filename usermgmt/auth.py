@@ -29,8 +29,8 @@ def _sign(payload: str) -> str:
 
 
 def _client_ip() -> str:
-    # Trust X-Real-IP only (set by nginx from $remote_addr). Never X-Forwarded-For.
-    return request.headers.get("X-Real-IP") or (request.remote_addr or "-")
+    from utils import client_ip
+    return client_ip()
 
 
 def _mask_email(email: str) -> str:
@@ -254,6 +254,7 @@ def mfa_resend():
     try:
         mailer.send_mfa_code(email, rec["username"], new_code)
     except mailer.MailerError as e:
+        mfa.consume_challenge(challenge_id)
         audit.write("login.mfa.send_fail", actor=rec["username"], ip=ip,
                     details={"reason": str(e)[:120], "resend": True})
         return jsonify({"error": "Could not send verification email."}), 503
@@ -268,7 +269,7 @@ def logout():
     s = get_session_user()
     if s:
         audit.write("logout", actor=s["u"], actor_role=s["r"],
-                    ip=request.remote_addr or "-")
+                    ip=_client_ip())
     resp = redirect("/auth/login")
     resp.delete_cookie("kong_session", path="/")
     return resp

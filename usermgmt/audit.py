@@ -13,6 +13,7 @@ import threading
 from typing import Any, Optional
 
 from flask import Blueprint, jsonify, request, send_from_directory
+from utils import client_ip
 
 _cfg = None
 _lock = threading.Lock()
@@ -203,7 +204,7 @@ def api_logs():
         if offset == 0:
             s = get_session_user() or {"u": "anonymous", "r": None}
             write("audit.view", actor=s["u"], actor_role=s["r"],
-                  ip=request.remote_addr or "-",
+                  ip=client_ip(),
                   details={"date": date, "actor": actor, "event": event})
 
         return jsonify(result)
