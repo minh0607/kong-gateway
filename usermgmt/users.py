@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
+import re
 import subprocess
 import time as _time
 
@@ -154,6 +155,32 @@ def ensure_default_admin() -> None:
     write_user_db(db)
 
 
+_EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$")
+
+
+def _valid_email(email: str) -> bool:
+    if any(c in email for c in "\r\n\t"):
+        return False
+    if not (5 <= len(email) <= 254):
+        return False
+    return bool(_EMAIL_RE.match(email))
+
+
+def _set_email(username: str, email: str) -> None:
+    db = read_user_db()
+    rec = db["users"].setdefault(
+        username,
+        {"role": "user", "email": None, "created_at": _now_iso(), "updated_at": _now_iso()},
+    )
+    rec["email"] = email
+    rec["updated_at"] = _now_iso()
+    write_user_db(db)
+
+
+def get_email(username: str) -> str | None:
+    return read_user_db().get("users", {}).get(username, {}).get("email")
+
+
 def _resolve_users_path() -> str:
     try:
         return current_app.config["CONFIG"].users_file
@@ -217,7 +244,11 @@ def list_users():
         users = []
         for u in read_users():
             rec = db.get("users", {}).get(u, {})
-            users.append({"username": u, "role": rec.get("role", "user")})
+            users.append({
+                "username": u,
+                "role": rec.get("role", "user"),
+                "email": rec.get("email"),
+            })
         return jsonify({"users": users})
 
     return _inner()
@@ -245,6 +276,10 @@ def add_user():
         if any(c in username for c in "\r\n\t"):
             return jsonify({"error": "Username contains invalid characters"}), 400
 
+        email = (data.get("email") or "").strip()
+        if email and not _valid_email(email):
+            return jsonify({"error": "Invalid email"}), 400
+
         entries = read_entries()
         if any(u == username for u, _ in entries):
             return jsonify({"error": "User already exists"}), 409
@@ -252,6 +287,8 @@ def add_user():
         entries.append((username, apr1_hash(password)))
         save_entries(entries)
         set_role(username, role)
+        if email:
+            _set_email(username, email)
         _audit("user.create", target=username, details={"role": role})
         return jsonify({"message": f"User '{username}' created as {role}"})
 
@@ -347,5 +384,28 @@ def change_role(username):
         set_role(username, role)
         _audit("user.role.change", target=username, details={"role": role})
         return jsonify({"message": f"Role changed to '{role}' for '{username}'"})
+
+    return _inner()
+
+
+@bp.route("/api/users/<username>/email", methods=["PUT"])
+def change_email(username):
+    from auth import require_admin
+
+    @require_admin
+    def _inner():
+        data = request.get_json() or {}
+        email = (data.get("email") or "").strip()
+        if not _valid_email(email):
+            return jsonify({"error": "Invalid email"}), 400
+
+        # User must exist in either the htpasswd file or the users.json DB
+        db = read_user_db()
+        if username not in db.get("users", {}) and username not in read_users():
+            return jsonify({"error": "User not found"}), 404
+
+        _set_email(username, email)
+        _audit("user.email.change", target=username)
+        return jsonify({"message": f"Email updated for '{username}'"})
 
     return _inner()

@@ -103,6 +103,10 @@
             </div>
           </div>
           <div class="form-group">
+            <label>Email (optional)</label>
+            <input type="email" id="newEmail" placeholder="user@example.com">
+          </div>
+          <div class="form-group">
             <label>Role</label>
             <select id="newRole">
               <option value="user">User — Kong Manager access only</option>
@@ -190,10 +194,12 @@ async function loadUsers() {
           <div class="user-icon ${u.role}">${u.username[0].toUpperCase()}</div>
           <span class="user-name">${u.username}</span>
           <span class="user-role role-${u.role}">${u.role}</span>
+          <span style="margin-left:10px;font-size:12px;color:#666;">${u.email || ''}</span>
         </div>
         <div class="user-actions">
           <button class="btn btn-role btn-sm" onclick="toggleRole('${u.username}','${u.role}')">${u.role === 'admin' ? 'Demote' : 'Promote'}</button>
           <button class="btn btn-warning btn-sm" onclick="openPasswordModal('${u.username}')">Password</button>
+          <button class="btn btn-sm" style="background:#e8f4f8;color:#003459;" onclick="editEmail('${u.username}','${u.email || ''}')">Email</button>
           <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.username}')">Delete</button>
         </div>
       </div>
@@ -209,8 +215,11 @@ async function addUser(e) {
   const username = document.getElementById('newUsername').value.trim();
   const password = document.getElementById('newPassword').value.trim();
   const role = document.getElementById('newRole').value;
+  const email = document.getElementById('newEmail').value.trim();
+  const body = { username, password, role }
+  if (email) body.email = email
   try {
-    const data = await api('POST', 'api/users', { username, password, role });
+    const data = await api('POST', 'api/users', body);
     showAlert(data.message, 'success');
     document.getElementById('addForm').reset();
     loadUsers();
@@ -263,6 +272,18 @@ async function savePassword() {
     closeModal();
   } catch (e) {
     showAlert(e.message, 'error');
+  }
+}
+
+async function editEmail(username, current) {
+  const newValue = prompt(`Email for "${username}":`, current)
+  if (newValue === null) return
+  try {
+    const data = await api('PUT', `api/users/${username}/email`, { email: newValue.trim() })
+    showAlert(data.message, 'success')
+    loadUsers()
+  } catch (e) {
+    showAlert(e.message, 'error')
   }
 }
 
