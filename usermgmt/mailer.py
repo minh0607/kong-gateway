@@ -15,6 +15,8 @@ class MailerError(Exception):
 def configure(cfg) -> None:
     global _cfg
     _cfg = cfg
+    import smtp_settings
+    smtp_settings.configure(cfg)
 
 
 _TEMPLATE = """Hello {username},
@@ -31,17 +33,20 @@ and contact your administrator.
 
 
 def send_mfa_code(to_email: str, username: str, code: str) -> None:
+    from smtp_settings import get_current
+
+    s = get_current()
     msg = EmailMessage()
-    msg["From"] = _cfg.smtp_from
+    msg["From"] = s.from_addr
     msg["To"] = to_email
     msg["Subject"] = "SEHC AI Gateway — your verification code"
     msg.set_content(_TEMPLATE.format(username=username, code=code))
     try:
-        with smtplib.SMTP(_cfg.smtp_host, _cfg.smtp_port, timeout=_cfg.smtp_timeout_sec) as s:
-            if _cfg.smtp_use_tls:
-                s.starttls()
-            if _cfg.smtp_user and _cfg.smtp_pass:
-                s.login(_cfg.smtp_user, _cfg.smtp_pass)
-            s.send_message(msg)
+        with smtplib.SMTP(s.host, s.port, timeout=s.timeout_sec) as conn:
+            if s.use_tls:
+                conn.starttls()
+            if s.user and s.password:
+                conn.login(s.user, s.password)
+            conn.send_message(msg)
     except (smtplib.SMTPException, OSError) as e:
         raise MailerError(str(e)) from e
