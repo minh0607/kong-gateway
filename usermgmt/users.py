@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import datetime
+import json
 import os
 import subprocess
+import time as _time
 
 from flask import Blueprint, current_app, jsonify, request, send_from_directory
 
@@ -133,6 +135,45 @@ def ensure_default_admin() -> None:
     )
     db["users"][first]["role"] = "admin"
     write_user_db(db)
+
+
+def _resolve_users_path() -> str:
+    try:
+        return current_app.config["CONFIG"].users_file
+    except RuntimeError:
+        return os.environ.get("USERS_FILE", "/data/users.json")
+
+
+def migrate_legacy_roles_file(roles_path: str) -> None:
+    """One-shot migration from roles.json to users.json.
+
+    Idempotent: if users.json already exists, this is a no-op even if a
+    leftover roles.json is also present.
+    """
+    if not os.path.exists(roles_path):
+        return
+    users_path = _resolve_users_path()
+    if os.path.exists(users_path):
+        return
+
+    with open(roles_path, "r", encoding="utf-8") as f:
+        roles = json.load(f)
+    now = _now_iso()
+    db = {
+        "version": 1,
+        "users": {
+            u: {
+                "role": r,
+                "email": None,
+                "created_at": now,
+                "updated_at": now,
+            }
+            for u, r in roles.items()
+        },
+    }
+    write_json_file(users_path, db)
+    backup = f"{roles_path}.bak-{int(_time.time())}"
+    os.replace(roles_path, backup)
 
 
 # ─── Endpoints ───────────────────────────────────────────────────

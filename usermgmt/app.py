@@ -14,6 +14,12 @@ def create_app() -> Flask:
     cfg = Config.from_env()
     app.config["CONFIG"] = cfg
 
+    import os.path
+    from users import migrate_legacy_roles_file
+
+    roles_legacy = os.path.join(os.path.dirname(cfg.users_file), "roles.json")
+    migrate_legacy_roles_file(roles_legacy)
+
     from auth import bp as auth_bp
     from users import bp as users_bp
 
