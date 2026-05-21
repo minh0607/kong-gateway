@@ -14,6 +14,9 @@ def create_app() -> Flask:
     cfg = Config.from_env()
     app.config["CONFIG"] = cfg
 
+    import lockouts
+    lockouts.configure(cfg)
+
     import os.path
     from users import migrate_legacy_roles_file
 
