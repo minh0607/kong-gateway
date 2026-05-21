@@ -185,7 +185,7 @@ def _query(date: str, actor: str | None, event: str | None,
     return {"rows": sliced, "total": total, "has_more": offset + limit < total}
 
 
-@bp.route("/api/logs")
+@bp.route("/logs/api")
 def api_logs():
     from auth import get_session_user, require_admin
 

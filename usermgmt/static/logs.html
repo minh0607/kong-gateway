@@ -63,7 +63,7 @@ async function load(off) {
     limit, offset,
   });
   for (const k of [...params.keys()]) if (!params.get(k)) params.delete(k);
-  const r = await fetch(`/api/logs?${params.toString()}`, { credentials: 'include' });
+  const r = await fetch(`/logs/api?${params.toString()}`, { credentials: 'include' });
   if (!r.ok) {
     document.getElementById('rows').innerHTML = `<tr><td colspan=6>Error: ${r.status}</td></tr>`;
     return;

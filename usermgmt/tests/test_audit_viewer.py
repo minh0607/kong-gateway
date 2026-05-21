@@ -53,7 +53,7 @@ def test_viewer_merges_both_files(client):
                       "event": "kong.api.request", "ip": "1.2.3.4",
                       "details": {"method": "GET", "path": "/services"}}],
     )
-    r = client.get(f"/api/logs?date={today}")
+    r = client.get(f"/logs/api?date={today}")
     assert r.status_code == 200
     rows = r.json["rows"]
     # The endpoint will have also added its own `audit.view` row to today's audit file before reading.
@@ -73,7 +73,7 @@ def test_viewer_filters_by_actor(client):
         ],
         access_rows=[],
     )
-    r = client.get(f"/api/logs?date={today}&actor=bob")
+    r = client.get(f"/logs/api?date={today}&actor=bob")
     assert r.status_code == 200
     rows = r.json["rows"]
     assert all(row["actor"] == "bob" for row in rows)
@@ -88,7 +88,7 @@ def test_viewer_filters_by_event_glob(client):
         ],
         access_rows=[],
     )
-    r = client.get(f"/api/logs?date={today}&event=login.*")
+    r = client.get(f"/logs/api?date={today}&event=login.*")
     rows = r.json["rows"]
     # The endpoint's own audit.view event might land in today's file too — filter to spec events
     seeded = [row for row in rows if row["event"] == "login.success"]
@@ -112,5 +112,5 @@ def test_viewer_admin_only(client, tmp_data_dir):
     client.post("/auth/logout")
     client.post("/auth/login", json={"username": "alice", "password": "secret123"})
 
-    r = client.get("/api/logs?date=2026-05-21")
+    r = client.get("/logs/api?date=2026-05-21")
     assert r.status_code == 403
