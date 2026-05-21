@@ -179,6 +179,58 @@ def login_submit():
                     "expires_in": cfg.mfa_code_ttl_sec})
 
 
+@bp.route("/auth/mfa", methods=["POST"])
+def mfa_submit():
+    import audit, lockouts, mfa
+    from users import get_role
+
+    cfg = _config()
+    data = request.get_json(silent=True) or {}
+    challenge_id = (data.get("challenge_id") or "").strip()
+    code = (data.get("code") or "").strip()
+    ip = _client_ip()
+
+    if lockouts.is_ip_locked(ip):
+        audit.write("login.locked.ip", actor="anonymous", ip=ip)
+        return jsonify({"error": "Too many failed attempts. Try again later."}), 423
+
+    rec = mfa.get_challenge(challenge_id)
+    if not rec:
+        lockouts.record_mfa_failure(ip)
+        audit.write("login.mfa.expired", actor="anonymous", ip=ip,
+                    details={"challenge_id": challenge_id})
+        return jsonify({"error": "Code expired. Please log in again."}), 410
+
+    if rec["bound_ip"] != ip:
+        mfa.consume_challenge(challenge_id)
+        audit.write("login.mfa.fail", actor=rec.get("username", "anonymous"),
+                    ip=ip, details={"reason": "ip_mismatch"})
+        return jsonify({"error": "Invalid code"}), 401
+
+    if not mfa.verify_code(challenge_id, code):
+        lockouts.record_mfa_failure(ip)
+        remaining = mfa.fail_challenge(challenge_id)
+        audit.write("login.mfa.fail", actor=rec["username"], ip=ip,
+                    details={"attempts_left": remaining})
+        if remaining == 0:
+            return jsonify({"error": "Code expired. Please log in again."}), 410
+        return jsonify({"error": "Invalid code", "attempts_left": remaining}), 401
+
+    username = rec["username"]
+    role = get_role(username)
+    mfa.consume_challenge(challenge_id)
+    lockouts.clear_user(username)
+
+    audit.write("login.mfa.ok", actor=username, actor_role=role, ip=ip)
+    audit.write("login.success", actor=username, actor_role=role, ip=ip)
+
+    cookie_val = create_session_cookie(username, role, mfa=True)
+    resp = jsonify({"message": "Login successful", "user": username, "role": role})
+    resp.set_cookie("kong_session", cookie_val, max_age=cfg.session_max_age,
+                    httponly=True, samesite="Strict", path="/")
+    return resp
+
+
 @bp.route("/auth/logout", methods=["GET", "POST"])
 def logout():
     s = get_session_user()
