@@ -88,8 +88,9 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
       - ./nginx/portal.html:/etc/nginx/portal.html:ro
+      - ./data/audit:/var/log/audit
     ports:
-      - "8002:80"  # Kong Manager GUI (with login)
+      - "8002:80"
     networks:
       - kong-net
 
@@ -99,9 +100,39 @@ services:
     restart: unless-stopped
     volumes:
       - ./nginx/.htpasswd:/data/.htpasswd
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       HTPASSWD_FILE: /data/.htpasswd
+      USERS_FILE: /data/users.json
+      MFA_STATE_FILE: /data/mfa_state.json
+      LOCKOUTS_FILE: /data/lockouts.json
+      AUDIT_DIR: /data/audit
+      SESSION_SECRET: ${SESSION_SECRET:?must be set}
+      SESSION_MAX_AGE: "1800"
+
+      SMTP_HOST: ${SMTP_HOST:?must be set}
+      SMTP_PORT: "587"
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: "SEHC AI Gateway <no-reply@sehc.local>"
+      SMTP_USE_TLS: "true"
+      SMTP_TIMEOUT_SEC: "10"
+
+      MFA_ENFORCED: "false"
+      MFA_CODE_TTL_SEC: "300"
+      MFA_MAX_ATTEMPTS: "3"
+      MFA_RESEND_COOLDOWN_SEC: "60"
+
+      PWD_LOCKOUT_THRESHOLD: "5"
+      PWD_LOCKOUT_WINDOW_SEC: "900"
+      IP_MFA_LOCKOUT_THRESHOLD: "10"
+      IP_MFA_LOCKOUT_WINDOW_SEC: "900"
+
+      AUDIT_RETENTION_DAYS: "90"
+      AUTH_PROXY_CONTAINER: "kong-auth-proxy"
+      TZ: "UTC"
     ports:
-      - "8888:5000"  # User Management GUI
+      - "8888:5000"
     networks:
       - kong-net
