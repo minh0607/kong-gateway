@@ -231,6 +231,38 @@ def mfa_submit():
     return resp
 
 
+@bp.route("/auth/mfa/resend", methods=["POST"])
+def mfa_resend():
+    import audit, mailer, mfa
+    from users import get_email
+
+    data = request.get_json(silent=True) or {}
+    challenge_id = (data.get("challenge_id") or "").strip()
+    ip = _client_ip()
+
+    rec = mfa.get_challenge(challenge_id)
+    if not rec:
+        return jsonify({"error": "Challenge expired"}), 410
+    if rec["bound_ip"] != ip:
+        return jsonify({"error": "Invalid challenge"}), 401
+
+    new_code = mfa.reissue_code(challenge_id)
+    if new_code is None:
+        return jsonify({"error": "Resend not allowed"}), 429
+
+    email = get_email(rec["username"]) or ""
+    try:
+        mailer.send_mfa_code(email, rec["username"], new_code)
+    except mailer.MailerError as e:
+        audit.write("login.mfa.send_fail", actor=rec["username"], ip=ip,
+                    details={"reason": str(e)[:120], "resend": True})
+        return jsonify({"error": "Could not send verification email."}), 503
+
+    audit.write("login.mfa.sent", actor=rec["username"], ip=ip,
+                details={"challenge_id": challenge_id, "resend": True})
+    return jsonify({"message": "Code resent"})
+
+
 @bp.route("/auth/logout", methods=["GET", "POST"])
 def logout():
     s = get_session_user()
