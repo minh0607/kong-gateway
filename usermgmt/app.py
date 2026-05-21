@@ -39,9 +39,11 @@ def create_app() -> Flask:
 
     from auth import bp as auth_bp
     from users import bp as users_bp
+    from audit import bp as audit_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(audit_bp)
 
     return app
 

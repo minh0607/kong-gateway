@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import fnmatch
 import json
 import glob
 import os
@@ -10,6 +11,8 @@ import subprocess
 import sys
 import threading
 from typing import Any, Optional
+
+from flask import Blueprint, jsonify, request, send_from_directory
 
 _cfg = None
 _lock = threading.Lock()
@@ -132,3 +135,88 @@ def start_housekeeping_thread() -> None:
 
     t = threading.Thread(target=loop, name="audit-housekeeping", daemon=True)
     t.start()
+
+
+bp = Blueprint("audit", __name__)
+
+
+def _read_jsonl(path: str):
+    if not os.path.exists(path):
+        return
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                yield json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+
+def _query(date: str, actor: str | None, event: str | None,
+           limit: int, offset: int) -> dict:
+    audit_path = os.path.join(_audit_dir(), f"audit-{date}.jsonl")
+    access_today = os.path.join(_audit_dir(), "access-current.jsonl")
+    access_dated = os.path.join(_audit_dir(), f"access-{date}.jsonl")
+
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    if date == today:
+        paths = [audit_path, access_today, access_dated]
+    else:
+        paths = [audit_path, access_dated]
+
+    rows = []
+    for p in paths:
+        for r in _read_jsonl(p):
+            r.setdefault("actor", "anonymous")
+            if not r["actor"]:
+                r["actor"] = "anonymous"
+            if actor and r.get("actor") != actor:
+                continue
+            if event and not fnmatch.fnmatch(r.get("event", ""), event):
+                continue
+            rows.append(r)
+
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    total = len(rows)
+    sliced = rows[offset: offset + limit]
+    return {"rows": sliced, "total": total, "has_more": offset + limit < total}
+
+
+@bp.route("/api/logs")
+def api_logs():
+    from auth import get_session_user, require_admin
+
+    @require_admin
+    def inner():
+        date = request.args.get("date") or datetime.datetime.now(
+            datetime.timezone.utc
+        ).strftime("%Y-%m-%d")
+        actor = request.args.get("actor")
+        event = request.args.get("event")
+        limit = min(int(request.args.get("limit", "200")), 1000)
+        offset = max(int(request.args.get("offset", "0")), 0)
+        result = _query(date, actor, event, limit, offset)
+
+        # Emit audit.view ONLY on the first page of a search
+        if offset == 0:
+            s = get_session_user() or {"u": "anonymous", "r": None}
+            write("audit.view", actor=s["u"], actor_role=s["r"],
+                  ip=request.remote_addr or "-",
+                  details={"date": date, "actor": actor, "event": event})
+
+        return jsonify(result)
+
+    return inner()
+
+
+@bp.route("/logs/")
+def logs_page():
+    from auth import require_admin
+
+    @require_admin
+    def inner():
+        return send_from_directory("/app/static", "logs.html")
+
+    return inner()
