@@ -12,6 +12,8 @@ import json
 import time
 from functools import wraps
 
+import audit
+
 from flask import Blueprint, current_app, jsonify, redirect, request, send_from_directory, Response
 
 bp = Blueprint("auth", __name__)
@@ -111,6 +113,7 @@ def login_submit():
     if not username or not password:
         return jsonify({"error": "Username and password required"}), 400
     if not verify_password(username, password):
+        audit.write("login.password.fail", actor=username, ip=request.remote_addr or "-")
         return jsonify({"error": "Invalid username or password"}), 401
 
     ensure_default_admin()
@@ -125,11 +128,17 @@ def login_submit():
         samesite="Lax",
         path="/",
     )
+    audit.write("login.password.ok", actor=username, actor_role=role,
+                ip=request.remote_addr or "-")
     return resp
 
 
 @bp.route("/auth/logout", methods=["GET", "POST"])
 def logout():
+    s = get_session_user()
+    if s:
+        audit.write("logout", actor=s["u"], actor_role=s["r"],
+                    ip=request.remote_addr or "-")
     resp = redirect("/auth/login")
     resp.delete_cookie("kong_session", path="/")
     return resp
@@ -141,3 +150,9 @@ def session_info():
     if s:
         return jsonify({"authenticated": True, "user": s["u"], "role": s["r"]})
     return jsonify({"authenticated": False}), 401
+
+
+@bp.route("/healthz")
+def healthz():
+    import audit as a
+    return jsonify({"audit_healthy": a.healthy()}), (200 if a.healthy() else 503)

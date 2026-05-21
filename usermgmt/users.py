@@ -8,11 +8,28 @@ import os
 import subprocess
 import time as _time
 
+import audit
+
 from flask import Blueprint, current_app, jsonify, request, send_from_directory
 
 from storage import read_json_file, with_flock, write_json_file
 
 bp = Blueprint("users", __name__)
+
+
+def _audit(event, target=None, details=None):
+    """Log an audit event with the current session user as actor."""
+    from auth import get_session_user
+
+    s = get_session_user() or {"u": "anonymous", "r": None}
+    audit.write(
+        event,
+        actor=s["u"],
+        actor_role=s["r"],
+        ip=request.remote_addr or "-",
+        target=target,
+        details=details,
+    )
 
 
 def _htpasswd_path() -> str:
@@ -235,6 +252,7 @@ def add_user():
         entries.append((username, apr1_hash(password)))
         save_entries(entries)
         set_role(username, role)
+        _audit("user.create", target=username, details={"role": role})
         return jsonify({"message": f"User '{username}' created as {role}"})
 
     return _inner()
@@ -265,6 +283,7 @@ def delete_user(username):
 
         save_entries(new_entries)
         remove_user_record(username)
+        _audit("user.delete", target=username)
         return jsonify({"message": f"User '{username}' deleted"})
 
     return _inner()
@@ -297,6 +316,7 @@ def change_password(username):
             return jsonify({"error": "User not found"}), 404
 
         save_entries(new_entries)
+        _audit("user.password.change", target=username)
         return jsonify({"message": f"Password changed for '{username}'"})
 
     return _inner()
@@ -325,6 +345,7 @@ def change_role(username):
                 return jsonify({"error": "Cannot demote the last admin"}), 400
 
         set_role(username, role)
+        _audit("user.role.change", target=username, details={"role": role})
         return jsonify({"message": f"Role changed to '{role}' for '{username}'"})
 
     return _inner()

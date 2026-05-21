@@ -17,6 +17,13 @@ def create_app() -> Flask:
     import lockouts
     lockouts.configure(cfg)
 
+    import audit
+    audit.configure(cfg)
+    audit.write("startup", actor="system", ip="-",
+                details={"mfa_enforced": cfg.mfa_enforced})
+    audit.write("mfa.enforced.state", actor="system", ip="-",
+                details={"value": cfg.mfa_enforced})
+
     import os.path
     from users import migrate_legacy_roles_file
 
