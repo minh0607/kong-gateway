@@ -41,6 +41,26 @@ def test_atomic_write_leaves_no_partial_file_on_crash(tmp_data_dir, monkeypatch)
     assert leftovers == []
 
 
+def test_atomic_write_cleans_tmp_when_dump_fails(tmp_data_dir, monkeypatch):
+    path = os.path.join(tmp_data_dir, "atomic2.json")
+    from storage import read_json_file, write_json_file
+
+    write_json_file(path, {"good": True})
+
+    import storage as s
+
+    def boom(_data, _fp, **_kw):
+        raise OSError("simulated dump failure")
+
+    monkeypatch.setattr(s.json, "dump", boom)
+    with pytest.raises(OSError):
+        write_json_file(path, {"bad": True})
+
+    assert read_json_file(path, default=None) == {"good": True}
+    leftovers = [f for f in os.listdir(tmp_data_dir) if f.startswith(".tmp-")]
+    assert leftovers == []
+
+
 def test_flock_serialises_threads(tmp_data_dir):
     path = os.path.join(tmp_data_dir, "lock.json")
     write_json_file(path, {"count": 0})

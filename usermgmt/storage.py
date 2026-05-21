@@ -26,13 +26,24 @@ def write_json_file(path: str, data: Any) -> None:
     dir_ = os.path.dirname(path) or "."
     os.makedirs(dir_, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=".tmp-", dir=dir_, suffix=".tmp")
+    f = None
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, sort_keys=True)
-            f.flush()
-            os.fsync(f.fileno())
+        f = os.fdopen(fd, "w", encoding="utf-8")
+        json.dump(data, f, indent=2, sort_keys=True)
+        f.flush()
+        os.fsync(f.fileno())
+        f.close()
+        f = None
         os.replace(tmp, path)
     except Exception:
+        if f is not None:
+            # os.fdopen succeeded — close via the file object.
+            with contextlib.suppress(Exception):
+                f.close()
+        else:
+            # os.fdopen itself raised — close the raw fd directly.
+            with contextlib.suppress(OSError):
+                os.close(fd)
         # Best-effort cleanup; ignore secondary failures.
         with contextlib.suppress(OSError):
             os.unlink(tmp)
