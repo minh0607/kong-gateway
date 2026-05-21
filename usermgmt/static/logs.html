@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SEHC AI Gateway — Audit Log</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; background:#0a1628; color:#cdd5e0; }
+  header { padding: 16px 24px; background: rgba(0,52,89,0.95); display:flex; justify-content:space-between; }
+  header h1 { font-size: 18px; margin:0; color:#fff; }
+  header a { color:#00d09c; text-decoration:none; margin-left:16px; }
+  .filters { padding: 16px 24px; display:flex; gap:12px; flex-wrap:wrap; background:rgba(255,255,255,0.02); }
+  .filters input, .filters button { padding: 8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.06); color:#fff; }
+  .filters button { background:#00d09c; color:#003459; cursor:pointer; border:none; font-weight:700; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { padding: 10px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; }
+  th { color:rgba(255,255,255,0.5); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+  tr:hover { background:rgba(255,255,255,0.03); cursor:pointer; }
+  pre { background:rgba(0,0,0,0.4); padding:14px; border-radius:8px; font-size:12px; white-space:pre-wrap; }
+  .pager { padding: 16px 24px; display:flex; gap:8px; }
+  .pager button { padding:6px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:transparent; color:#cdd5e0; cursor:pointer; }
+  .pager button:disabled { opacity:0.4; cursor:not-allowed; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SEHC AI Gateway — Audit Log</h1>
+  <div>
+    <a href="/users/">Users</a>
+    <a href="/">Kong Manager</a>
+    <a href="/auth/logout">Logout</a>
+  </div>
+</header>
+<div class="filters">
+  <input id="date" type="date">
+  <input id="actor" type="text" placeholder="actor (exact)">
+  <input id="event" type="text" placeholder="event (glob: login.*)">
+  <button onclick="load(0)">Search</button>
+</div>
+<table>
+  <thead><tr><th>ts (UTC)</th><th>actor</th><th>role</th><th>ip</th><th>event</th><th>target</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<div class="pager">
+  <button id="prev" onclick="load(offset - limit)">&lt; Newer</button>
+  <span id="info" style="padding:6px"></span>
+  <button id="next" onclick="load(offset + limit)">Older &gt;</button>
+</div>
+<pre id="detail" hidden></pre>
+
+<script>
+const limit = 200;
+let offset = 0;
+let total = 0;
+
+document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+
+async function load(off) {
+  offset = Math.max(0, off);
+  const params = new URLSearchParams({
+    date: document.getElementById('date').value,
+    actor: document.getElementById('actor').value,
+    event: document.getElementById('event').value,
+    limit, offset,
+  });
+  for (const k of [...params.keys()]) if (!params.get(k)) params.delete(k);
+  const r = await fetch(`/api/logs?${params.toString()}`, { credentials: 'include' });
+  if (!r.ok) {
+    document.getElementById('rows').innerHTML = `<tr><td colspan=6>Error: ${r.status}</td></tr>`;
+    return;
+  }
+  const data = await r.json();
+  total = data.total;
+  document.getElementById('rows').innerHTML = data.rows.map(row => `
+    <tr onclick='showDetail(${JSON.stringify(JSON.stringify(row))})'>
+      <td>${row.ts || ''}</td>
+      <td>${row.actor || ''}</td>
+      <td>${row.actor_role || ''}</td>
+      <td>${row.ip || ''}</td>
+      <td>${row.event || ''}</td>
+      <td>${row.target || ''}</td>
+    </tr>`).join('');
+  document.getElementById('info').textContent = `${offset + 1}–${offset + data.rows.length} of ${total}`;
+  document.getElementById('prev').disabled = offset === 0;
+  document.getElementById('next').disabled = !data.has_more;
+}
+
+function showDetail(jsonStr) {
+  const el = document.getElementById('detail');
+  el.textContent = JSON.stringify(JSON.parse(jsonStr), null, 2);
+  el.hidden = false;
+}
+
+load(0);
+</script>
+</body>
+</html>

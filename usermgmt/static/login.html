@@ -3,116 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kong Gateway — Login</title>
+<title>SEHC AI Gateway — Login</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0a1628;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-
-  .bg-grid {
-    position: fixed; inset: 0;
-    background-image:
-      linear-gradient(rgba(0,212,156,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,156,0.04) 1px, transparent 1px);
-    background-size: 60px 60px;
-    pointer-events: none;
-  }
-
-  .login-card {
-    position: relative;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 48px 40px 40px;
-    width: 400px;
-    max-width: 92%;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 24px 80px rgba(0,0,0,0.4);
-  }
-
-  .logo-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 32px;
-  }
-  .logo-icon {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, #00d09c, #003459);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 22px; color: white;
-    box-shadow: 0 4px 20px rgba(0,208,156,0.3);
-  }
-  .logo-text h1 {
-    font-size: 20px; font-weight: 700; color: #fff;
-    letter-spacing: -0.3px;
-  }
-  .logo-text p {
-    font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 2px;
-  }
-
-  .form-group { margin-bottom: 20px; }
-  .form-group label {
-    display: block; margin-bottom: 7px;
-    font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6);
-    text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .form-group input {
-    width: 100%; padding: 12px 16px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    color: #fff; font-size: 15px;
-    transition: all 0.2s;
-  }
-  .form-group input::placeholder { color: rgba(255,255,255,0.25); }
-  .form-group input:focus {
-    outline: none;
-    border-color: #00d09c;
-    box-shadow: 0 0 0 3px rgba(0,208,156,0.15);
-    background: rgba(255,255,255,0.08);
-  }
-
-  .btn-login {
-    width: 100%; padding: 13px;
-    background: linear-gradient(135deg, #00d09c, #00b386);
-    border: none; border-radius: 10px;
-    color: #003459; font-size: 15px; font-weight: 700;
-    cursor: pointer; letter-spacing: 0.3px;
-    transition: all 0.2s;
-    box-shadow: 0 4px 20px rgba(0,208,156,0.25);
-  }
-  .btn-login:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 28px rgba(0,208,156,0.35);
-  }
-  .btn-login:active { transform: translateY(0); }
-  .btn-login:disabled {
-    opacity: 0.6; cursor: not-allowed; transform: none;
-  }
-
-  .alert {
-    padding: 11px 16px; border-radius: 8px;
-    margin-bottom: 20px; font-size: 14px;
-    display: none;
-    background: rgba(244,67,54,0.15);
-    color: #ff6b6b;
-    border: 1px solid rgba(244,67,54,0.2);
-  }
-
-  .session-info {
-    margin-top: 20px; text-align: center;
-    font-size: 12px; color: rgba(255,255,255,0.3);
-  }
-  .session-info span { color: #00d09c; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#0a1628; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .bg-grid { position: fixed; inset:0; background-image:linear-gradient(rgba(0,212,156,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,156,0.04) 1px, transparent 1px); background-size:60px 60px; pointer-events:none; }
+  .login-card { position:relative; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:48px 40px 40px; width:400px; max-width:92%; backdrop-filter:blur(20px); box-shadow:0 24px 80px rgba(0,0,0,0.4); }
+  .logo-row { display:flex; align-items:center; gap:14px; margin-bottom:32px; }
+  .logo-icon { width:44px; height:44px; background:linear-gradient(135deg, #00d09c, #003459); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; color:white; box-shadow:0 4px 20px rgba(0,208,156,0.3); }
+  .logo-text h1 { font-size:18px; font-weight:800; color:#fff; letter-spacing:0.5px; }
+  .logo-text p { font-size:13px; color:rgba(255,255,255,0.4); margin-top:2px; }
+  .form-group { margin-bottom:20px; }
+  .form-group label { display:block; margin-bottom:7px; font-size:13px; font-weight:600; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:0.5px; }
+  .form-group input { width:100%; padding:12px 16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff; font-size:15px; }
+  .form-group input:focus { outline:none; border-color:#00d09c; box-shadow:0 0 0 3px rgba(0,208,156,0.15); }
+  .btn { width:100%; padding:13px; background:linear-gradient(135deg,#00d09c,#00b386); border:none; border-radius:10px; color:#003459; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(0,208,156,0.25); }
+  .btn:disabled { opacity:0.6; cursor:not-allowed; }
+  .alert { padding:11px 16px; border-radius:8px; margin-bottom:20px; font-size:14px; display:none; background:rgba(244,67,54,0.15); color:#ff6b6b; border:1px solid rgba(244,67,54,0.2); }
+  .info { font-size:13px; color:rgba(255,255,255,0.6); margin-bottom:16px; }
+  .link { background:none; border:none; color:#00d09c; cursor:pointer; padding:0; font-size:13px; text-decoration:underline; }
+  .countdown { color:rgba(255,255,255,0.4); font-size:12px; margin-top:8px; text-align:center; }
 </style>
 </head>
 <body>
@@ -121,73 +31,153 @@
 
 <div class="login-card">
   <div class="logo-row">
-    <div class="logo-icon">K</div>
+    <div class="logo-icon">S</div>
     <div class="logo-text">
-      <h1>Kong Gateway</h1>
+      <h1>SEHC AI GATEWAY</h1>
       <p>Admin Authentication</p>
     </div>
   </div>
 
   <div id="alert" class="alert"></div>
 
-  <form id="loginForm" onsubmit="doLogin(event)">
+  <form id="password-form" onsubmit="doPassword(event)">
     <div class="form-group">
       <label>Username</label>
-      <input type="text" id="username" placeholder="Enter username" required autocomplete="username" autofocus>
+      <input type="text" id="username" required autocomplete="username" autofocus>
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="password" placeholder="Enter password" required autocomplete="current-password">
+      <input type="password" id="password" required autocomplete="current-password">
     </div>
-    <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+    <button type="submit" class="btn" id="loginBtn">Sign In</button>
   </form>
 
-  <div class="session-info">
-    Session expires after <span>30 minutes</span> of inactivity
-  </div>
+  <form id="mfa-form" style="display:none" onsubmit="doCode(event)">
+    <p class="info">A 6-digit code was sent to <span id="masked-email"></span>.</p>
+    <div class="form-group">
+      <label>Verification code</label>
+      <input type="text" id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" autofocus>
+    </div>
+    <button type="submit" class="btn" id="verifyBtn">Verify</button>
+    <p class="countdown" id="countdown"></p>
+    <p class="countdown">
+      <button type="button" class="link" onclick="doResend()">Resend code</button>
+      &nbsp;·&nbsp;
+      <button type="button" class="link" onclick="backToPassword()">Back to login</button>
+    </p>
+  </form>
 </div>
 
 <script>
+let challengeId = null;
+let countdownTimer = null;
+let expiresAt = 0;
+
 function showError(msg) {
   const el = document.getElementById('alert');
   el.textContent = msg;
   el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 4000);
+  setTimeout(() => el.style.display = 'none', 4500);
 }
 
-async function doLogin(e) {
+function showStep(name) {
+  document.getElementById('password-form').style.display = name === 'password' ? '' : 'none';
+  document.getElementById('mfa-form').style.display = name === 'mfa' ? '' : 'none';
+}
+
+function startCountdown(expiresInSec) {
+  expiresAt = Date.now() + expiresInSec * 1000;
+  if (countdownTimer) clearInterval(countdownTimer);
+  const el = document.getElementById('countdown');
+  function tick() {
+    const left = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+    el.textContent = `Code expires in ${Math.floor(left / 60)}:${String(left % 60).padStart(2,'0')}`;
+    if (left === 0) clearInterval(countdownTimer);
+  }
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+}
+
+async function doPassword(e) {
   e.preventDefault();
   const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
-
-  btn.disabled = true;
-  btn.textContent = 'Signing in...';
-
   try {
-    const res = await fetch('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+    const r = await fetch('/auth/login', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, password}),
     });
-    const data = await res.json();
+    const data = await r.json();
+    if (!r.ok) { showError(data.error || 'Login failed'); return; }
+    if (data.step === 'mfa_required') {
+      challengeId = data.challenge_id;
+      document.getElementById('masked-email').textContent = data.masked_email;
+      showStep('mfa');
+      startCountdown(data.expires_in);
+      document.getElementById('code').focus();
+    } else if (data.step === 'ok') {
+      goNext();
+    }
+  } catch (err) {
+    showError('Connection error.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
 
-    if (!res.ok) {
-      showError(data.error || 'Login failed');
-      btn.disabled = false;
-      btn.textContent = 'Sign In';
+async function doCode(e) {
+  e.preventDefault();
+  const btn = document.getElementById('verifyBtn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  const code = document.getElementById('code').value.trim();
+  try {
+    const r = await fetch('/auth/mfa', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({challenge_id: challengeId, code}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showError(data.error || 'Invalid code');
+      if (r.status === 410) backToPassword();
       return;
     }
-
-    // Redirect to the originally requested page or Kong Manager
-    const params = new URLSearchParams(window.location.search);
-    const next = params.get('next') || '/';
-    window.location.href = next;
+    goNext();
   } catch (err) {
-    showError('Connection error. Please try again.');
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
+    showError('Connection error.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Verify';
   }
+}
+
+async function doResend() {
+  try {
+    const r = await fetch('/auth/mfa/resend', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({challenge_id: challengeId}),
+    });
+    const data = await r.json();
+    if (!r.ok) { showError(data.error || 'Could not resend'); return; }
+    showError('A new code has been sent.');
+    startCountdown(300);
+  } catch (err) {
+    showError('Connection error.');
+  }
+}
+
+function backToPassword() {
+  challengeId = null;
+  if (countdownTimer) clearInterval(countdownTimer);
+  document.getElementById('code').value = '';
+  showStep('password');
+  document.getElementById('username').focus();
+}
+
+function goNext() {
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get('next') || '/';
+  window.location.href = next;
 }
 </script>
 </body>
