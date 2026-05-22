@@ -182,6 +182,23 @@ def get_email(username: str) -> str | None:
     return read_user_db().get("users", {}).get(username, {}).get("email")
 
 
+def get_mfa_enabled(username: str) -> bool:
+    rec = read_user_db().get("users", {}).get(username, {})
+    return bool(rec.get("mfa_enabled", False))
+
+
+def _set_mfa_enabled(username: str, enabled: bool) -> None:
+    db = read_user_db()
+    rec = db["users"].setdefault(
+        username,
+        {"role": "user", "email": None, "mfa_enabled": False,
+         "created_at": _now_iso(), "updated_at": _now_iso()},
+    )
+    rec["mfa_enabled"] = bool(enabled)
+    rec["updated_at"] = _now_iso()
+    write_user_db(db)
+
+
 def _resolve_users_path() -> str:
     try:
         return current_app.config["CONFIG"].users_file
@@ -249,6 +266,7 @@ def list_users():
                 "username": u,
                 "role": rec.get("role", "user"),
                 "email": rec.get("email"),
+                "mfa_enabled": bool(rec.get("mfa_enabled", False)),
             })
         return jsonify({"users": users})
 
@@ -285,11 +303,17 @@ def add_user():
         if any(u == username for u, _ in entries):
             return jsonify({"error": "User already exists"}), 409
 
+        mfa_enabled = bool(data.get("mfa_enabled", False))
+        if mfa_enabled and not email:
+            return jsonify({"error": "Cannot enable MFA without an email"}), 400
+
         entries.append((username, apr1_hash(password)))
         save_entries(entries)
         set_role(username, role)
         if email:
             _set_email(username, email)
+        if mfa_enabled:
+            _set_mfa_enabled(username, True)
         _audit("user.create", target=username, details={"role": role})
         return jsonify({"message": f"User '{username}' created as {role}"})
 
@@ -408,5 +432,29 @@ def change_email(username):
         _set_email(username, email)
         _audit("user.email.change", target=username)
         return jsonify({"message": f"Email updated for '{username}'"})
+
+    return _inner()
+
+
+@bp.route("/api/users/<username>/mfa", methods=["PUT"])
+def change_mfa(username):
+    from auth import require_admin
+
+    @require_admin
+    def _inner():
+        data = request.get_json() or {}
+        if "enabled" not in data:
+            return jsonify({"error": "Field 'enabled' is required"}), 400
+        enabled = bool(data["enabled"])
+
+        if username not in read_users() and username not in read_user_db().get("users", {}):
+            return jsonify({"error": "User not found"}), 404
+
+        if enabled and not get_email(username):
+            return jsonify({"error": "Cannot enable MFA without an email on file"}), 400
+
+        _set_mfa_enabled(username, enabled)
+        _audit("user.mfa.change", target=username, details={"enabled": enabled})
+        return jsonify({"message": f"MFA {'enabled' if enabled else 'disabled'} for '{username}'"})
 
     return _inner()

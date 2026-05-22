@@ -249,6 +249,7 @@ async function loadUsers() {
           <button class="btn btn-role btn-sm" onclick="toggleRole('${u.username}','${u.role}')">${u.role === 'admin' ? 'Demote' : 'Promote'}</button>
           <button class="btn btn-warning btn-sm" onclick="openPasswordModal('${u.username}')">Password</button>
           <button class="btn btn-sm" style="background:#e8f4f8;color:#003459;" onclick="editEmail('${u.username}','${u.email || ''}')">Email</button>
+          <button class="btn btn-sm" style="background:${u.mfa_enabled ? '#e8f5e9' : '#f5f5f5'};color:${u.mfa_enabled ? '#2e7d32' : '#666'};" onclick="toggleMfa('${u.username}',${u.mfa_enabled})">MFA: ${u.mfa_enabled ? 'on' : 'off'}</button>
           <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.username}')">Delete</button>
         </div>
       </div>
@@ -389,6 +390,16 @@ async function testSmtp() {
     showSmtpAlert(data.message, 'success');
   } catch (e) {
     showSmtpAlert(e.message, 'error');
+  }
+}
+
+async function toggleMfa(username, current) {
+  try {
+    const data = await api('PUT', `api/users/${username}/mfa`, { enabled: !current });
+    showAlert(data.message, 'success');
+    loadUsers();
+  } catch (e) {
+    showAlert(e.message, 'error');
   }
 }
 

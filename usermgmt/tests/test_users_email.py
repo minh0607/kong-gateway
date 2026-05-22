@@ -52,3 +52,36 @@ def test_change_email(client):
     listing = client.get("/api/users").json["users"]
     bob = next(u for u in listing if u["username"] == "bob")
     assert bob["email"] == "bob2@example.com"
+
+
+def test_change_mfa_requires_email(client):
+    # Add a user with no email
+    client.post("/api/users", json={
+        "username": "noemail", "password": "secret789", "role": "user"
+    })
+    r = client.put("/api/users/noemail/mfa", json={"enabled": True})
+    assert r.status_code == 400
+
+
+def test_change_mfa_succeeds_with_email(client):
+    client.post("/api/users", json={
+        "username": "bob", "password": "secret789",
+        "role": "user", "email": "bob@example.com"
+    })
+    r = client.put("/api/users/bob/mfa", json={"enabled": True})
+    assert r.status_code == 200
+    listing = client.get("/api/users").json["users"]
+    bob = next(u for u in listing if u["username"] == "bob")
+    assert bob["mfa_enabled"] is True
+
+
+def test_disable_mfa_does_not_require_email(client):
+    # Disable should always be allowed
+    client.post("/api/users", json={
+        "username": "bob", "password": "secret789",
+        "role": "user", "email": "bob@example.com"
+    })
+    client.put("/api/users/bob/mfa", json={"enabled": True})
+    # Disable regardless of email state
+    r = client.put("/api/users/bob/mfa", json={"enabled": False})
+    assert r.status_code == 200

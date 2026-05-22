@@ -1,3 +1,4 @@
+import importlib
 import json
 import os
 import shutil
@@ -83,3 +84,38 @@ def test_mfa_disabled_skips_challenge_and_sets_cookie(client, monkeypatch):
     assert r.status_code == 200
     assert r.json.get("step") == "ok"
     assert "kong_session" in r.headers.get("Set-Cookie", "")
+
+
+@pytest.fixture
+def client_factory(tmp_data_dir, monkeypatch):
+    pw = os.environ["HTPASSWD_FILE"]
+    subprocess.run(["htpasswd", "-bc", pw, "alice", "secret123"],
+                   check=True, capture_output=True)
+    monkeypatch.setenv("SMTP_HOST", "mail.internal")
+
+    def make():
+        import config
+        import app as appmod
+        importlib.reload(config)
+        importlib.reload(appmod)
+        return appmod.create_app().test_client()
+
+    return make
+
+
+def test_per_user_mfa_triggers_challenge_when_global_off(client_factory, monkeypatch):
+    monkeypatch.setenv("MFA_ENFORCED", "false")
+    with open(os.environ["USERS_FILE"], "w") as f:
+        json.dump({"version": 1, "users": {"alice": {
+            "role": "admin", "email": "alice@example.com",
+            "mfa_enabled": True,
+            "created_at": "n", "updated_at": "n"}}}, f)
+    c = client_factory()
+
+    with patch("mailer.send_mfa_code") as send:
+        r = c.post("/auth/login",
+                   json={"username": "alice", "password": "secret123"},
+                   headers={"X-Real-IP": "192.168.1.50"})
+    assert r.status_code == 200
+    assert r.json["step"] == "mfa_required"
+    assert send.called

@@ -146,7 +146,9 @@ def login_submit():
     role = get_role(username)
     audit.write("login.password.ok", actor=username, actor_role=role, ip=ip)
 
-    if not cfg.mfa_enforced:
+    from users import get_mfa_enabled
+    requires_mfa = cfg.mfa_enforced or get_mfa_enabled(username)
+    if not requires_mfa:
         audit.write("login.bypass.mfa_disabled", actor=username, actor_role=role, ip=ip)
         audit.write("login.success", actor=username, actor_role=role, ip=ip)
         cookie_val = create_session_cookie(username, role, mfa=False)
