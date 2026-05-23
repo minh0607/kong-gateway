@@ -22,14 +22,15 @@ Before every upgrade, confirm all five:
 
 - Docker + Docker Compose v2 on the target host.
 - The release tarball: `kong-deploy-v<VERSION>.tar.gz`.
-- Image tarballs in `offline-package/images/` **inside** the tarball, OR pre-loaded via `docker load`.
+- Kong base images (`kong:3.9`, `postgres:15-alpine`, `nginx:alpine`) already loaded into Docker. These come from the original `kong-offline-package.tar.gz` and are NOT re-shipped in each release — they are stable across versions.
+- The `kong-usermgmt` image **is** bundled inside the release tarball at `images/kong-usermgmt.tar`; `deploy.sh` loads it automatically. No internet build required.
 
 ### Steps
 
 ```bash
 # 1. Copy the release tarball to the PCA box, then:
-tar xzf kong-deploy-v1.0.0.tar.gz
-cd kong-deploy-v1.0.0/
+tar xzf kong-deploy-v1.0.1.tar.gz
+cd kong-deploy-v1.0.1/
 
 # 2. Run the install script
 chmod +x deploy.sh
@@ -38,12 +39,12 @@ chmod +x deploy.sh
 
 `deploy.sh` will:
 
-1. Load any `offline-package/images/*.tar` files into Docker.
-2. Generate `.env` with a random `SESSION_SECRET`.
+1. Load the bundled `images/kong-usermgmt.tar` into Docker (single image, ~25 MB).
+2. Generate `.env` with random `SESSION_SECRET` and `KONG_PG_PASSWORD`.
 3. Prompt for an SMTP relay hostname (or accept the default `mail.internal`).
 4. Prompt for an admin password (auto-generates one if left blank).
-5. Create `nginx/.htpasswd` for the `kong` admin user.
-6. Build the `kong-usermgmt` image.
+5. Create `nginx/.htpasswd` for the `kong` admin user. If the host lacks the `htpasswd` binary, the just-loaded `kong-usermgmt:latest` image is used as a fallback (no internet pull).
+6. Skip `docker compose build` because the pre-built image is already loaded.
 7. Start the full stack with `docker compose up -d`.
 8. Wait for `kong-usermgmt /healthz`.
 9. Print the admin password and access URLs.
