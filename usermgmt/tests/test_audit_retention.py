@@ -40,3 +40,42 @@ def test_retention_deletes_old_files():
     assert not os.path.exists(drop1)
     assert not os.path.exists(drop2)
     assert os.path.exists(other)
+
+
+def test_docker_signal_uses_http_post_path(monkeypatch):
+    """Verify the Docker HTTP API helper hits the right URL."""
+    calls = {}
+
+    class FakeResp:
+        status = 204
+        def read(self): return b""
+
+    class FakeConn:
+        def __init__(self, *a, **kw): pass
+        def request(self, method, url):
+            calls["method"] = method
+            calls["url"] = url
+        def getresponse(self): return FakeResp()
+        def close(self): pass
+
+    monkeypatch.setattr(audit, "_UnixSocketHTTPConnection", FakeConn)
+    audit._docker_signal("kong-auth-proxy", "SIGUSR1")
+    assert calls["method"] == "POST"
+    assert calls["url"] == "/containers/kong-auth-proxy/kill?signal=SIGUSR1"
+
+
+def test_docker_signal_raises_on_error(monkeypatch):
+    class FakeResp:
+        status = 404
+        def read(self): return b'{"message":"No such container"}'
+
+    class FakeConn:
+        def __init__(self, *a, **kw): pass
+        def request(self, *a, **kw): pass
+        def getresponse(self): return FakeResp()
+        def close(self): pass
+
+    monkeypatch.setattr(audit, "_UnixSocketHTTPConnection", FakeConn)
+    import pytest
+    with pytest.raises(RuntimeError):
+        audit._docker_signal("does-not-exist", "SIGUSR1")

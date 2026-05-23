@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import datetime
 import fnmatch
+import http.client
 import json
 import glob
 import os
-import subprocess
+import socket
 import sys
 import threading
 from typing import Any, Optional
@@ -18,6 +19,38 @@ from utils import client_ip
 _cfg = None
 _lock = threading.Lock()
 _healthy = True
+
+
+class _UnixSocketHTTPConnection(http.client.HTTPConnection):
+    """http.client.HTTPConnection backed by a Unix domain socket."""
+
+    def __init__(self, socket_path: str):
+        super().__init__("localhost")
+        self._socket_path = socket_path
+
+    def connect(self):
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(5)
+        s.connect(self._socket_path)
+        self.sock = s
+
+
+def _docker_signal(container: str, signal_name: str) -> None:
+    """POST /containers/<name>/kill?signal=<name> to the Docker socket.
+
+    Raises RuntimeError on non-2xx response.
+    """
+    conn = _UnixSocketHTTPConnection("/var/run/docker.sock")
+    try:
+        conn.request("POST", f"/containers/{container}/kill?signal={signal_name}")
+        resp = conn.getresponse()
+        body = resp.read()
+        if resp.status not in (200, 204):
+            raise RuntimeError(
+                f"docker kill {container} {signal_name}: HTTP {resp.status} {body[:200]!r}"
+            )
+    finally:
+        conn.close()
 
 
 def configure(cfg) -> None:
@@ -108,12 +141,12 @@ def rotate_nginx_access_log() -> None:
         print(f"[audit] rotation rename failed: {e}", file=sys.stderr)
         return
     try:
-        subprocess.run(
-            ["docker", "kill", "-s", "USR1", _cfg.auth_proxy_container],
-            check=True, capture_output=True, timeout=5,
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
-        print(f"[audit] nginx SIGUSR1 failed: {e}", file=sys.stderr)
+        _docker_signal(_cfg.auth_proxy_container, "SIGUSR1")
+    except (OSError, RuntimeError) as e:
+        # nginx didn't reopen — log loud, but the rename already happened.
+        # Operator will see this in the container stderr and on /healthz next
+        # rotation cycle (audit_healthy stays True; this isn't a write failure).
+        print(f"[audit] nginx SIGUSR1 via docker socket failed: {e}", file=sys.stderr)
 
 
 def start_housekeeping_thread() -> None:
