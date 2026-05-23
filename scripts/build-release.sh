@@ -125,7 +125,7 @@ ok "Tarball created."
 
 # ── checksum ──────────────────────────────────────────────────────────────────
 
-sha256sum "$TARBALL" > "$SHA_FILE"
+( cd "$(dirname "$TARBALL")" && sha256sum "$(basename "$TARBALL")" ) > "$SHA_FILE"
 ok "sha256: $(cat "$SHA_FILE")"
 
 # ── report ────────────────────────────────────────────────────────────────────

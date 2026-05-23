@@ -130,13 +130,32 @@ fi
 [[ -n "$TARBALL" ]] || { usage; die "no tarball given"; }
 [[ -f "$TARBALL" ]] || die "tarball not found: $TARBALL"
 TARBALL=$(realpath "$TARBALL")
-SHA256="${TARBALL}.sha256.txt"
-[[ -f "$SHA256" ]] || die "sha256 file not next to tarball: $SHA256"
 
-# 1. Verify checksum
+# Find the SHA256 file — accept any of the common naming conventions
+# produced by build-release.sh or sha256sum.
+SHA256=""
+for candidate in \
+  "${TARBALL}.sha256.txt" \
+  "${TARBALL%.tar.gz}.sha256.txt" \
+  "${TARBALL}.sha256" \
+  "${TARBALL%.tar.gz}.sha256"; do
+  if [[ -f "$candidate" ]]; then
+    SHA256="$candidate"
+    break
+  fi
+done
+[[ -n "$SHA256" ]] || die "no .sha256(.txt) file found next to $TARBALL"
+log "Found checksum file: $(basename "$SHA256")"
+
+# 1. Verify checksum — strip any embedded path so it matches the file in this dir
 log "Verifying SHA256 ..."
-( cd "$(dirname "$TARBALL")" && sha256sum -c "$(basename "$SHA256")" ) >/dev/null \
-  || die "checksum FAILED — re-transfer the tarball"
+EXPECTED=$(awk '{print $1; exit}' "$SHA256")
+ACTUAL=$(sha256sum "$TARBALL" | awk '{print $1}')
+if [[ "$EXPECTED" != "$ACTUAL" ]]; then
+  die "checksum FAILED — re-transfer the tarball
+       expected: $EXPECTED
+       actual:   $ACTUAL"
+fi
 ok "Checksum OK"
 
 # 2. Pre-upgrade health snapshot
