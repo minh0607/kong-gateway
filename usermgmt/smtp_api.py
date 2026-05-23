@@ -7,6 +7,14 @@ from flask import Blueprint, jsonify, request
 bp = Blueprint("smtp_admin", __name__)
 
 
+_CRLF_CHARS = ("\r", "\n", "\x00")
+
+
+def _no_crlf(value: str) -> bool:
+    """Reject CRLF / NUL — these are SMTP header-injection vectors."""
+    return not any(c in value for c in _CRLF_CHARS)
+
+
 @bp.route("/api/smtp", methods=["GET"])
 def get_smtp():
     from auth import require_admin
@@ -35,6 +43,8 @@ def put_smtp():
             host = (data.get("host") or "").strip()
             if not host:
                 return jsonify({"error": "host required"}), 400
+            if not _no_crlf(host):
+                return jsonify({"error": "host contains invalid characters"}), 400
             updates["host"] = host
 
         if "port" in data:
@@ -47,17 +57,24 @@ def put_smtp():
             updates["port"] = p
 
         if "user" in data:
-            updates["user"] = (data.get("user") or "").strip()
+            user = (data.get("user") or "").strip()
+            if not _no_crlf(user):
+                return jsonify({"error": "user contains invalid characters"}), 400
+            updates["user"] = user
 
         if "password" in data:
             pw = data["password"]
             if pw:
+                if not _no_crlf(pw):
+                    return jsonify({"error": "password contains invalid characters"}), 400
                 updates["password"] = pw
 
         if "from_addr" in data:
             fa = (data.get("from_addr") or "").strip()
             if not fa:
                 return jsonify({"error": "from_addr required"}), 400
+            if not _no_crlf(fa):
+                return jsonify({"error": "from_addr contains invalid characters"}), 400
             updates["from_addr"] = fa
 
         if "use_tls" in data:
