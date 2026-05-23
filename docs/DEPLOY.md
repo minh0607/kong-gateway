@@ -62,30 +62,48 @@ Configure SMTP via the **SMTP Settings** card in the User Mgmt Portal if you ski
 
 ## Upgrade
 
-### Steps
+### Air-gapped / PCA upgrade (--tarball-only) — recommended for production
+
+Use this on PCA hosts that have no internet or git access.
 
 ```bash
-# 1. Copy the new release tarball alongside the current project directory
-#    and extract, then run upgrade.sh from within the existing working dir:
+# 1. Copy the new release tarball to the PCA box, then:
 cd /opt/kong          # or wherever the current install lives
 
-# 2. Overwrite code files from the new tarball (data/ is excluded from tarballs)
-tar xzf /tmp/kong-deploy-v1.1.0.tar.gz --strip-components=1
+# 2. Overwrite code files from the new tarball (data/ and .env are excluded)
+tar xzf /tmp/kong-deploy-v1.0.1.tar.gz --strip-components=1
 
-# 3. Run upgrade
+# 3. Run upgrade in tarball-only mode (no git required)
 chmod +x upgrade.sh
+./upgrade.sh --tarball-only
+```
+
+`upgrade.sh --tarball-only` will:
+
+1. Snapshot `./data/` to `./backups/<UTC-timestamp>/data.tar.gz`.
+2. Load `images/kong-usermgmt.tar` if present (pre-built at release time — no internet needed).
+3. Force-recreate `kong-usermgmt` and restart `kong-auth-proxy`.
+4. Run `docker compose up -d` to pick up any compose changes.
+5. Wait for `/healthz`.
+6. Print a summary.
+
+### Git-pull upgrade (DEV / internet-connected environments)
+
+```bash
+cd /opt/kong
 ./upgrade.sh
 ```
 
-`upgrade.sh` will:
+`upgrade.sh` (no flags) will:
 
 1. Snapshot `./data/` to `./backups/<UTC-timestamp>/data.tar.gz`.
-2. Show incoming commits (`git log HEAD..origin/master`).
-3. Ask for confirmation.
-4. Pull with `--ff-only` (refuses merge/rebase).
-5. Detect which services are affected by changed files and rebuild/restart only those.
-6. Wait for `/healthz`.
-7. Print a summary of what was rebuilt and where the backup is.
+2. Guard against uncommitted local changes (exits if any are found).
+3. Show incoming commits (`git log HEAD..origin/master`).
+4. Ask for confirmation.
+5. Pull with `--ff-only` (refuses merge/rebase).
+6. Detect which services are affected by changed files and rebuild/restart only those.
+7. Wait for `/healthz`.
+8. Print a summary of what was rebuilt and where the backup is.
 
 ### Confirm the upgrade
 
@@ -96,6 +114,31 @@ curl -sf http://localhost:8888/healthz && echo OK
 # Log in to Kong Manager at http://<host>:8002/
 # Verify user list is intact at http://<host>:8888/users
 ```
+
+### Breaking change — KONG_PG_PASSWORD (v1.0.1 upgrade path)
+
+v1.0.1 removes the hardcoded `kong_pass` database password from `docker-compose.yml`
+and replaces it with `${KONG_PG_PASSWORD:?must be set}`.
+
+**If upgrading from a pre-v1.0.1 install**, your existing Postgres volume already has
+the password `kong_pass`. You must preserve that value — **do not** let deploy.sh
+generate a new random password, which would break database connectivity.
+
+Set `KONG_PG_PASSWORD` manually in your `.env` before running upgrade.sh:
+
+```bash
+echo 'KONG_PG_PASSWORD=kong_pass' >> .env
+```
+
+Then run:
+
+```bash
+./upgrade.sh --tarball-only
+```
+
+Only change `KONG_PG_PASSWORD` to a new value if you also intend to destroy and
+recreate the Postgres volume (`docker compose down -v`), which **destroys all Kong
+route/service/plugin data**. Restore from a Kong deck backup if you do this.
 
 ---
 

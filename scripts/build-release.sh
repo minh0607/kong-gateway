@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # SEHC AI Gateway — build a release tarball for distribution.
 # Output: release/v<VERSION>/kong-deploy-v<VERSION>.tar.gz  + sha256.txt
+#
+# Usage: scripts/build-release.sh
+#
+# The kong-usermgmt image is built locally and embedded in the tarball as
+# images/kong-usermgmt.tar so deployments are fully self-contained (air-gap safe).
+# Base images (kong:3.9, postgres:15-alpine, nginx:alpine) are NOT shipped —
+# they are assumed to be present on the target host from the original offline install.
+#
 # Safe to run on DEV — creates files only, never touches the running stack.
 set -euo pipefail
 
@@ -9,14 +17,6 @@ set -euo pipefail
 log()  { printf '\n\033[1;34m[build-release]\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m  ✔\033[0m  %s\n' "$*"; }
 die()  { printf '\033[1;31m[FATAL]\033[0m %s\n' "$*" >&2; exit 1; }
-
-WITH_IMAGES=false
-for arg in "$@"; do
-  case "$arg" in
-    --with-images) WITH_IMAGES=true ;;
-    *) die "Unknown argument: $arg" ;;
-  esac
-done
 
 # ── locate project root ───────────────────────────────────────────────────────
 
@@ -35,11 +35,27 @@ SHA_FILE="${RELEASE_DIR}/kong-deploy-v${VERSION}.sha256.txt"
 mkdir -p "$RELEASE_DIR"
 log "Building release tarball for v${VERSION} ..."
 
+# ── build kong-usermgmt image and export to staging dir ──────────────────────
+
+STAGE_DIR="$(mktemp -d)"
+trap 'rm -rf "$STAGE_DIR"' EXIT
+
+log "Building kong-usermgmt:latest image ..."
+# Use docker build directly — docker compose build would require all env vars
+# (including KONG_PG_PASSWORD) to be set even though they are only needed at runtime.
+docker build -t kong-usermgmt:latest ./usermgmt
+ok "kong-usermgmt image built."
+
+log "Saving kong-usermgmt:latest to images/kong-usermgmt.tar ..."
+mkdir -p "$STAGE_DIR/images"
+docker save kong-usermgmt:latest -o "$STAGE_DIR/images/kong-usermgmt.tar"
+ok "Image saved ($(du -sh "$STAGE_DIR/images/kong-usermgmt.tar" | cut -f1))."
+
 # ── build file list from git-tracked files ────────────────────────────────────
 # Excludes: release/, *.tar.gz, *.tar, offline-package/, docs/superpowers/
 
 INCLUDE_LIST="$(mktemp)"
-trap 'rm -f "$INCLUDE_LIST"' EXIT
+trap 'rm -rf "$STAGE_DIR"; rm -f "$INCLUDE_LIST"' EXIT
 
 git ls-files | grep -v \
   -e '^release/' \
@@ -68,26 +84,44 @@ if grep -E '^data/' "$INCLUDE_LIST"; then
   die "SAFETY: data/ entries found in file list — aborting."
 fi
 
-# ── create tarball ────────────────────────────────────────────────────────────
+# ── stage all source files then add images/ ───────────────────────────────────
+# Strategy: copy everything into a single tempdir, then tar czf once.
+# Avoids the broken 'tar rzf' (cannot append to compressed archives).
+
+SOURCE_STAGE="$STAGE_DIR/src"
+mkdir -p "$SOURCE_STAGE"
+
+# Copy git-tracked source files preserving directory structure
+while IFS= read -r f; do
+  dest="$SOURCE_STAGE/$f"
+  mkdir -p "$(dirname "$dest")"
+  cp "$f" "$dest"
+done < "$INCLUDE_LIST"
+
+# ── safety check: VERSION must be in the staged files ───────────────────────
+
+[[ -f "$SOURCE_STAGE/VERSION" ]] || die "SAFETY: VERSION not found in staged files — aborting."
+
+# ── create tarball from single staged directory ───────────────────────────────
+# images/ subdirectory (with kong-usermgmt.tar) is already inside $STAGE_DIR.
+# We need both src/ contents and images/ in the archive under one prefix.
+
+COMBINED="$STAGE_DIR/combined"
+mkdir -p "$COMBINED"
+
+# Move staged source into combined/
+cp -a "$SOURCE_STAGE/." "$COMBINED/"
+
+# Move images/ into combined/
+cp -a "$STAGE_DIR/images" "$COMBINED/images"
 
 tar czf "$TARBALL" \
-  --files-from="$INCLUDE_LIST" \
-  --transform "s|^|kong-deploy-v${VERSION}/|"
+  -C "$COMBINED" \
+  --transform "s|^\./||" \
+  --transform "s|^|kong-deploy-v${VERSION}/|" \
+  .
 
-if [[ "$WITH_IMAGES" == true ]]; then
-  if [[ -d offline-package/images ]] && ls offline-package/images/*.tar 2>/dev/null | grep -q .; then
-    log "Appending offline Docker image tarballs (--with-images) ..."
-    IMAGES_LIST="$(mktemp)"
-    trap 'rm -f "$INCLUDE_LIST" "$IMAGES_LIST"' EXIT
-    find offline-package/images -name '*.tar' > "$IMAGES_LIST"
-    tar rzf "$TARBALL" \
-      --files-from="$IMAGES_LIST" \
-      --transform "s|^|kong-deploy-v${VERSION}/|"
-    ok "Offline images appended."
-  else
-    printf '\033[1;33m  !\033[0m  --with-images: no *.tar files found in offline-package/images/ — skipping.\n'
-  fi
-fi
+ok "Tarball created."
 
 # ── checksum ──────────────────────────────────────────────────────────────────
 
@@ -108,22 +142,37 @@ printf '  SHA256:  %s\n' "$SHA_FILE"
 printf '\n'
 printf '  Verifying secrets excluded:\n'
 
-if tar tzf "$TARBALL" | grep -q '\.env$'; then
+# Note: `{ tar tzf ... || true; }` prevents SIGPIPE from failing the pipeline
+# under set -euo pipefail when grep -q exits early after finding a match.
+
+if { tar tzf "$TARBALL" || true; } | grep -q '\.env$'; then
   printf '  [FAIL] .env found in tarball!\n'
 else
   printf '  [OK] .env not in tarball\n'
 fi
 
-if tar tzf "$TARBALL" | grep -qE '\.htpasswd$' | grep -v '\.htpasswd\.example'; then
-  printf '  [WARN] .htpasswd may be present — verify manually\n'
-else
-  printf '  [OK] real .htpasswd not in tarball\n'
+# Bug 8 fix: use two separate commands so grep -v does not suppress the pipeline exit code
+if { tar tzf "$TARBALL" || true; } | grep -E '\.htpasswd$' | grep -qv '\.htpasswd\.example'; then
+  die "SAFETY: real .htpasswd found in tarball — aborting."
 fi
+printf '  [OK] real .htpasswd not in tarball\n'
 
-if tar tzf "$TARBALL" | grep -qE '^kong-deploy-v[^/]+/data/'; then
+if { tar tzf "$TARBALL" || true; } | grep -qE '^kong-deploy-v[^/]+/data/'; then
   printf '  [FAIL] data/ entries found in tarball!\n'
 else
   printf '  [OK] data/ not in tarball\n'
+fi
+
+if { tar tzf "$TARBALL" || true; } | grep -q "kong-deploy-v${VERSION}/images/kong-usermgmt.tar"; then
+  printf '  [OK] images/kong-usermgmt.tar present in tarball\n'
+else
+  printf '  [FAIL] images/kong-usermgmt.tar NOT found in tarball!\n'
+fi
+
+if { tar tzf "$TARBALL" || true; } | grep -q "kong-deploy-v${VERSION}/VERSION"; then
+  printf '  [OK] VERSION present in tarball\n'
+else
+  die "SAFETY: VERSION not found in tarball — aborting."
 fi
 
 printf '══════════════════════════════════════════════════════════\n\n'

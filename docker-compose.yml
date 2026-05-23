@@ -9,7 +9,7 @@ x-kong-config: &kong-env
   KONG_DATABASE: postgres
   KONG_PG_HOST: kong-database
   KONG_PG_USER: kong
-  KONG_PG_PASSWORD: kong_pass
+  KONG_PG_PASSWORD: ${KONG_PG_PASSWORD:?must be set}
   KONG_PG_DATABASE: kong
 
 services:
@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: kong
-      POSTGRES_PASSWORD: kong_pass
+      POSTGRES_PASSWORD: ${KONG_PG_PASSWORD:?must be set}
       POSTGRES_DB: kong
     volumes:
       - pg_data:/var/lib/postgresql/data

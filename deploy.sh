@@ -40,7 +40,18 @@ if [[ -d ./data && -n "$(ls -A ./data 2>/dev/null)" ]]; then
 Run upgrade.sh instead. If you really want a fresh install, delete ./data/ manually first."
 fi
 
-# ── load offline images ───────────────────────────────────────────────────────
+# ── load pre-built kong-usermgmt image (air-gap safe) ────────────────────────
+# Bug 1 fix: load the pre-built image from the tarball (built at release time)
+# rather than building from source (which requires internet for apk/pip).
+# If images/kong-usermgmt.tar exists alongside this script, load it now.
+
+if [[ -f ./images/kong-usermgmt.tar ]]; then
+  log "Loading pre-built kong-usermgmt image from images/kong-usermgmt.tar ..."
+  docker load -i ./images/kong-usermgmt.tar
+  ok "kong-usermgmt image loaded from tarball."
+fi
+
+# ── load other offline images ─────────────────────────────────────────────────
 
 if [[ -d offline-package/images && -n "$(ls offline-package/images/*.tar 2>/dev/null)" ]]; then
   log "Loading offline Docker images from offline-package/images/ ..."
@@ -65,13 +76,17 @@ else
   SESSION_SECRET="$(openssl rand -hex 32)"
   sed -i "s|replace-me-with-a-32-byte-hex-string|${SESSION_SECRET}|g" .env
 
+  # Generate a random KONG_PG_PASSWORD
+  KONG_PG_PASSWORD="$(openssl rand -hex 16)"
+  sed -i "s|replace-me-with-a-random-string|${KONG_PG_PASSWORD}|g" .env
+
   # Prompt for SMTP_HOST
   printf '\nSMTP relay hostname or IP [mail.internal]: '
   read -r smtp_input
   smtp_input="${smtp_input:-mail.internal}"
   sed -i "s|^SMTP_HOST=.*|SMTP_HOST=${smtp_input}|" .env
 
-  ok ".env written (SESSION_SECRET auto-generated)."
+  ok ".env written (SESSION_SECRET and KONG_PG_PASSWORD auto-generated)."
 fi
 
 # ── nginx/.htpasswd ──────────────────────────────────────────────────────────
@@ -92,15 +107,18 @@ else
     ADMIN_PASS="$admin_pass_input"
   fi
 
+  # Bug 2 fix: fallback uses the pre-loaded kong-usermgmt image (apache2-utils
+  # is already inside it) instead of pulling httpd:2.4-alpine from the internet.
   if command -v htpasswd >/dev/null 2>&1; then
     htpasswd -bc nginx/.htpasswd kong "$ADMIN_PASS"
   else
-    warn "htpasswd not found locally — using Docker (httpd:2.4-alpine)."
+    warn "htpasswd not on host; using kong-usermgmt image (apache2-utils inside)..."
     docker run --rm \
       -v "$(pwd)/nginx:/work" \
       -w /work \
-      httpd:2.4-alpine \
-      htpasswd -bc .htpasswd kong "$ADMIN_PASS"
+      --entrypoint htpasswd \
+      kong-usermgmt:latest \
+      -bc .htpasswd kong "$ADMIN_PASS"
   fi
   chmod 600 nginx/.htpasswd
   ok "nginx/.htpasswd created (user: kong)."
@@ -112,11 +130,18 @@ log "Ensuring runtime state directories exist ..."
 mkdir -p ./data/audit
 ok "./data/audit/ ready."
 
-# ── build usermgmt image ──────────────────────────────────────────────────────
+# ── build or verify usermgmt image ───────────────────────────────────────────
+# Bug 1 fix: if the pre-built image was loaded from images/kong-usermgmt.tar
+# above, skip `docker compose build`. Only build from source if the image is
+# not already present (e.g., developer workstation with no tarball).
 
-log "Building kong-usermgmt image ..."
-docker compose build kong-usermgmt
-ok "kong-usermgmt image built."
+if docker image inspect kong-usermgmt:latest >/dev/null 2>&1; then
+  ok "kong-usermgmt:latest image already present — skipping build."
+else
+  log "Building kong-usermgmt image from source ..."
+  docker compose build kong-usermgmt
+  ok "kong-usermgmt image built."
+fi
 
 # ── start stack ───────────────────────────────────────────────────────────────
 

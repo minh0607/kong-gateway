@@ -12,6 +12,5 @@ nginx/.htpasswd
 offline-package/nginx/.htpasswd
 backups/
 release/v*/
-VERSION
 !.env.example
 !nginx/.htpasswd.example
