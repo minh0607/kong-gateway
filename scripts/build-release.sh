@@ -184,10 +184,10 @@ printf '════════════════════════
 
 log "Staging loose files in $RELEASE_DIR/ for direct copy to PCA ..."
 
-cp -f pca-upgrade.sh         "$RELEASE_DIR/pca-upgrade.sh"
-chmod +x                       "$RELEASE_DIR/pca-upgrade.sh"
+cp -f pca-deploy.sh          "$RELEASE_DIR/pca-deploy.sh"
+chmod +x                       "$RELEASE_DIR/pca-deploy.sh"
 cp -f PCA-UPGRADE-GUIDE.md   "$RELEASE_DIR/PCA-UPGRADE-GUIDE.md"
-ok "pca-upgrade.sh + PCA-UPGRADE-GUIDE.md copied alongside tarball"
+ok "pca-deploy.sh + PCA-UPGRADE-GUIDE.md copied alongside tarball"
 
 # ── include base Docker images if available on the host ──────────────────────
 # These are used by Kong's compose stack. PCA loaded them during the original
@@ -217,29 +217,28 @@ then to PCA. The operator does not need to download anything else.
 
 Files in this directory:
 
-  kong-deploy-v${VERSION}.tar.gz       Code + kong-usermgmt image (run via pca-upgrade.sh)
-  kong-deploy-v${VERSION}.sha256.txt   Checksum for integrity verification
-  pca-upgrade.sh                        One-shot upgrade script — RUN THIS
-  PCA-UPGRADE-GUIDE.md                  Step-by-step operator guide
-  images/                               Base Docker images (load only if missing on PCA)
+  kong-deploy-v${VERSION}.tar.gz       Code + kong-usermgmt image
+  kong-deploy-v${VERSION}.sha256.txt   Checksum
+  pca-deploy.sh                         One-shot deploy script — RUN THIS
+  PCA-UPGRADE-GUIDE.md                  Operator guide
+  images/                               Base Docker images
     kong-oss-3.9.tar
     postgres-15-alpine.tar
     nginx-alpine.tar
   README.txt                            This file
 
-On PCA, from this directory:
+On PCA, from this directory, ONE command does everything:
 
-  sudo ./pca-upgrade.sh kong-deploy-v${VERSION}.tar.gz
+  sudo ./pca-deploy.sh kong-deploy-v${VERSION}.tar.gz
 
-The script will:
- * Verify the tarball SHA256
- * Auto-load any missing base images from images/
- * Snapshot config + Postgres data to a backup directory
- * Extract the new code over the existing install
- * Restart only the services that changed
- * Health-check and print next steps
+The script auto-detects:
+ * FRESH INSTALL  — no Kong running. Creates /opt/kong, generates secrets,
+                    sets a random admin password, brings the full stack up.
+ * UPGRADE        — Kong already running. Backs up, extracts new code,
+                    restarts only the services that changed.
 
-For rollback: sudo ./pca-upgrade.sh --rollback
+For rollback:    sudo ./pca-deploy.sh --rollback
+For custom dir:  sudo ./pca-deploy.sh kong-deploy-v${VERSION}.tar.gz --install-dir /opt/kong
 EOF
 ok "README.txt written"
 
@@ -250,5 +249,5 @@ printf '\n═══════════════════════�
 printf '  Release directory: %s\n' "$RELEASE_DIR"
 printf '  Total size:        %s (everything PCA needs)\n' "$TOTAL_SIZE"
 printf '  Copy this whole directory to USB → PCA, then:\n'
-printf '    sudo ./pca-upgrade.sh kong-deploy-v%s.tar.gz\n' "$VERSION"
+printf '    sudo ./pca-deploy.sh kong-deploy-v%s.tar.gz\n' "$VERSION"
 printf '══════════════════════════════════════════════════════════\n\n'
