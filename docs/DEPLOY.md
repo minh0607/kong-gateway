@@ -63,9 +63,43 @@ Configure SMTP via the **SMTP Settings** card in the User Mgmt Portal if you ski
 
 ## Upgrade
 
-### Air-gapped / PCA upgrade (--tarball-only) — recommended for production
+### Air-gapped / PCA upgrade — one-shot script (recommended for production)
 
-Use this on PCA hosts that have no internet or git access.
+Copy three files to the PCA box (USB, file share, jumpbox — whatever your transfer mechanism is):
+
+```
+kong-deploy-vX.Y.Z.tar.gz
+kong-deploy-vX.Y.Z.sha256.txt
+pca-upgrade.sh
+```
+
+Then run a single command on PCA:
+
+```bash
+sudo ./pca-upgrade.sh kong-deploy-vX.Y.Z.tar.gz
+```
+
+That's it. The script handles everything:
+
+1. Verifies the tarball SHA256.
+2. Auto-detects the existing Kong install directory (`docker inspect kong`).
+3. Snapshots config + Postgres data to `<install>/backups/pre-upgrade-<UTC>/`.
+4. Extracts the new bundle (preserving `.env`, `nginx/.htpasswd`).
+5. Creates `.env` with `KONG_PG_PASSWORD=kong_pass` if missing (the v1.0.0→v1.0.1 migration).
+6. Runs `upgrade.sh --tarball-only` under the hood.
+7. Health-checks the result and prints next-step guidance.
+
+If anything goes wrong:
+
+```bash
+sudo ./pca-upgrade.sh --rollback
+```
+
+restores the latest backup (config + .env + Postgres volume).
+
+### Manual upgrade — if you don't want the wrapper
+
+If you prefer to drive each step yourself, this is what `pca-upgrade.sh` is doing:
 
 ```bash
 # 1. Copy the new release tarball to the PCA box, then:
