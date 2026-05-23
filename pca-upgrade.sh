@@ -111,12 +111,29 @@ if $DO_ROLLBACK; then
     && cp "$LATEST/dot-env.bak" "$INSTALL/.env" && chmod 600 "$INSTALL/.env" \
     && ok ".env restored"
 
-  log "Restoring Postgres volume from $LATEST/pg_data.tar.gz ..."
-  docker volume rm kong_pg_data >/dev/null 2>&1 || true
-  docker volume create kong_pg_data >/dev/null
-  docker run --rm -v kong_pg_data:/data -v "$LATEST":/bak alpine \
-    sh -c 'tar xzf /bak/pg_data.tar.gz -C /data' || die "pg_data restore failed"
-  ok "Postgres volume restored"
+  # Restore DB: bring just kong-database up, run psql to replay the dump
+  if [[ -f "$LATEST/pg_data.sql.gz" ]]; then
+    log "Restoring Postgres data from pg_data.sql.gz ..."
+    docker compose up -d kong-database >/dev/null
+    log "Waiting for kong-database to be healthy ..."
+    for i in {1..30}; do
+      if docker exec kong-database pg_isready -U kong >/dev/null 2>&1; then break; fi
+      sleep 1
+    done
+    gunzip -c "$LATEST/pg_data.sql.gz" \
+      | docker exec -i kong-database psql -U kong -d kong >/dev/null \
+      || die "pg_data restore failed"
+    ok "Postgres data restored"
+  elif [[ -f "$LATEST/pg_data.tar.gz" ]]; then
+    warn "Legacy tarball backup detected — restoring via host volume path"
+    VOL_PATH=$(docker volume inspect kong_pg_data --format '{{.Mountpoint}}')
+    docker compose down
+    sudo rm -rf "$VOL_PATH"/*
+    sudo tar xzf "$LATEST/pg_data.tar.gz" -C "$VOL_PATH"
+    ok "Postgres volume restored from legacy tarball"
+  else
+    warn "No pg_data backup found in $LATEST — DB not touched"
+  fi
 
   docker compose up -d
   log "Waiting 10s for containers ..."
@@ -189,12 +206,17 @@ if [[ -f "$INSTALL/.env" ]]; then
   ok ".env saved"
 fi
 
-# 3c. Postgres named volume
-log "Snapshotting kong_pg_data volume ..."
-docker run --rm -v kong_pg_data:/data -v "$BACKUP_DIR":/bak alpine \
-  sh -c 'cd /data && tar czf /bak/pg_data.tar.gz .' \
-  || die "pg_data backup failed — aborting (nothing changed yet)"
-ok "pg_data.tar.gz ($(du -h "$BACKUP_DIR/pg_data.tar.gz" | cut -f1))"
+# 3c. Postgres logical dump (uses pg_dump from the already-running kong-database)
+log "Dumping Postgres via kong-database (pg_dump) ..."
+if docker exec kong-database pg_dump -U kong --clean --if-exists kong \
+     > "$BACKUP_DIR/pg_data.sql" 2>"$BACKUP_DIR/pg_dump.err"; then
+  gzip "$BACKUP_DIR/pg_data.sql"
+  rm -f "$BACKUP_DIR/pg_dump.err"
+  ok "pg_data.sql.gz ($(du -h "$BACKUP_DIR/pg_data.sql.gz" | cut -f1))"
+else
+  warn "pg_dump failed — see $BACKUP_DIR/pg_dump.err"
+  warn "continuing without DB backup (Postgres volume is unchanged by upgrade)"
+fi
 
 # 3d. /data runtime state if present (might not exist on first upgrade)
 if [[ -d "$INSTALL/data" ]]; then
