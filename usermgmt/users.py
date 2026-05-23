@@ -420,16 +420,23 @@ def change_email(username):
     @require_admin
     def _inner():
         data = request.get_json() or {}
-        email = (data.get("email") or "").strip()
-        if not _valid_email(email):
-            return jsonify({"error": "Invalid email"}), 400
+        email_raw = (data.get("email") or "").strip()
 
         # User must exist in either the htpasswd file or the users.json DB
         db = read_user_db()
         if username not in db.get("users", {}) and username not in read_users():
             return jsonify({"error": "User not found"}), 404
 
-        _set_email(username, email)
+        if email_raw == "":
+            if get_mfa_enabled(username):
+                return jsonify({"error": "Cannot clear email while MFA is enabled for this user"}), 400
+            _set_email(username, None)
+            _audit("user.email.change", target=username, details={"email": None})
+            return jsonify({"message": f"Email cleared for '{username}'"})
+
+        if not _valid_email(email_raw):
+            return jsonify({"error": "Invalid email"}), 400
+        _set_email(username, email_raw)
         _audit("user.email.change", target=username)
         return jsonify({"message": f"Email updated for '{username}'"})
 

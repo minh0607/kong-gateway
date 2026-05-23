@@ -85,3 +85,26 @@ def test_disable_mfa_does_not_require_email(client):
     # Disable regardless of email state
     r = client.put("/api/users/bob/mfa", json={"enabled": False})
     assert r.status_code == 200
+
+
+def test_clear_email_allowed_when_mfa_off(client):
+    client.post("/api/users", json={
+        "username": "bob", "password": "secret789",
+        "role": "user", "email": "bob@example.com"
+    })
+    r = client.put("/api/users/bob/email", json={"email": ""})
+    assert r.status_code == 200
+    listing = client.get("/api/users").json["users"]
+    bob = next(u for u in listing if u["username"] == "bob")
+    assert bob["email"] is None
+
+
+def test_clear_email_blocked_when_mfa_on(client):
+    client.post("/api/users", json={
+        "username": "bob", "password": "secret789",
+        "role": "user", "email": "bob@example.com"
+    })
+    client.put("/api/users/bob/mfa", json={"enabled": True})
+    r = client.put("/api/users/bob/email", json={"email": ""})
+    assert r.status_code == 400
+    assert "MFA" in r.json["error"]

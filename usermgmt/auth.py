@@ -9,18 +9,46 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
+import secrets
 import time
 from functools import wraps
 
 import audit
 
 from flask import Blueprint, current_app, jsonify, redirect, request, send_from_directory, Response
+from storage import read_json_file, with_flock, write_json_file
 
 bp = Blueprint("auth", __name__)
 
 
 def _config():
     return current_app.config["CONFIG"]
+
+
+def _revoked_path() -> str:
+    cfg = _config()
+    return os.path.join(os.path.dirname(cfg.users_file), "revoked_sessions.json")
+
+
+def _revoked_lock() -> str:
+    return _revoked_path() + ".lock"
+
+
+def _is_revoked(signature: str) -> bool:
+    db = read_json_file(_revoked_path(), default={"sigs": {}})
+    return signature in db.get("sigs", {})
+
+
+def _revoke(signature: str, expires_at: int) -> None:
+    with with_flock(_revoked_lock()):
+        db = read_json_file(_revoked_path(), default={"sigs": {}})
+        sigs = db.get("sigs", {})
+        now = int(time.time())
+        sigs = {s: e for s, e in sigs.items() if e > now}
+        sigs[signature] = expires_at
+        db["sigs"] = sigs
+        write_json_file(_revoked_path(), db)
 
 
 def _sign(payload: str) -> str:
@@ -47,7 +75,7 @@ def create_session_cookie(username: str, role: str, *, mfa: bool) -> str:
     cfg = _config()
     expires = int(time.time()) + cfg.session_max_age
     payload = json.dumps(
-        {"u": username, "r": role, "e": expires, "mfa": mfa},
+        {"u": username, "r": role, "e": expires, "mfa": mfa, "n": secrets.token_hex(8)},
         separators=(",", ":"),
     )
     sig = _sign(payload)
@@ -63,6 +91,8 @@ def validate_session_cookie(cookie: str | None) -> dict | None:
             return None
         data = json.loads(payload)
         if data.get("e", 0) < int(time.time()):
+            return None
+        if _is_revoked(sig):
             return None
         if _config().mfa_enforced and not data.get("mfa", False):
             return None
@@ -268,7 +298,16 @@ def mfa_resend():
 
 @bp.route("/auth/logout", methods=["GET", "POST"])
 def logout():
+    cookie = request.cookies.get("kong_session")
     s = get_session_user()
+    if cookie and "." in cookie:
+        try:
+            payload, sig = cookie.rsplit(".", 1)
+            data = json.loads(payload)
+            exp = int(data.get("e", time.time() + 60))
+            _revoke(sig, exp)
+        except Exception:
+            pass
     if s:
         audit.write("logout", actor=s["u"], actor_role=s["r"],
                     ip=_client_ip())
