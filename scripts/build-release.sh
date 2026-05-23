@@ -242,12 +242,32 @@ For custom dir:  sudo ./pca-deploy.sh kong-deploy-v${VERSION}.tar.gz --install-d
 EOF
 ok "README.txt written"
 
+# ── single-file bundle for USB transfer ──────────────────────────────────────
+# Compress the whole release dir into one .tar.gz the operator carries on USB.
+
+BUNDLE="release/kong-pca-bundle-v${VERSION}.tar.gz"
+BUNDLE_SHA="${BUNDLE%.tar.gz}.sha256.txt"
+
+log "Creating single-file bundle: $BUNDLE ..."
+( cd release && tar czf "kong-pca-bundle-v${VERSION}.tar.gz" "v${VERSION}/" )
+( cd release && sha256sum "kong-pca-bundle-v${VERSION}.tar.gz" ) > "$BUNDLE_SHA"
+BUNDLE_SIZE="$(du -sh "$BUNDLE" | cut -f1)"
+ok "Bundle: $BUNDLE ($BUNDLE_SIZE)"
+
 # ── final size report ────────────────────────────────────────────────────────
 
 TOTAL_SIZE="$(du -sh "$RELEASE_DIR" | cut -f1)"
 printf '\n══════════════════════════════════════════════════════════\n'
-printf '  Release directory: %s\n' "$RELEASE_DIR"
-printf '  Total size:        %s (everything PCA needs)\n' "$TOTAL_SIZE"
-printf '  Copy this whole directory to USB → PCA, then:\n'
+printf '  Release directory: %s  (%s, loose files)\n' "$RELEASE_DIR" "$TOTAL_SIZE"
+printf '  Single bundle:     %s  (%s)\n' "$BUNDLE" "$BUNDLE_SIZE"
+printf '\n'
+printf '  Easiest path — copy these 2 files to USB → PCA:\n'
+printf '    %s\n' "$BUNDLE"
+printf '    %s\n' "$BUNDLE_SHA"
+printf '\n'
+printf '  On PCA:\n'
+printf '    sha256sum -c kong-pca-bundle-v%s.sha256.txt\n' "$VERSION"
+printf '    tar xzf kong-pca-bundle-v%s.tar.gz\n' "$VERSION"
+printf '    cd v%s\n' "$VERSION"
 printf '    sudo ./pca-deploy.sh kong-deploy-v%s.tar.gz\n' "$VERSION"
 printf '══════════════════════════════════════════════════════════\n\n'
