@@ -175,6 +175,31 @@ if [[ "$EXPECTED" != "$ACTUAL" ]]; then
 fi
 ok "Checksum OK"
 
+# 1b. Pre-load any base Docker images alongside this script (air-gap-safe)
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+if [[ -d "$SCRIPT_DIR/images" ]]; then
+  log "Loading base Docker images from $SCRIPT_DIR/images/ if needed ..."
+  shopt -s nullglob
+  for img_tar in "$SCRIPT_DIR/images"/*.tar; do
+    # Skip if this is the kong-usermgmt tar inside the bundle (handled by upgrade.sh)
+    [[ "$(basename "$img_tar")" == "kong-usermgmt.tar" ]] && continue
+    # Heuristic: extract image name from filename (kong-oss-3.9.tar → kong:3.9)
+    case "$(basename "$img_tar")" in
+      kong-oss-3.9.tar)        IMG="kong:3.9" ;;
+      postgres-15-alpine.tar)  IMG="postgres:15-alpine" ;;
+      nginx-alpine.tar)        IMG="nginx:alpine" ;;
+      *)                       IMG="" ;;
+    esac
+    if [[ -n "$IMG" ]] && docker image inspect "$IMG" >/dev/null 2>&1; then
+      ok "$IMG already loaded — skipping"
+      continue
+    fi
+    log "  Loading $(basename "$img_tar") ..."
+    docker load -i "$img_tar" >/dev/null && ok "Loaded $(basename "$img_tar")"
+  done
+  shopt -u nullglob
+fi
+
 # 2. Pre-upgrade health snapshot
 log "Pre-upgrade health check ..."
 RUNNING=$(docker compose -f "$INSTALL/docker-compose.yml" ps --services --status running 2>/dev/null | wc -l)

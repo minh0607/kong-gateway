@@ -176,3 +176,79 @@ else
 fi
 
 printf '══════════════════════════════════════════════════════════\n\n'
+
+# ── stage loose files next to the tarball for direct PCA transfer ────────────
+# Operator copies the whole release/vX.Y.Z/ directory to USB → PCA.
+# These files sit OUTSIDE the tarball so the operator can run pca-upgrade.sh
+# without extracting first.
+
+log "Staging loose files in $RELEASE_DIR/ for direct copy to PCA ..."
+
+cp -f pca-upgrade.sh         "$RELEASE_DIR/pca-upgrade.sh"
+chmod +x                       "$RELEASE_DIR/pca-upgrade.sh"
+cp -f PCA-UPGRADE-GUIDE.md   "$RELEASE_DIR/PCA-UPGRADE-GUIDE.md"
+ok "pca-upgrade.sh + PCA-UPGRADE-GUIDE.md copied alongside tarball"
+
+# ── include base Docker images if available on the host ──────────────────────
+# These are used by Kong's compose stack. PCA loaded them during the original
+# kong-offline-package install; including them here lets a fresh PCA box come
+# up without needing the old offline-package separately.
+
+BASE_IMAGES_DIR="$RELEASE_DIR/images"
+mkdir -p "$BASE_IMAGES_DIR"
+
+for src in kong-oss-3.9.tar postgres-15-alpine.tar nginx-alpine.tar; do
+  if [[ -f "$src" ]]; then
+    cp -f "$src" "$BASE_IMAGES_DIR/$src"
+    ok "Included $src ($(du -sh "$BASE_IMAGES_DIR/$src" | cut -f1))"
+  else
+    printf '  [WARN] base image %s not found at project root — skipping (PCA must already have it loaded)\n' "$src"
+  fi
+done
+
+# ── README for the operator ──────────────────────────────────────────────────
+
+cat > "$RELEASE_DIR/README.txt" <<EOF
+SEHC AI Gateway — Release v${VERSION}
+=========================================
+
+This directory is self-contained. Copy the WHOLE folder to USB / file share,
+then to PCA. The operator does not need to download anything else.
+
+Files in this directory:
+
+  kong-deploy-v${VERSION}.tar.gz       Code + kong-usermgmt image (run via pca-upgrade.sh)
+  kong-deploy-v${VERSION}.sha256.txt   Checksum for integrity verification
+  pca-upgrade.sh                        One-shot upgrade script — RUN THIS
+  PCA-UPGRADE-GUIDE.md                  Step-by-step operator guide
+  images/                               Base Docker images (load only if missing on PCA)
+    kong-oss-3.9.tar
+    postgres-15-alpine.tar
+    nginx-alpine.tar
+  README.txt                            This file
+
+On PCA, from this directory:
+
+  sudo ./pca-upgrade.sh kong-deploy-v${VERSION}.tar.gz
+
+The script will:
+ * Verify the tarball SHA256
+ * Auto-load any missing base images from images/
+ * Snapshot config + Postgres data to a backup directory
+ * Extract the new code over the existing install
+ * Restart only the services that changed
+ * Health-check and print next steps
+
+For rollback: sudo ./pca-upgrade.sh --rollback
+EOF
+ok "README.txt written"
+
+# ── final size report ────────────────────────────────────────────────────────
+
+TOTAL_SIZE="$(du -sh "$RELEASE_DIR" | cut -f1)"
+printf '\n══════════════════════════════════════════════════════════\n'
+printf '  Release directory: %s\n' "$RELEASE_DIR"
+printf '  Total size:        %s (everything PCA needs)\n' "$TOTAL_SIZE"
+printf '  Copy this whole directory to USB → PCA, then:\n'
+printf '    sudo ./pca-upgrade.sh kong-deploy-v%s.tar.gz\n' "$VERSION"
+printf '══════════════════════════════════════════════════════════\n\n'
