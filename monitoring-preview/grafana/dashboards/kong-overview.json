@@ -120,6 +120,71 @@
       "targets": [
         { "refId": "A", "expr": "sum by (direction) (rate(kong_bandwidth_bytes[1m]))", "legendFormat": "{{direction}}", "datasource": { "type": "prometheus", "uid": "prometheus" } }
       ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Request rate by consumer",
+      "description": "Requests/sec attributed to an authenticated consumer (key-auth). Empty until traffic is authenticated.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 15, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (consumer) (rate(kong_http_requests_total{consumer!=\"\"}[1m]))", "legendFormat": "{{consumer}}", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Egress bandwidth by consumer",
+      "description": "Bytes/sec sent to authenticated consumers.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "drawStyle": "line", "fillOpacity": 15, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (consumer) (rate(kong_bandwidth_bytes{consumer!=\"\",direction=\"egress\"}[1m]))", "legendFormat": "{{consumer}}", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Request rate by service",
+      "description": "Requests/sec per Kong service. Legend table shows current/avg/max per service.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 15, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (service) (rate(kong_http_requests_total[1m]))", "legendFormat": "{{service}}", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Egress bandwidth by service",
+      "description": "Bytes/sec sent per service. Legend table shows current/avg/max.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "drawStyle": "line", "fillOpacity": 15, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (service) (rate(kong_bandwidth_bytes{direction=\"egress\"}[1m]))", "legendFormat": "{{service}}", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Egress bandwidth by route",
+      "description": "Bytes/sec sent per route. Legend table shows current/avg/max per route.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 36 },
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "drawStyle": "line", "fillOpacity": 15, "showPoints": "never" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "mean", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "refId": "A", "expr": "sum by (route) (rate(kong_bandwidth_bytes{direction=\"egress\"}[1m]))", "legendFormat": "{{route}}", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ]
     }
   ]
 }
