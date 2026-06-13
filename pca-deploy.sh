@@ -80,6 +80,35 @@ ensure_proxy_cert() {
   ok "Proxy TLS cert created (SAN IP:$ip)"
 }
 
+# ── Prometheus plugin ─────────────────────────────────────────────────────────
+# Enables the bundled Prometheus plugin (global) so metrics are exposed on the
+# Status API (:8100/metrics) for external scraping (e.g. Zabbix). The plugin row
+# lives in Postgres, so this only does work on a fresh install; on upgrade it is
+# already present and we skip. Idempotent and non-fatal.
+enable_prometheus_plugin() {
+  local admin="http://localhost:8001"
+  local i
+  for i in $(seq 1 30); do
+    curl -sf "$admin/" >/dev/null 2>&1 && break
+    sleep 1
+  done
+  if curl -sf "$admin/plugins" 2>/dev/null | grep -q '"name":"prometheus"'; then
+    ok "Prometheus plugin already enabled"
+    return 0
+  fi
+  log "Enabling Prometheus plugin (global, :8100/metrics) ..."
+  if curl -sf -X POST "$admin/plugins" \
+       -d name=prometheus \
+       -d config.status_code_metrics=true \
+       -d config.latency_metrics=true \
+       -d config.bandwidth_metrics=true \
+       -d config.per_consumer=true >/dev/null 2>&1; then
+    ok "Prometheus plugin enabled"
+  else
+    warn "Could not enable Prometheus plugin — enable it manually via Admin API"
+  fi
+}
+
 usage() {
   cat <<EOF
 Usage:
@@ -324,6 +353,9 @@ EOF
     sleep 1
   done
 
+  # Enable Prometheus metrics for external monitoring (Zabbix/Grafana)
+  enable_prometheus_plugin
+
   # Save admin password to a guarded file
   PASS_FILE="$INSTALL/.first-install-admin-password.txt"
   printf 'Admin user: %s\nAdmin pass: %s\nInstalled:  %s\n' \
@@ -457,6 +489,9 @@ for i in {1..30}; do
   fi
   sleep 1
 done
+
+# Ensure Prometheus metrics stay enabled (no-op if already in DB)
+enable_prometheus_plugin
 
 # Quick smoke test
 if curl -sf http://localhost:8002/auth/login | grep -q "SEHC AI GATEWAY"; then

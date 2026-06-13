@@ -60,6 +60,9 @@ services:
       # no SNI, so the default cert is what they get on :8443.
       KONG_SSL_CERT: /etc/kong/ssl/kong-proxy.crt
       KONG_SSL_CERT_KEY: /etc/kong/ssl/kong-proxy.key
+      # Status API (read-only): exposes /status + /metrics (Prometheus format)
+      # for external scraping by Zabbix. Safer to publish than the Admin API.
+      KONG_STATUS_LISTEN: 0.0.0.0:8100
       KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002
       # Served behind IT Portal at /aigw via System Forward (preserve_prefix=1).
       # GUI_PATH tells Kong Manager's Vue Router to use /aigw as basePath.
@@ -77,6 +80,7 @@ services:
       - "8001:8001"  # Admin API HTTP
       - "8443:8443"  # Proxy HTTPS
       - "8444:8444"  # Admin API HTTPS
+      - "8100:8100"  # Status API + Prometheus /metrics (for Zabbix)
     volumes:
       - ./ssl:/etc/kong/ssl:ro
     networks:
