@@ -52,7 +52,8 @@ docker save kong-usermgmt:latest -o "$STAGE_DIR/images/kong-usermgmt.tar"
 ok "Image saved ($(du -sh "$STAGE_DIR/images/kong-usermgmt.tar" | cut -f1))."
 
 # ── build file list from git-tracked files ────────────────────────────────────
-# Excludes: release/, *.tar.gz, *.tar, offline-package/, docs/superpowers/
+# Excludes: release/, *.tar.gz, *.tar, offline-package/, docs/superpowers/,
+#           monitoring-preview/ (DEV-only Prometheus+Grafana; prod uses Zabbix)
 
 INCLUDE_LIST="$(mktemp)"
 trap 'rm -rf "$STAGE_DIR"; rm -f "$INCLUDE_LIST"' EXIT
@@ -61,6 +62,7 @@ git ls-files | grep -v \
   -e '^release/' \
   -e '^offline-package/' \
   -e '^docs/superpowers/' \
+  -e '^monitoring-preview/' \
   -e '\.tar\.gz$' \
   -e '\.tar$' \
   > "$INCLUDE_LIST"
