@@ -54,3 +54,33 @@ def test_auth_check_with_session(client):
     assert r.status_code == 200
     assert r.headers.get("X-Auth-User") == "alice"
     assert r.headers.get("X-Auth-Role") == "admin"
+
+
+def test_auth_check_admin_requires_session(client):
+    r = client.get("/auth/check/admin")
+    assert r.status_code == 401
+
+
+def test_auth_check_admin_allows_admin(client):
+    client.post("/auth/login", json={"username": "alice", "password": "secret123"})
+    r = client.get("/auth/check/admin")
+    assert r.status_code == 200
+    assert r.headers.get("X-Auth-User") == "alice"
+    assert r.headers.get("X-Auth-Role") == "admin"
+
+
+def test_auth_check_admin_forbids_non_admin(client, app):
+    # alice is the default admin; add a second, non-admin user.
+    pw_file = os.environ["HTPASSWD_FILE"]
+    subprocess.run(
+        ["htpasswd", "-b", pw_file, "bob", "secret123"],
+        check=True, capture_output=True,
+    )
+    from users import set_role
+    with app.app_context():
+        set_role("alice", "admin")  # keep an admin so bob is not auto-promoted
+        set_role("bob", "user")
+
+    client.post("/auth/login", json={"username": "bob", "password": "secret123"})
+    r = client.get("/auth/check/admin")
+    assert r.status_code == 403

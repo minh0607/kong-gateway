@@ -142,6 +142,27 @@ def auth_check():
     return Response("Unauthorized", 401)
 
 
+@bp.route("/auth/check/admin")
+def auth_check_admin():
+    """Stricter gate for nginx auth_request: 200 only for admin role,
+    401 anonymous, 403 authenticated-but-not-admin.
+
+    Used to protect Kong Manager UI and Admin API from non-admin users.
+    Kong Manager OSS has no RBAC, so any session that reaches /api/ can
+    see all keys, secrets, and plugin configs. This endpoint enforces
+    admin-only access at the nginx layer.
+    """
+    s = get_session_user()
+    if not s:
+        return Response("Unauthorized", 401)
+    if s.get("r") != "admin":
+        return Response("Forbidden", 403)
+    resp = Response("OK", 200)
+    resp.headers["X-Auth-User"] = s["u"]
+    resp.headers["X-Auth-Role"] = s["r"]
+    return resp
+
+
 @bp.route("/auth/login", methods=["GET"])
 def login_page():
     return send_from_directory("/app/static", "login.html")
