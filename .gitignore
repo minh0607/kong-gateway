@@ -10,6 +10,7 @@ __pycache__/
 htmlcov/
 nginx/.htpasswd
 offline-package/nginx/.htpasswd
+ssl/
 backups/
 release/v*/
 !.env.example

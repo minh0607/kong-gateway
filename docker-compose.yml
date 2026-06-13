@@ -56,6 +56,10 @@ services:
       <<: *kong-env
       KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
       KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
+      # Default proxy TLS cert (self-signed for IP 192.168.1.121). IP clients send
+      # no SNI, so the default cert is what they get on :8443.
+      KONG_SSL_CERT: /etc/kong/ssl/kong-proxy.crt
+      KONG_SSL_CERT_KEY: /etc/kong/ssl/kong-proxy.key
       KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002
       # Served behind IT Portal at /aigw via System Forward (preserve_prefix=1).
       # GUI_PATH tells Kong Manager's Vue Router to use /aigw as basePath.
@@ -73,6 +77,8 @@ services:
       - "8001:8001"  # Admin API HTTP
       - "8443:8443"  # Proxy HTTPS
       - "8444:8444"  # Admin API HTTPS
+    volumes:
+      - ./ssl:/etc/kong/ssl:ro
     networks:
       - kong-net
     healthcheck:

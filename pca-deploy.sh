@@ -46,16 +46,55 @@ ok()   { printf '%s  ✔%s  %s\n' "$C_GRN" "$C_RST" "$*"; }
 warn() { printf '%s  ⚠%s  %s\n' "$C_YEL" "$C_RST" "$*" >&2; }
 die()  { printf '%s  ✘%s  %s\n' "$C_RED" "$C_RST" "$*" >&2; exit 1; }
 
+# ── proxy TLS cert ────────────────────────────────────────────────────────────
+# Kong proxy serves HTTPS on :8443 using a default cert. IP-based clients send no
+# SNI, so this self-signed cert (SAN = the box IP) is what they receive. Generated
+# locally with openssl — no internet, air-gap safe. Idempotent: skips if present.
+ensure_proxy_cert() {
+  local dir="$1/ssl"
+  local crt="$dir/kong-proxy.crt" key="$dir/kong-proxy.key"
+  if [[ -f "$crt" && -f "$key" ]]; then
+    ok "Proxy TLS cert already present ($(openssl x509 -in "$crt" -noout -ext subjectAltName 2>/dev/null | tr -d ' ' | grep -oE 'IPAddress:[0-9.]+' | head -1))"
+    return 0
+  fi
+  # IP that clients will use to reach :8443. MUST match how clients connect.
+  # Explicit --cert-ip wins; otherwise auto-detect (fragile on multi-NIC/Docker hosts).
+  local ip="${CERT_IP_OVERRIDE:-}"
+  if [[ -z "$ip" ]]; then
+    # Skip Docker bridge ranges (172.16-31.x) when picking the primary IP.
+    ip=$(hostname -I 2>/dev/null | tr ' ' '\n' \
+           | grep -vE '^172\.(1[6-9]|2[0-9]|3[01])\.' | grep -E '^[0-9.]+$' | head -1)
+    [[ -n "$ip" ]] || ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    [[ -n "$ip" ]] || ip="127.0.0.1"
+    warn "No --cert-ip given; auto-detected $ip for the TLS cert."
+    warn "If clients reach this box on a DIFFERENT IP, re-run with: --cert-ip <ip>"
+  fi
+  log "Generating self-signed proxy TLS cert for $ip (:8443 HTTPS) ..."
+  mkdir -p "$dir"
+  openssl req -x509 -nodes -newkey rsa:2048 \
+    -keyout "$key" -out "$crt" -days 3650 \
+    -subj "/CN=$ip/O=SEHC AI Gateway" \
+    -addext "subjectAltName=IP:$ip,IP:127.0.0.1" >/dev/null 2>&1 \
+    || die "openssl proxy cert generation failed"
+  chmod 600 "$key"
+  ok "Proxy TLS cert created (SAN IP:$ip)"
+}
+
 usage() {
   cat <<EOF
 Usage:
   sudo ./$SCRIPT_NAME <tarball.tar.gz>                  # auto: install or upgrade
   sudo ./$SCRIPT_NAME <tarball.tar.gz> --install-dir /opt/kong
+  sudo ./$SCRIPT_NAME <tarball.tar.gz> --cert-ip <ip>   # IP for the :8443 HTTPS cert
   sudo ./$SCRIPT_NAME --rollback                        # restore last backup
   sudo ./$SCRIPT_NAME --help
 
+  --cert-ip <ip>  IP clients use to reach :8443. Sets the self-signed proxy
+                  cert's SAN. If omitted, auto-detected (verify it is correct on
+                  multi-NIC / Docker hosts). Ignored if a cert already exists.
+
 Examples:
-  sudo ./$SCRIPT_NAME kong-deploy-v1.0.1.tar.gz
+  sudo ./$SCRIPT_NAME kong-deploy-v1.0.1.tar.gz --cert-ip 10.20.30.40
   sudo ./$SCRIPT_NAME --rollback
 EOF
 }
@@ -64,11 +103,13 @@ EOF
 TARBALL=""
 DO_ROLLBACK=false
 INSTALL_DIR_OVERRIDE=""
+CERT_IP_OVERRIDE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --rollback)     DO_ROLLBACK=true ;;
     --install-dir)  shift; INSTALL_DIR_OVERRIDE="${1:-}" ;;
+    --cert-ip)      shift; CERT_IP_OVERRIDE="${1:-}" ;;
     --help|-h)      usage; exit 0 ;;
     -*)             die "unknown flag: $1 (see --help)" ;;
     *)              TARBALL="$1" ;;
@@ -155,6 +196,7 @@ if $DO_ROLLBACK; then
     ok "Postgres restored"
   fi
 
+  ensure_proxy_cert "$INSTALL"
   docker compose up -d
   sleep 10
   docker compose ps
@@ -261,6 +303,9 @@ EOF
   # Create runtime dirs
   mkdir -p "$INSTALL/data/audit" "$INSTALL/backups"
   ok "data/ + backups/ directories created"
+
+  # Self-signed proxy TLS cert for :8443 HTTPS
+  ensure_proxy_cert "$INSTALL"
 
   # Make scripts executable
   chmod +x "$INSTALL"/*.sh 2>/dev/null || true
@@ -393,6 +438,9 @@ fi
 
 chmod +x "$INSTALL"/*.sh 2>/dev/null || true
 chmod +x "$INSTALL"/scripts/*.sh 2>/dev/null || true
+
+# Self-signed proxy TLS cert for :8443 HTTPS (no-op if already generated)
+ensure_proxy_cert "$INSTALL"
 
 # Recreate affected services
 log "Recreating kong-usermgmt and kong-auth-proxy ..."
