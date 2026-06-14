@@ -53,11 +53,19 @@ chmod +x deploy.sh
 
 ### Post-install
 
-- Kong Manager GUI: `http://<host>:8002/`
-- User Mgmt Portal: `http://<host>:8888/`
-- Kong Proxy:       `http://<host>:8000/`
+- Kong Manager GUI:  `http://<host>:8002/`  (admin-only since v1.0.3)
+- User Mgmt Portal:  `http://<host>:8888/`
+- Kong Proxy (HTTP): `http://<host>:8000/`
+- Kong Proxy (HTTPS):`https://<host>:8443/` (self-signed IP cert, auto-generated)
+- Metrics (Status API): `http://<host>:8100/metrics`
 
 Configure SMTP via the **SMTP Settings** card in the User Mgmt Portal if you skipped it during install.
+
+### Monitoring
+
+Metrics and the Prometheus plugin are enabled automatically by the deploy script.
+To wire Zabbix + Grafana (or the self-contained Prometheus/Loki/Grafana stack) and
+alerting, see **[MONITORING.md](MONITORING.md)**.
 
 ---
 
