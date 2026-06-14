@@ -1,0 +1,20 @@
+apiVersion: 1
+
+contactPoints:
+  # Single contact point with BOTH integrations — every routed alert fires email
+  # AND webhook. Integrations are notified independently.
+  - orgId: 1
+    name: kong-notify
+    receivers:
+      - uid: kong_email_rx
+        type: email
+        settings:
+          addresses: ops@sehc.local
+          singleEmail: false
+      - uid: kong_webhook_rx
+        type: webhook
+        settings:
+          # DEV demo: echo sink that returns 200. On prod, replace with your
+          # internal endpoint (n8n webhook, ticketing system, ...).
+          url: http://webhook-sink:8080/kong-alert
+          httpMethod: POST

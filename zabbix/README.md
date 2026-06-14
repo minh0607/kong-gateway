@@ -71,6 +71,44 @@ Kong host and the items above (e.g. `Route [n8n]: request rate`). The community
 Prometheus dashboard (Grafana ID 7424) is **not** used — it needs a Prometheus
 datasource, not Zabbix.
 
+## Alerting (notifications)
+
+The template already ships **triggers** (datastore down, metrics unreachable,
+high 5xx node + per-route). Triggers only change problem state — to actually
+**notify**, configure media + an action on your Zabbix server (one-time setup):
+
+### 1. Media types (the channels)
+**Alerts → Media types**
+- **Email**: enable the built-in *Email* media type, set SMTP server/port, from
+  address, and (for air-gapped PCA) point it at the internal SMTP relay.
+- **Webhook**: enable/clone the built-in *Webhook* media type (a JavaScript
+  media type). Add a parameter `URL` = your internal endpoint (n8n, ticketing,
+  ...) and have the script `POST` the alert JSON. Air-gap OK if the endpoint is
+  on the LAN.
+
+### 2. Attach media to a user
+**Users → Users → (your user) → Media → Add** — one row per channel (Email with
+the recipient address; Webhook with a send-to value). Set *When active* and the
+severity filter (e.g. Warning and above).
+
+### 3. Trigger action
+**Alerts → Actions → Trigger actions → Create action**
+- *Conditions*: e.g. `Host group = Kong` (or `Template = Kong Gateway by HTTP`),
+  optionally `Trigger severity >= Warning`.
+- *Operations*: *Send message* to the user/group, via *Email* and *Webhook*.
+- (Optional) escalation steps and a *Recovery operation* for the "resolved" note.
+
+### Severity mapping (template → suggested action)
+| Trigger | Severity | Suggested |
+|---|---|---|
+| Datastore (Postgres) not reachable | HIGH | page on-call (email + webhook) |
+| Metrics endpoint unreachable | AVERAGE | email + webhook |
+| High 5xx (node / per-route) | WARNING | email |
+
+> The Grafana preview stack (`monitoring-preview/`) demonstrates the same two
+> channels with Grafana-managed alert rules — useful as a reference for what to
+> alert on.
+
 ## Notes
 
 - Request/bandwidth/latency counters are converted to per-second rates inside

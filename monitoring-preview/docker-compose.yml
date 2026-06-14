@@ -28,6 +28,29 @@ services:
     networks:
       - kong_kong-net
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: kong-preview-mailpit
+    restart: unless-stopped
+    ports:
+      - "8026:8025"   # web UI to view captured alert emails
+    networks:
+      - kong_kong-net
+
+  # DEV-only webhook receiver: echoes the alert JSON and returns 200 so the
+  # webhook channel is demonstrable. On prod, point the webhook contact point at
+  # your real internal endpoint (n8n, ticketing, ...) instead of this.
+  webhook-sink:
+    image: mendhak/http-https-echo:latest
+    container_name: kong-preview-webhook-sink
+    restart: unless-stopped
+    environment:
+      HTTP_PORT: "8080"
+    ports:
+      - "8081:8080"
+    networks:
+      - kong_kong-net
+
   loki:
     image: grafana/loki:latest
     container_name: kong-preview-loki
@@ -61,12 +84,19 @@ services:
     depends_on:
       - prometheus
       - loki
+      - mailpit
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      # SMTP -> mailpit (DEV demo). On prod, point at the internal SMTP relay.
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: "mailpit:1025"
+      GF_SMTP_FROM_ADDRESS: "kong-grafana@sehc.local"
+      GF_SMTP_FROM_NAME: "Kong Grafana"
+      GF_SMTP_SKIP_VERIFY: "true"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
