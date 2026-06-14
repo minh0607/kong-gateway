@@ -78,13 +78,13 @@ Copy three files to the PCA box (USB, file share, jumpbox — whatever your tran
 ```
 kong-deploy-vX.Y.Z.tar.gz
 kong-deploy-vX.Y.Z.sha256.txt
-pca-upgrade.sh
+pca-deploy.sh
 ```
 
 Then run a single command on PCA:
 
 ```bash
-sudo ./pca-upgrade.sh kong-deploy-vX.Y.Z.tar.gz
+sudo ./pca-deploy.sh kong-deploy-vX.Y.Z.tar.gz
 ```
 
 That's it. The script handles everything:
@@ -100,14 +100,14 @@ That's it. The script handles everything:
 If anything goes wrong:
 
 ```bash
-sudo ./pca-upgrade.sh --rollback
+sudo ./pca-deploy.sh --rollback
 ```
 
 restores the latest backup (config + .env + Postgres volume).
 
 ### Manual upgrade — if you don't want the wrapper
 
-If you prefer to drive each step yourself, this is what `pca-upgrade.sh` is doing:
+If you prefer to drive each step yourself, this is what `pca-deploy.sh` is doing:
 
 ```bash
 # 1. Copy the new release tarball to the PCA box, then:

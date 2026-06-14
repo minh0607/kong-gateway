@@ -8,7 +8,7 @@
 
 ## When to use this guide
 
-You have a new release tarball from the DEV team (e.g. `kong-deploy-v1.0.1.tar.gz`)
+You have a new release tarball from the DEV team (e.g. `kong-deploy-v1.0.3.tar.gz`)
 and want to upgrade the production Kong stack on PCA without losing:
 
 - Existing users in `nginx/.htpasswd`
@@ -25,13 +25,13 @@ From the DEV box, copy **three files** to your transfer medium (USB / file share
 
 | File | Where to find it on DEV |
 |---|---|
-| `kong-deploy-v1.0.1.tar.gz` | `/DATA/kong/release/v1.0.1/` |
-| `kong-deploy-v1.0.1.sha256.txt` | `/DATA/kong/release/v1.0.1/` |
-| `pca-upgrade.sh` | `/DATA/kong/` |
+| `kong-deploy-v1.0.3.tar.gz` | `/DATA/kong/release/v1.0.3/` |
+| `kong-deploy-v1.0.3.sha256.txt` | `/DATA/kong/release/v1.0.3/` |
+| `pca-deploy.sh` | `/DATA/kong/` |
 
 Drop all three into the same directory on PCA (e.g. `~/transfer/`).
 
-> **First-time upgrades only:** for the next release after this one, `pca-upgrade.sh`
+> **First-time upgrades only:** for the next release after this one, `pca-deploy.sh`
 > will already be on PCA inside `/opt/kong/`, so you only need to copy 2 files.
 
 ---
@@ -40,12 +40,12 @@ Drop all three into the same directory on PCA (e.g. `~/transfer/`).
 
 ```bash
 cd ~/transfer
-sha256sum -c kong-deploy-v1.0.1.sha256.txt
+sha256sum -c kong-deploy-v1.0.3.sha256.txt
 ```
 
 **Expected output:**
 ```
-kong-deploy-v1.0.1.tar.gz: OK
+kong-deploy-v1.0.3.tar.gz: OK
 ```
 
 If it says `FAILED` — copy the files again. Do not proceed.
@@ -78,7 +78,7 @@ If any container is unhealthy or missing, fix that first — don't upgrade on to
 **One command. That's the whole upgrade:**
 
 ```bash
-sudo ./pca-upgrade.sh kong-deploy-v1.0.1.tar.gz
+sudo ./pca-deploy.sh kong-deploy-v1.0.3.tar.gz
 ```
 
 The script will:
@@ -88,7 +88,7 @@ The script will:
 3. Snapshot config + Postgres volume to `<install>/backups/pre-upgrade-<UTC-timestamp>/`.
 4. Extract the new bundle (preserves your `.env` and `nginx/.htpasswd`).
 5. Create `.env` if missing, with `KONG_PG_PASSWORD=kong_pass` so Kong can still reach the existing database.
-6. Run `upgrade.sh --tarball-only` to load the new image and restart services.
+6. Generate the proxy TLS cert (`:8443`) if absent, load the new `kong-usermgmt` image, enable the Prometheus plugin, and recreate the affected services.
 7. Health-check and print a summary.
 
 Watch the output. You should see green checkmarks for each step. The final block prints:
@@ -211,7 +211,7 @@ If you accidentally changed it, set it back to `kong_pass` and `docker compose u
 You forgot `sudo`:
 
 ```bash
-sudo ./pca-upgrade.sh kong-deploy-v1.0.1.tar.gz
+sudo ./pca-deploy.sh kong-deploy-v1.0.3.tar.gz
 ```
 
 ### Health check fails / can't reach `http://localhost:8002/`
@@ -233,7 +233,7 @@ If the upgrade fails or behaves wrong, restore the previous state:
 
 ```bash
 cd ~/transfer
-sudo ./pca-upgrade.sh --rollback
+sudo ./pca-deploy.sh --rollback
 ```
 
 This restores from the most recent backup automatically:
@@ -256,16 +256,16 @@ The backup directory stays on disk under `<install>/backups/pre-upgrade-*` — y
 
 ```
 1. cd ~/transfer
-2. sha256sum -c kong-deploy-v1.0.1.sha256.txt    →  must say OK
+2. sha256sum -c kong-deploy-v1.0.3.sha256.txt    →  must say OK
 3. docker ps                                      →  all 4 services healthy
-4. sudo ./pca-upgrade.sh kong-deploy-v1.0.1.tar.gz
+4. sudo ./pca-deploy.sh kong-deploy-v1.0.3.tar.gz
 5. docker compose ps                              →  all 4 services healthy
 6. curl http://localhost:8002/auth/login | grep SEHC AI GATEWAY
 7. Browser login as kong / your-password         →  Kong Manager dashboard
 8. Set kong's email, configure SMTP, enable MFA as desired.
 
 Rollback (if anything broke):
-   sudo ./pca-upgrade.sh --rollback
+   sudo ./pca-deploy.sh --rollback
 ```
 
 ---
