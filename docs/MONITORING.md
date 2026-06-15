@@ -80,11 +80,28 @@ endpoint.
 ## Path B — Prometheus + Loki + Grafana (self-contained)
 
 A complete observability stack (metrics + logs + alerting) in one Grafana. Lives
-under [`monitoring-preview/`](../monitoring-preview/). It is **not** part of the
-PCA release bundle (DEV-only by default) — to use it in production, copy the
-directory across and bundle the images for the air-gapped host.
+under [`monitoring-preview/`](../monitoring-preview/). Shipped as its **own
+air-gapped bundle** (separate from the gateway bundle) so it can run on PCA.
 
-### B1. Run it
+### B0. PCA (air-gapped) — build on DEV, deploy on PCA
+On DEV (has the images pulled):
+```bash
+bash scripts/build-monitoring-bundle.sh
+# -> release/kong-monitoring-bundle-v<X.Y.Z>.tar.gz  (config + 6 Docker images, ~0.5 GB)
+```
+Copy the bundle + its `.sha256.txt` to PCA, then (after the gateway is deployed):
+```bash
+cd /opt/kong
+sha256sum -c kong-monitoring-bundle-v<X.Y.Z>.sha256.txt
+tar xzf kong-monitoring-bundle-v<X.Y.Z>.tar.gz        # -> /opt/kong/monitoring-preview/
+sudo ./monitoring-preview/deploy-monitoring.sh        # loads images + brings the stack up
+```
+`deploy-monitoring.sh` loads the bundled images (no internet) and starts the
+stack. It needs the Kong stack already running (shares `kong_kong-net`, reads
+`../data/audit`). Same config as DEV — no IPs to change (it scrapes `kong:8100`
+by container name).
+
+### B1. Run it (DEV, or manual)
 ```bash
 docker compose -f monitoring-preview/docker-compose.yml up -d
 # Grafana    http://<host>:3000   (admin / admin)  — dashboard "Kong Gateway — Overview"
