@@ -64,7 +64,7 @@ services:
       - kong_kong-net
 
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:3.5.1
     container_name: kong-preview-promtail
     restart: unless-stopped
     depends_on:

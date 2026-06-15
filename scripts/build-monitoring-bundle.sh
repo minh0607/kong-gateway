@@ -23,7 +23,7 @@ die() { printf '\033[1;31m[FATAL]\033[0m %s\n' "$*" >&2; exit 1; }
 IMAGES=(
   prom/prometheus:latest
   grafana/loki:latest
-  grafana/promtail:latest
+  grafana/promtail:3.5.1
   grafana/grafana:latest
   axllent/mailpit:latest
   mendhak/http-https-echo:latest
@@ -45,14 +45,15 @@ chmod +x "$DEST/deploy-monitoring.sh" 2>/dev/null || true
 [[ -f "$DEST/docker-compose.yml" ]] || die "monitoring-preview/docker-compose.yml not staged"
 ok "config staged"
 
-# ── save images ───────────────────────────────────────────────────────────────
+# ── save images (one combined archive) ────────────────────────────────────────
+# Saving all images together avoids a docker-save/containerd-snapshotter bug that
+# drops shared layers when images are exported one at a time.
 for img in "${IMAGES[@]}"; do
   docker image inspect "$img" >/dev/null 2>&1 || die "image not present locally: $img (docker pull it first)"
-  fname="$(echo "$img" | tr '/:' '__').tar"
-  log "Saving $img ..."
-  docker save "$img" -o "$DEST/images/$fname"
-  ok "$(du -h "$DEST/images/$fname" | cut -f1)  $fname"
 done
+log "Saving ${#IMAGES[@]} images into one archive ..."
+docker save "${IMAGES[@]}" -o "$DEST/images/kong-monitoring-images.tar"
+ok "images saved ($(du -h "$DEST/images/kong-monitoring-images.tar" | cut -f1))"
 
 # ── pack ──────────────────────────────────────────────────────────────────────
 mkdir -p "$ROOT/release"
