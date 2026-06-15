@@ -181,12 +181,19 @@ Password mismatch with the existing volume:
 grep KONG_PG_PASSWORD /opt/kong/.env   # must be exactly: KONG_PG_PASSWORD=kong_pass
 ```
 
-### Kong won't start — TLS cert path
-If `KONG_SSL_CERT` points at a missing file, regenerate:
+### Kong unhealthy / "dependency failed to start: container kong is unhealthy"
+Most often the proxy TLS key is not readable by Kong. Kong runs as a **non-root**
+user (uid/gid 1001), so a root-owned `600` key under `ssl/` makes Kong fail to
+load TLS and never go healthy. Fix the permissions and bring it up:
 ```bash
-cd /opt/kong && sudo ./pca-deploy.sh --rollback   # or re-run deploy to regen ssl/
+sudo chmod 644 /opt/kong/ssl/kong-proxy.crt /opt/kong/ssl/kong-proxy.key
+cd /opt/kong && sudo docker compose up -d
+docker compose ps          # kong -> Up (healthy)
 ```
-`pca-deploy.sh` creates `ssl/kong-proxy.{crt,key}` automatically when absent.
+`pca-deploy.sh` sets these perms automatically (and re-asserts them on re-run); a
+manual `chmod` is only needed on an install made before this fix. If the cert is
+missing entirely, re-running `pca-deploy.sh` regenerates `ssl/kong-proxy.{crt,key}`.
+Confirm the real cause first: `docker logs --tail 30 kong`.
 
 ### Admin locked out (too many failed logins) or forgot password
 After 5 failed password attempts an account is locked for 15 minutes. Recover

@@ -50,11 +50,25 @@ die()  { printf '%s  ✘%s  %s\n' "$C_RED" "$C_RST" "$*" >&2; exit 1; }
 # Kong proxy serves HTTPS on :8443 using a default cert. IP-based clients send no
 # SNI, so this self-signed cert (SAN = the box IP) is what they receive. Generated
 # locally with openssl — no internet, air-gap safe. Idempotent: skips if present.
+# Make the cert readable by the NON-root kong container user (uid/gid 1001 in
+# kong:3.9). The cert is created by root; a 600 key is unreadable by kong, so Kong
+# fails to load TLS and the container never becomes healthy. Prefer group-read by
+# the kong gid; fall back to world-read if that gid is unavailable.
+_fix_cert_perms() {
+  local key="$1" crt="$2"
+  if chown root:1001 "$key" "$crt" 2>/dev/null; then
+    chmod 640 "$key"; chmod 644 "$crt"
+  else
+    chmod 644 "$key" "$crt"
+  fi
+}
+
 ensure_proxy_cert() {
   local dir="$1/ssl"
   local crt="$dir/kong-proxy.crt" key="$dir/kong-proxy.key"
   if [[ -f "$crt" && -f "$key" ]]; then
     ok "Proxy TLS cert already present ($(openssl x509 -in "$crt" -noout -ext subjectAltName 2>/dev/null | tr -d ' ' | grep -oE 'IPAddress:[0-9.]+' | head -1))"
+    _fix_cert_perms "$key" "$crt"   # re-assert perms (repairs an old root-only 600 cert)
     return 0
   fi
   # IP that clients will use to reach :8443. MUST match how clients connect.
@@ -71,12 +85,13 @@ ensure_proxy_cert() {
   fi
   log "Generating self-signed proxy TLS cert for $ip (:8443 HTTPS) ..."
   mkdir -p "$dir"
+  chmod 755 "$dir"
   openssl req -x509 -nodes -newkey rsa:2048 \
     -keyout "$key" -out "$crt" -days 3650 \
     -subj "/CN=$ip/O=SEHC AI Gateway" \
     -addext "subjectAltName=IP:$ip,IP:127.0.0.1" >/dev/null 2>&1 \
     || die "openssl proxy cert generation failed"
-  chmod 600 "$key"
+  _fix_cert_perms "$key" "$crt"
   ok "Proxy TLS cert created (SAN IP:$ip)"
 }
 

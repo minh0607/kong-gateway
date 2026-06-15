@@ -60,6 +60,11 @@ Security hardening, full monitoring + alerting, and a documentation refresh.
 - `build-release.sh` excludes `monitoring-preview/` from the PCA bundle.
 
 ### Fixed
+- Proxy TLS cert unreadable by Kong on a normal filesystem: the cert key was
+  created `600` and root-owned, but Kong runs as a non-root user (uid/gid 1001),
+  so it could not load TLS and the container never became healthy ("dependency
+  failed to start: container kong is unhealthy"). `pca-deploy.sh` now sets
+  group/world-readable perms and re-asserts them on re-run.
 - Stale documentation referencing the retired `pca-upgrade.sh` script (unified
   into `pca-deploy.sh`).
 
