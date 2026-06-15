@@ -1,301 +1,247 @@
 # SEHC AI Gateway — Deployment Runbook
 
-Kong OSS 3.9 · nginx auth proxy · User Management Portal
+Kong OSS 3.9 · PostgreSQL 15 · nginx auth proxy · User Management Portal
+
+This runbook covers installing and upgrading the gateway. For **monitoring**
+(Zabbix / Grafana / alerting) see **[MONITORING.md](MONITORING.md)**.
 
 ---
 
-## Pre-Upgrade Checklist
+## Which script do I use?
 
-Before every upgrade, confirm all five:
+| Script | Purpose | Environment |
+|---|---|---|
+| **`pca-deploy.sh`** | **One-shot install OR upgrade**, auto-detects which. Self-contained, no internet. | **PCA / production (air-gapped)** — recommended |
+| `deploy.sh` | First install only (idempotent). | DEV / manual bring-up |
+| `upgrade.sh` | Upgrade in place: `--tarball-only` (air-gap) or git-pull (DEV). | DEV, or manual PCA |
 
-- [ ] A recent backup of `./data/` exists (upgrade.sh creates one automatically).
-- [ ] You have reviewed `git log HEAD..origin/master --oneline` and understand what's changing.
-- [ ] You are in a maintenance window (user sessions will briefly drop during container restarts).
-- [ ] `docker compose ps` shows all services healthy before you start.
-- [ ] You have the admin password stored somewhere safe (not in your terminal history).
+> **For production on PCA, use `pca-deploy.sh` and nothing else.** It handles fresh
+> installs and upgrades with the same command, generates the proxy TLS cert,
+> enables metrics, takes backups, and supports rollback. The other two scripts are
+> the DEV-side / manual building blocks.
 
 ---
 
-## First Install (air-gapped / with image tarballs)
+## Production deploy on PCA (air-gapped) — `pca-deploy.sh`
 
-### Prerequisites
+### What to bring
 
-- Docker + Docker Compose v2 on the target host.
-- The release tarball: `kong-deploy-v<VERSION>.tar.gz`.
-- Kong base images (`kong:3.9`, `postgres:15-alpine`, `nginx:alpine`) already loaded into Docker. These come from the original `kong-offline-package.tar.gz` and are NOT re-shipped in each release — they are stable across versions.
-- The `kong-usermgmt` image **is** bundled inside the release tarball at `images/kong-usermgmt.tar`; `deploy.sh` loads it automatically. No internet build required.
+Build the release on DEV (`bash scripts/build-release.sh`), then copy the
+**single bundle** (2 files) to PCA via USB / file share / jumpbox:
 
-### Steps
+```
+release/kong-pca-bundle-v<X.Y.Z>.tar.gz
+release/kong-pca-bundle-v<X.Y.Z>.sha256.txt
+```
+
+The bundle is self-contained: release tarball, `pca-deploy.sh`, base image tars
+(`kong:3.9`, `postgres:15-alpine`, `nginx:alpine`), the `kong-usermgmt` image,
+and docs. No internet or git needed on PCA.
+
+### Run it
 
 ```bash
-# 1. Copy the release tarball to the PCA box, then:
-tar xzf kong-deploy-v1.0.1.tar.gz
-cd kong-deploy-v1.0.1/
-
-# 2. Run the install script
-chmod +x deploy.sh
-./deploy.sh
+sha256sum -c kong-pca-bundle-v<X.Y.Z>.sha256.txt     # must say OK
+tar xzf kong-pca-bundle-v<X.Y.Z>.tar.gz
+cd v<X.Y.Z>
+sudo ./pca-deploy.sh kong-deploy-v<X.Y.Z>.tar.gz --cert-ip <PCA_IP>
 ```
 
-`deploy.sh` will:
+`pca-deploy.sh` auto-detects the mode:
 
-1. Load the bundled `images/kong-usermgmt.tar` into Docker (single image, ~25 MB).
-2. Generate `.env` with random `SESSION_SECRET` and `KONG_PG_PASSWORD`.
-3. Prompt for an SMTP relay hostname (or accept the default `mail.internal`).
-4. Prompt for an admin password (auto-generates one if left blank).
-5. Create `nginx/.htpasswd` for the `kong` admin user. If the host lacks the `htpasswd` binary, the just-loaded `kong-usermgmt:latest` image is used as a fallback (no internet pull).
-6. Skip `docker compose build` because the pre-built image is already loaded.
-7. Start the full stack with `docker compose up -d`.
-8. Wait for `kong-usermgmt /healthz`.
-9. Print the admin password and access URLs.
+- **FRESH** (no `kong` container): creates the install dir (default `/opt/kong`),
+  generates `.env` (random `SESSION_SECRET`, `KONG_PG_PASSWORD`), a random admin
+  password, and `nginx/.htpasswd`, then brings the whole stack up.
+- **UPGRADE** (existing `kong` container): snapshots config + Postgres (`pg_dump`)
+  to `<install>/backups/pre-upgrade-<UTC>/`, extracts the new bundle (preserving
+  `.env` and `nginx/.htpasswd`), loads the new image, and recreates services.
 
-**Save the printed admin password — it is shown once.**
+In both modes it also: generates the **proxy TLS cert** for `:8443` (self-signed,
+SAN = `--cert-ip`, auto-detected if omitted), enables the **Prometheus plugin**
+(metrics on `:8100`), health-checks, and prints a summary.
 
-### Post-install
+| Flag | Meaning |
+|---|---|
+| `--cert-ip <ip>` | IP clients use to reach `:8443`; sets the TLS cert SAN. Omit → auto-detect (verify on multi-NIC/Docker hosts). |
+| `--install-dir <dir>` | Fresh-install target (default `/opt/kong`). |
+| `--rollback` | Restore the most recent pre-upgrade backup. |
 
-- Kong Manager GUI:  `http://<host>:8002/`  (admin-only since v1.0.3)
-- User Mgmt Portal:  `http://<host>:8888/`
-- Kong Proxy (HTTP): `http://<host>:8000/`
-- Kong Proxy (HTTPS):`https://<host>:8443/` (self-signed IP cert, auto-generated)
-- Metrics (Status API): `http://<host>:8100/metrics`
+> **First install only:** the admin password is printed **once** (also written to
+> `/opt/kong/.first-install-admin-password.txt`, chmod 600). Save it.
 
-Configure SMTP via the **SMTP Settings** card in the User Mgmt Portal if you skipped it during install.
-
-### Monitoring
-
-Metrics and the Prometheus plugin are enabled automatically by the deploy script.
-To wire Zabbix + Grafana (or the self-contained Prometheus/Loki/Grafana stack) and
-alerting, see **[MONITORING.md](MONITORING.md)**.
-
----
-
-## Upgrade
-
-### Air-gapped / PCA upgrade — one-shot script (recommended for production)
-
-Copy three files to the PCA box (USB, file share, jumpbox — whatever your transfer mechanism is):
-
-```
-kong-deploy-vX.Y.Z.tar.gz
-kong-deploy-vX.Y.Z.sha256.txt
-pca-deploy.sh
-```
-
-Then run a single command on PCA:
+### Verify
 
 ```bash
-sudo ./pca-deploy.sh kong-deploy-vX.Y.Z.tar.gz
+docker compose ps                                           # 4 services Up/healthy
+curl -s http://localhost:8002/auth/login | grep 'SEHC AI GATEWAY'
+curl -s http://localhost:8100/metrics | grep -c '^kong_'    # > 0
+curl -k -s -o /dev/null -w '%{http_code}\n' https://localhost:8443/   # TLS responds
 ```
 
-That's it. The script handles everything:
-
-1. Verifies the tarball SHA256.
-2. Auto-detects the existing Kong install directory (`docker inspect kong`).
-3. Snapshots config + Postgres data to `<install>/backups/pre-upgrade-<UTC>/`.
-4. Extracts the new bundle (preserving `.env`, `nginx/.htpasswd`).
-5. Creates `.env` with `KONG_PG_PASSWORD=kong_pass` if missing (the v1.0.0→v1.0.1 migration).
-6. Runs `upgrade.sh --tarball-only` under the hood.
-7. Health-checks the result and prints next-step guidance.
-
-If anything goes wrong:
+### Rollback
 
 ```bash
 sudo ./pca-deploy.sh --rollback
 ```
 
-restores the latest backup (config + .env + Postgres volume).
-
-### Manual upgrade — if you don't want the wrapper
-
-If you prefer to drive each step yourself, this is what `pca-deploy.sh` is doing:
-
-```bash
-# 1. Copy the new release tarball to the PCA box, then:
-cd /opt/kong          # or wherever the current install lives
-
-# 2. Overwrite code files from the new tarball (data/ and .env are excluded)
-tar xzf /tmp/kong-deploy-v1.0.1.tar.gz --strip-components=1
-
-# 3. Run upgrade in tarball-only mode (no git required)
-chmod +x upgrade.sh
-./upgrade.sh --tarball-only
-```
-
-`upgrade.sh --tarball-only` will:
-
-1. Snapshot `./data/` to `./backups/<UTC-timestamp>/data.tar.gz`.
-2. Load `images/kong-usermgmt.tar` if present (pre-built at release time — no internet needed).
-3. Force-recreate `kong-usermgmt` and restart `kong-auth-proxy`.
-4. Run `docker compose up -d` to pick up any compose changes.
-5. Wait for `/healthz`.
-6. Print a summary.
-
-### Git-pull upgrade (DEV / internet-connected environments)
-
-```bash
-cd /opt/kong
-./upgrade.sh
-```
-
-`upgrade.sh` (no flags) will:
-
-1. Snapshot `./data/` to `./backups/<UTC-timestamp>/data.tar.gz`.
-2. Guard against uncommitted local changes (exits if any are found).
-3. Show incoming commits (`git log HEAD..origin/master`).
-4. Ask for confirmation.
-5. Pull with `--ff-only` (refuses merge/rebase).
-6. Detect which services are affected by changed files and rebuild/restart only those.
-7. Wait for `/healthz`.
-8. Print a summary of what was rebuilt and where the backup is.
-
-### Confirm the upgrade
-
-```bash
-# Health check
-curl -sf http://localhost:8888/healthz && echo OK
-
-# Log in to Kong Manager at http://<host>:8002/
-# Verify user list is intact at http://<host>:8888/users
-```
-
-### Breaking change — KONG_PG_PASSWORD (v1.0.1 upgrade path)
-
-v1.0.1 removes the hardcoded `kong_pass` database password from `docker-compose.yml`
-and replaces it with `${KONG_PG_PASSWORD:?must be set}`.
-
-**If upgrading from a pre-v1.0.1 install**, your existing Postgres volume already has
-the password `kong_pass`. You must preserve that value — **do not** let deploy.sh
-generate a new random password, which would break database connectivity.
-
-Set `KONG_PG_PASSWORD` manually in your `.env` before running upgrade.sh:
-
-```bash
-echo 'KONG_PG_PASSWORD=kong_pass' >> .env
-```
-
-Then run:
-
-```bash
-./upgrade.sh --tarball-only
-```
-
-Only change `KONG_PG_PASSWORD` to a new value if you also intend to destroy and
-recreate the Postgres volume (`docker compose down -v`), which **destroys all Kong
-route/service/plugin data**. Restore from a Kong deck backup if you do this.
+Restores the latest `<install>/backups/pre-upgrade-*/` automatically: config
+files, `.env`, and the Postgres volume. You're prompted before anything changes.
 
 ---
 
-## Rollback
+## DEV / manual
 
-Use this when an upgrade breaks the service and you need to revert fast.
+### Fresh install — `deploy.sh`
+
+Run from the project root after extracting a release tarball (or in the dev repo):
 
 ```bash
-# 1. Stop the stack
-docker compose down
-
-# 2. Restore data from the backup written by upgrade.sh
-BACKUP_TS="20260101T120000Z"   # replace with actual timestamp
-tar xzf ./backups/${BACKUP_TS}/data.tar.gz
-
-# 3. Reset code to the previous version tag or commit
-git reset --hard <previous-tag-or-sha>
-
-# 4. Rebuild and restart
-docker compose build kong-usermgmt
-docker compose up -d
-
-# 5. Verify
-curl -sf http://localhost:8888/healthz && echo OK
+chmod +x deploy.sh
+./deploy.sh                       # idempotent; refuses to run over a non-empty ./data/
+#   --reset-env        regenerate .env
+#   --reset-htpasswd   recreate nginx/.htpasswd
 ```
+
+It loads the bundled `kong-usermgmt` image, generates `.env` + admin password +
+`nginx/.htpasswd`, and starts the stack with `docker compose up -d`.
+
+### Upgrade — `upgrade.sh`
+
+```bash
+./upgrade.sh                  # git-pull mode (DEV / internet): fetch, show incoming
+                              # commits, confirm, --ff-only pull, rebuild affected svcs
+./upgrade.sh --tarball-only   # air-gap: extract new tarball over the install first,
+                              # then this rebuilds kong-usermgmt + restarts auth-proxy
+```
+
+`upgrade.sh` always snapshots `./data/` to `./backups/<UTC>/data.tar.gz` first and
+never touches `.env` or `nginx/.htpasswd`.
 
 ---
 
-## What's Preserved Across Upgrades
+## Ports
+
+| Port | Service | Exposed to |
+|---|---|---|
+| `8000` | Kong proxy (HTTP) | API clients |
+| `8443` | Kong proxy (HTTPS, self-signed IP cert) | API clients needing TLS |
+| `8001` | Kong Admin API (HTTP) | internal |
+| `8100` | Status API `/status` + `/metrics` | monitoring host (Zabbix / Prometheus) |
+| `8002` | Kong Manager UI (**admin-only** since v1.0.3) | admins |
+| `8888` | User Management Portal | admins |
+
+---
+
+## What's preserved across upgrades
 
 | Artifact | Location | Preserved? |
 |---|---|---|
-| Environment secrets | `.env` | Yes — never overwritten by upgrade.sh |
+| Environment secrets | `.env` | Yes — never overwritten |
 | Admin auth | `nginx/.htpasswd` | Yes — never overwritten |
-| User accounts & sessions | `./data/users.json`, `./data/*.json` | Yes — bind-mounted host dir |
-| Audit logs | `./data/audit/` | Yes — bind-mounted host dir |
-| Postgres data | `kong_pg_data` Docker volume | Yes — Docker managed volume |
+| User accounts, roles, sessions | `./data/users.json`, `./data/*.json` | Yes — bind-mounted |
+| Audit logs | `./data/audit/` | Yes — bind-mounted |
+| Postgres data (routes/services/plugins/consumers) | `kong_pg_data` volume | Yes — Docker volume |
 | SMTP settings | `./data/smtp.json` | Yes — bind-mounted |
+| Proxy TLS cert | `./ssl/` | Yes — kept if present; regenerated if absent |
+| Prometheus plugin | Postgres | Yes — persists in DB |
 
-## What Gets Replaced
+## What gets replaced
 
 | Artifact | What happens |
 |---|---|
-| Python app source | Replaced by new tarball, image rebuilt |
-| `nginx/default.conf` | Replaced; `kong-auth-proxy` restarted |
-| `nginx/portal.html` | Replaced; `kong-auth-proxy` restarted |
+| Python app source | New image loaded from the bundle |
+| `nginx/default.conf`, `nginx/portal.html` | Replaced; `kong-auth-proxy` recreated |
 | `docker-compose.yml` | Replaced; `docker compose up -d` re-evaluates |
-| Static assets | Replaced inside rebuilt image |
 
 ---
 
-## Common Errors and Recovery
+## Key secrets / invariants
 
-### Health check fails after upgrade
+- **`KONG_PG_PASSWORD` must match the existing Postgres volume.** Legacy installs
+  use `kong_pass`; `pca-deploy.sh` preserves/creates this automatically. Only
+  change it if you also destroy and recreate the volume (`docker compose down -v`),
+  which **wipes all Kong route/service/plugin data**.
+- Never commit `.env`, `nginx/.htpasswd`, `data/`, or `ssl/` (all gitignored).
 
+---
+
+## Common errors and recovery
+
+### `KONG_PG_PASSWORD ... must be set`
+`.env` is missing the line:
 ```bash
-docker compose logs kong-usermgmt
-# Look for Python tracebacks, missing env vars, or file permission errors.
-docker compose restart kong-usermgmt
-```
-
-### Database is down / kong-bootstrap fails
-
-```bash
-docker compose logs kong-database
-# If the volume is corrupt:
-docker compose down -v   # WARNING: destroys postgres data
+cd /opt/kong
+grep -q '^KONG_PG_PASSWORD=' .env || echo 'KONG_PG_PASSWORD=kong_pass' | sudo tee -a .env
 docker compose up -d
 ```
 
-Restore Kong routes/services from a Kong deck backup if you have one.
-
-### Port conflict (8000, 8001, 8002, 8888 already in use)
-
+### `kong-database` unhealthy after upgrade
+Password mismatch with the existing volume:
 ```bash
-ss -tlnp | grep -E '800[012]|8888'
-# Stop the conflicting process, or edit docker-compose.yml ports before starting.
+grep KONG_PG_PASSWORD /opt/kong/.env   # must be exactly: KONG_PG_PASSWORD=kong_pass
 ```
 
-### nginx returns 401 for all requests
-
+### Kong won't start — TLS cert path
+If `KONG_SSL_CERT` points at a missing file, regenerate:
 ```bash
-# Verify .htpasswd is readable
-ls -l nginx/.htpasswd
-docker compose restart kong-auth-proxy
+cd /opt/kong && sudo ./pca-deploy.sh --rollback   # or re-run deploy to regen ssl/
+```
+`pca-deploy.sh` creates `ssl/kong-proxy.{crt,key}` automatically when absent.
+
+### A `user`-role account is locked out of Kong Manager (403)
+Expected since v1.0.3 (admin-only console). Promote them:
+```bash
+docker exec kong-usermgmt python3 -c "import json,datetime; p='/data/users.json'; \
+db=json.load(open(p)); db['users']['USERNAME']['role']='admin'; json.dump(db,open(p,'w'),indent=2)"
+```
+
+### Health check fails / can't reach `http://localhost:8002/`
+```bash
+docker compose logs --tail 50 kong-usermgmt
+docker compose logs --tail 50 kong-auth-proxy
+```
+If clearly broken, roll back: `sudo ./pca-deploy.sh --rollback`.
+
+### Port conflict (8000/8001/8002/8100/8443/8888)
+```bash
+ss -tlnp | grep -E '800[012]|8100|8443|8888'
 ```
 
 ### MFA emails not sending
-
-Check SMTP settings via the admin GUI. Verify the relay host is reachable:
-
+Check SMTP via the admin GUI; verify the relay is reachable:
 ```bash
 docker exec kong-usermgmt nc -zv "$SMTP_HOST" 587
 ```
 
 ---
 
-## Directory Reference
+## Directory reference
 
 ```
-/opt/kong/              ← production install root (DEV: /DATA/kong)
-├── .env                ← secrets, auto-generated, never in git
-├── deploy.sh           ← first-install
-├── upgrade.sh          ← in-place upgrade
+/opt/kong/                ← production install root (DEV: /DATA/kong)
+├── .env                  ← secrets, auto-generated, never in git
+├── pca-deploy.sh         ← PCA one-shot install/upgrade/rollback
+├── deploy.sh             ← DEV/manual first-install
+├── upgrade.sh            ← DEV/manual upgrade
 ├── docker-compose.yml
 ├── nginx/
-│   ├── .htpasswd       ← basic-auth credentials, never in git
-│   └── default.conf
-├── usermgmt/           ← Python user management app
-├── data/               ← runtime state, bind-mounted, never in git
-│   ├── users.json
+│   ├── .htpasswd         ← basic-auth creds, never in git
+│   ├── default.conf
+│   └── portal.html
+├── ssl/                  ← proxy TLS cert (per-box, never in git)
+├── usermgmt/             ← Python user-management app
+├── zabbix/               ← Zabbix 7.0 monitoring template + README
+├── docs/                 ← DEPLOY.md, MONITORING.md
+├── data/                 ← runtime state, bind-mounted, never in git
+│   ├── users.json        ← accounts + roles
 │   ├── audit/
 │   └── smtp.json
-└── backups/            ← created by upgrade.sh, never in git
-    └── 20260101T120000Z/
-        └── data.tar.gz
+└── backups/              ← pre-upgrade snapshots, never in git
+    └── pre-upgrade-<UTC>/
+        ├── config.tar.gz
+        ├── dot-env.bak
+        └── pg_data.sql.gz
 ```
+
+> `monitoring-preview/` (DEV-only Prometheus + Loki + Grafana stack) lives in the
+> repo but is **excluded** from the PCA release bundle. See [MONITORING.md](MONITORING.md).
