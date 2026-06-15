@@ -43,6 +43,10 @@ Security hardening, full monitoring + alerting, and a documentation refresh.
   login required — so a locked-out or forgotten-password admin can be recovered
   even though the console is admin-only. `--admin` ensures the admin role;
   `--unlock-only` just lifts the 15-minute lock.
+- **Client cert-trust scripts** (`client/`) — `trust-kong-cert.sh` (Linux:
+  Debian/Ubuntu + RHEL/Fedora) and `trust-kong-cert.ps1` (Windows) so client
+  machines trust the self-signed proxy cert and call `:8443` over HTTPS without
+  `-k` / "allow self-signed".
 - **Documentation** — `docs/MONITORING.md` (full monitoring deployment guide,
   Zabbix and Prometheus/Grafana paths).
 
