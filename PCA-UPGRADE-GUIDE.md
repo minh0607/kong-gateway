@@ -214,6 +214,17 @@ You forgot `sudo`:
 sudo ./pca-deploy.sh kong-deploy-v1.0.3.tar.gz
 ```
 
+### Admin account locked out / forgot password
+
+After 5 failed logins an account is locked for 15 minutes. Recover without logging
+in (works even when `kong` is the only admin):
+
+```bash
+sudo ./reset-password.sh kong                 # reset password + clear lock
+sudo ./reset-password.sh kong --unlock-only   # just lift the lock
+sudo ./reset-password.sh backupadmin --admin  # make a spare admin so it can't happen again
+```
+
 ### Health check fails / can't reach `http://localhost:8002/`
 
 Check container logs:

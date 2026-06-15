@@ -188,11 +188,23 @@ cd /opt/kong && sudo ./pca-deploy.sh --rollback   # or re-run deploy to regen ss
 ```
 `pca-deploy.sh` creates `ssl/kong-proxy.{crt,key}` automatically when absent.
 
-### A `user`-role account is locked out of Kong Manager (403)
-Expected since v1.0.3 (admin-only console). Promote them:
+### Admin locked out (too many failed logins) or forgot password
+After 5 failed password attempts an account is locked for 15 minutes. Recover
+without logging in using the bundled tool (runs via `docker exec`, no console
+access needed):
 ```bash
-docker exec kong-usermgmt python3 -c "import json,datetime; p='/data/users.json'; \
-db=json.load(open(p)); db['users']['USERNAME']['role']='admin'; json.dump(db,open(p,'w'),indent=2)"
+sudo ./reset-password.sh kong                 # reset password + clear the lock (prompts)
+sudo ./reset-password.sh kong --unlock-only   # just lift the 15-min lock, keep password
+```
+Tip: keep a **second admin** so one lockout never blocks the console:
+```bash
+sudo ./reset-password.sh backupadmin --admin  # create/repair a backup admin
+```
+
+### A `user`-role account is locked out of Kong Manager (403)
+Expected since v1.0.3 (admin-only console). Promote them to admin:
+```bash
+sudo ./reset-password.sh USERNAME --admin     # ensures role=admin (and resets password)
 ```
 
 ### Health check fails / can't reach `http://localhost:8002/`
@@ -223,6 +235,7 @@ docker exec kong-usermgmt nc -zv "$SMTP_HOST" 587
 ├── pca-deploy.sh         ← PCA one-shot install/upgrade/rollback
 ├── deploy.sh             ← DEV/manual first-install
 ├── upgrade.sh            ← DEV/manual upgrade
+├── reset-password.sh     ← admin recovery: reset password + unlock + promote
 ├── docker-compose.yml
 ├── nginx/
 │   ├── .htpasswd         ← basic-auth creds, never in git
