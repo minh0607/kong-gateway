@@ -35,6 +35,11 @@ Security hardening, full monitoring + alerting, and a documentation refresh.
   routed to a contact point with **email + webhook** integrations; verified
   end-to-end on DEV. Zabbix alerting (Email + Webhook media + trigger action)
   documented in `zabbix/README.md`.
+- **`reset-password.sh`** — admin recovery tool. Resets a user's password and
+  clears their lockout (and any IP locks) via `docker exec`, with no console
+  login required — so a locked-out or forgotten-password admin can be recovered
+  even though the console is admin-only. `--admin` ensures the admin role;
+  `--unlock-only` just lifts the 15-minute lock.
 - **Documentation** — `docs/MONITORING.md` (full monitoring deployment guide,
   Zabbix and Prometheus/Grafana paths).
 
