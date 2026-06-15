@@ -30,7 +30,10 @@ Security hardening, full monitoring + alerting, and a documentation refresh.
   Grafana, with an 18-panel dashboard: health, request/error rates, latency
   (p95/p99), bandwidth, **consumption breakdown and ranking by route / service /
   consumer**, and **error + audit log panels** (Loki + Promtail, scoped to the
-  Kong stack). Excluded from the PCA release bundle (DEV-only).
+  Kong stack). Ships as its own **air-gapped bundle**
+  (`scripts/build-monitoring-bundle.sh` → `kong-monitoring-bundle-v*.tar.gz`:
+  config + 6 Docker images + `deploy-monitoring.sh`), separate from the lean
+  gateway bundle, so it can run on PCA.
 - **Alerting** — Grafana-managed alert rules (datastore down, Kong down, high 5xx)
   routed to a contact point with **email + webhook** integrations; verified
   end-to-end on DEV. Zabbix alerting (Email + Webhook media + trigger action)
