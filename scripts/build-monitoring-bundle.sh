@@ -25,6 +25,7 @@ IMAGES=(
   grafana/loki:latest
   grafana/promtail:3.5.1
   grafana/grafana:latest
+  grafana/grafana-image-renderer:latest
   axllent/mailpit:latest
   mendhak/http-https-echo:latest
 )
