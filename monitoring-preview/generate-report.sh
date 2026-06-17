@@ -54,30 +54,29 @@ for uid in "${UIDS[@]}"; do
 done
 [[ ${#PAGES[@]} -gt 0 ]] || { echo "no pages rendered — check Grafana/renderer"; exit 1; }
 
-# combine PNG pages -> one PDF (try whatever is available)
-combine() {
-  if command -v img2pdf >/dev/null 2>&1; then img2pdf "$@" -o "$OUT"; return; fi
-  if python3 -c 'import PIL' 2>/dev/null; then
-    python3 - "$OUT" "$@" <<'PY'
+# combine rendered dashboard PNGs -> one A4-PORTRAIT PDF (scaled to width, paginated)
+python3 -c 'import PIL' 2>/dev/null || {
+  echo "Need python3 Pillow to build the A4 PDF:  pip install Pillow" >&2
+  cp "${PAGES[@]}" . ; echo "Left the rendered PNGs in the current dir." >&2; exit 1; }
+
+python3 - "$OUT" "${PAGES[@]}" <<'PY'
 import sys
 from PIL import Image
 out, paths = sys.argv[1], sys.argv[2:]
-imgs = [Image.open(p).convert("RGB") for p in paths]
-imgs[0].save(out, save_all=True, append_images=imgs[1:])
+A4W, A4H, M = 1240, 1754, 48          # A4 portrait @150dpi, 48px (~8mm) margin
+cw, ch = A4W - 2*M, A4H - 2*M
+pages = []
+for p in paths:
+    im = Image.open(p).convert("RGB")
+    im = im.resize((cw, max(1, round(im.height * cw / im.width))), Image.LANCZOS)
+    y = 0
+    while y < im.height:
+        pg = Image.new("RGB", (A4W, A4H), "white")
+        pg.paste(im.crop((0, y, cw, min(y + ch, im.height))), (M, M))
+        pages.append(pg); y += ch
+pages[0].save(out, "PDF", resolution=150.0, save_all=True, append_images=pages[1:])
+print(f"PAGES={len(pages)}")
 PY
-    return
-  fi
-  if command -v convert >/dev/null 2>&1; then convert "$@" "$OUT"; return; fi
-  return 1
-}
 
-if combine "${PAGES[@]}"; then
-  echo ""
-  echo "Report: $OUT  ($(du -h "$OUT" | cut -f1), ${#PAGES[@]} page(s))"
-else
-  cp "${PAGES[@]}" .
-  echo ""
-  echo "Rendered ${#PAGES[@]} PNG page(s) to the current dir, but no PNG->PDF tool found."
-  echo "Install one of: img2pdf | python3-Pillow | imagemagick, then combine:"
-  echo "   img2pdf page-*.png -o $OUT"
-fi
+echo ""
+echo "Report: $OUT  ($(du -h "$OUT" | cut -f1), A4 portrait, ${#PAGES[@]} dashboard(s))"
