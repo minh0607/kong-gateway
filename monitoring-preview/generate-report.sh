@@ -12,7 +12,7 @@
 # Options:
 #   --grafana URL   Grafana base URL. Default: http://admin:admin@localhost:3000
 #   --from / --to   Time range. Default: now-6h .. now
-#   --width / --height  Render size px. Default: 1500 x 2600
+#   --width / --height  Render size px. Default: 1500 x 2900
 #   --theme         light | dark. Default: light
 #   --out FILE      Output PDF. Default: kong-report-<date>.pdf
 #   <uid> ...       One or more dashboard UIDs (see the dashboard URL /d/<uid>/...)
@@ -20,7 +20,7 @@
 set -euo pipefail
 
 GRAFANA="http://admin:admin@localhost:3000"
-FROM="now-6h"; TO="now"; WIDTH=1500; HEIGHT=2600; THEME="light"; OUT=""
+FROM="now-6h"; TO="now"; WIDTH=1500; HEIGHT=2900; THEME="light"; OUT=""
 UIDS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
