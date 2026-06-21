@@ -7,3 +7,12 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ['kong:8100']
+
+  # vLLM model servers. Targets live in vllm-targets.yml — add/remove machines
+  # there and Prometheus picks them up automatically (no restart needed).
+  - job_name: vllm
+    metrics_path: /metrics
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/vllm-targets.yml
+        refresh_interval: 30s

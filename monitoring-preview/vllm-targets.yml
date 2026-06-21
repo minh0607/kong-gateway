@@ -1,0 +1,18 @@
+# vLLM model servers scraped by Prometheus (job: vllm).
+# ADD A MACHINE: add its "ip:port" to the targets list below. Optionally set a
+# friendly name via labels (shown in the dashboard instead of the raw IP).
+# Prometheus reloads this file automatically within ~30s — no restart needed.
+#
+# Example with two machines:
+#   - targets: ['10.0.0.11:8000', '10.0.0.12:8000']
+#     labels: { group: 'vllm' }
+#
+# Or per-machine friendly names (one block each):
+#   - targets: ['10.0.0.11:8000']
+#     labels: { node: 'vllm-01', group: 'vllm' }
+#   - targets: ['10.0.0.12:8000']
+#     labels: { node: 'vllm-02', group: 'vllm' }
+
+- targets: []
+  labels:
+    group: 'vllm'
