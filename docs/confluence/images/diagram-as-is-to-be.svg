@@ -1,80 +1,173 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1140 640" font-family="Segoe UI, Arial, sans-serif">
   <defs>
-    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#64748b"/>
     </marker>
-    <style>
-      .box{fill:#ffffff;stroke:#cbd5e1;stroke-width:1.5;rx:8;}
-      .lbl{font-size:14px;fill:#111827;text-anchor:middle;}
-      .sub{font-size:11px;fill:#6b7280;text-anchor:middle;}
-      .flow{stroke:#6b7280;stroke-width:1.8;fill:none;}
-      .fw{fill:#fee2e2;stroke:#ef4444;stroke-width:1.5;}
-      .kong{fill:#e6f7f5;stroke:#0f9d94;stroke-width:2.5;}
-      .old{fill:#eef2ff;stroke:#6366f1;stroke-width:2;}
-      .tag{font-size:22px;font-weight:700;text-anchor:middle;}
-    </style>
+    <linearGradient id="kg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16BDCA"/><stop offset="1" stop-color="#0B7C74"/>
+    </linearGradient>
+
+    <!-- Application: monitor + gear + app tiles -->
+    <symbol id="ico-app" viewBox="0 0 100 92">
+      <g transform="translate(6,0)">
+        <circle cx="20" cy="16" r="12" fill="#2f6fb0"/>
+        <circle cx="20" cy="16" r="5" fill="#eaf2fb"/>
+        <g stroke="#2f6fb0" stroke-width="3">
+          <line x1="20" y1="1" x2="20" y2="6"/><line x1="20" y1="26" x2="20" y2="31"/>
+          <line x1="5" y1="16" x2="10" y2="16"/><line x1="30" y1="16" x2="35" y2="16"/>
+          <line x1="9" y1="5" x2="12" y2="8"/><line x1="28" y1="24" x2="31" y2="27"/>
+          <line x1="31" y1="5" x2="28" y2="8"/><line x1="12" y1="24" x2="9" y2="27"/>
+        </g>
+      </g>
+      <rect x="8" y="22" width="84" height="54" rx="4" fill="#eef3f8" stroke="#334155" stroke-width="2.5"/>
+      <rect x="18" y="31" width="15" height="12" rx="2" fill="#f59e0b"/>
+      <rect x="42" y="31" width="15" height="12" rx="2" fill="#ef4444"/>
+      <rect x="66" y="31" width="15" height="12" rx="2" fill="#22c55e"/>
+      <rect x="18" y="50" width="15" height="12" rx="2" fill="#3b82f6"/>
+      <rect x="42" y="50" width="15" height="12" rx="2" fill="#a855f7"/>
+      <rect x="66" y="50" width="15" height="12" rx="2" fill="#14b8a6"/>
+      <rect x="44" y="76" width="12" height="8" fill="#334155"/>
+      <rect x="32" y="84" width="36" height="6" rx="2" fill="#334155"/>
+    </symbol>
+
+    <!-- Web: globe + refresh + server tower -->
+    <symbol id="ico-web" viewBox="0 0 92 100">
+      <circle cx="34" cy="34" r="26" fill="#d6ebfb" stroke="#3b82f6" stroke-width="2.5"/>
+      <ellipse cx="34" cy="34" rx="12" ry="26" fill="none" stroke="#3b82f6" stroke-width="1.6"/>
+      <line x1="8" y1="34" x2="60" y2="34" stroke="#3b82f6" stroke-width="1.6"/>
+      <line x1="13" y1="22" x2="55" y2="22" stroke="#3b82f6" stroke-width="1.2"/>
+      <line x1="13" y1="46" x2="55" y2="46" stroke="#3b82f6" stroke-width="1.2"/>
+      <path d="M12,50 A26,26 0 1 0 20,20" fill="none" stroke="#22c55e" stroke-width="3.2"/>
+      <path d="M20,14 l3,12 l-12,-3 z" fill="#22c55e"/>
+      <rect x="52" y="54" width="32" height="44" rx="3" fill="#e2e8f0" stroke="#334155" stroke-width="2"/>
+      <line x1="58" y1="63" x2="78" y2="63" stroke="#334155" stroke-width="1.6"/>
+      <line x1="58" y1="72" x2="78" y2="72" stroke="#334155" stroke-width="1.6"/>
+      <circle cx="62" cy="90" r="2.6" fill="#22c55e"/>
+    </symbol>
+
+    <!-- Firewall bricks -->
+    <symbol id="ico-fw" viewBox="0 0 72 56">
+      <rect x="0" y="0" width="72" height="56" rx="4" fill="#c0392b"/>
+      <g stroke="#ffffff" stroke-width="2.2">
+        <line x1="0" y1="14" x2="72" y2="14"/><line x1="0" y1="28" x2="72" y2="28"/><line x1="0" y1="42" x2="72" y2="42"/>
+        <line x1="24" y1="0" x2="24" y2="14"/><line x1="48" y1="0" x2="48" y2="14"/>
+        <line x1="12" y1="14" x2="12" y2="28"/><line x1="36" y1="14" x2="36" y2="28"/><line x1="60" y1="14" x2="60" y2="28"/>
+        <line x1="24" y1="28" x2="24" y2="42"/><line x1="48" y1="28" x2="48" y2="42"/>
+        <line x1="12" y1="42" x2="12" y2="56"/><line x1="36" y1="42" x2="36" y2="56"/><line x1="60" y1="42" x2="60" y2="56"/>
+      </g>
+    </symbol>
+
+    <!-- Web Gateway: globe with open door + arrow entering -->
+    <symbol id="ico-gw" viewBox="0 0 120 90">
+      <circle cx="42" cy="45" r="33" fill="#e0efff" stroke="#3b82f6" stroke-width="2.5"/>
+      <ellipse cx="42" cy="45" rx="15" ry="33" fill="none" stroke="#3b82f6" stroke-width="1.6"/>
+      <line x1="9" y1="45" x2="75" y2="45" stroke="#3b82f6" stroke-width="1.6"/>
+      <line x1="16" y1="30" x2="68" y2="30" stroke="#3b82f6" stroke-width="1.2"/>
+      <line x1="16" y1="60" x2="68" y2="60" stroke="#3b82f6" stroke-width="1.2"/>
+      <rect x="60" y="28" width="30" height="42" rx="2" fill="#ffffff" stroke="#1e40af" stroke-width="2.5"/>
+      <line x1="74" y1="28" x2="74" y2="70" stroke="#1e40af" stroke-width="2"/>
+      <path d="M112,49 H84" stroke="#1e40af" stroke-width="3"/>
+      <path d="M90,42 l-9,7 l9,7 z" fill="#1e40af"/>
+    </symbol>
+
+    <!-- Docker whale + ubuntu, dashed red box -->
+    <symbol id="ico-llm" viewBox="0 0 170 150">
+      <rect x="2" y="2" width="166" height="146" rx="10" fill="none" stroke="#e02424" stroke-width="2" stroke-dasharray="6 4"/>
+      <g transform="translate(26,26)" fill="#2496ED">
+        <rect x="10" y="8" width="15" height="13"/><rect x="27" y="8" width="15" height="13"/><rect x="44" y="8" width="15" height="13"/>
+        <rect x="27" y="-7" width="15" height="13"/>
+        <path d="M2,24 h74 c4,12 -6,26 -24,26 h-30 c-16,0 -22,-13 -22,-24 z"/>
+        <path d="M78,26 c7,-3 9,4 14,1 c-2,7 -9,7 -14,4 z"/>
+        <path d="M-2,52 c9,5 19,5 28,0" fill="none" stroke="#2496ED" stroke-width="3"/>
+      </g>
+      <g transform="translate(69,92)">
+        <circle cx="16" cy="16" r="17" fill="#E95420"/>
+        <circle cx="16" cy="16" r="4.4" fill="#ffffff"/>
+        <circle cx="31" cy="16" r="3.6" fill="#ffffff"/>
+        <circle cx="8.5" cy="27" r="3.6" fill="#ffffff"/>
+        <circle cx="8.5" cy="5" r="3.6" fill="#ffffff"/>
+        <g stroke="#ffffff" stroke-width="1.6">
+          <line x1="20" y1="16" x2="27" y2="16"/><line x1="14" y1="20" x2="10" y2="24"/><line x1="14" y1="12" x2="10" y2="8"/>
+        </g>
+      </g>
+    </symbol>
   </defs>
 
-  <rect x="0" y="0" width="960" height="520" fill="#f8fafc"/>
+  <rect x="0" y="0" width="1140" height="640" fill="#f8fafc"/>
 
-  <!-- AS IS row -->
-  <text x="70" y="60" class="tag" fill="#b91c1c">AS IS</text>
-  <rect class="box" x="150" y="30" width="120" height="60" rx="8"/>
-  <text class="lbl" x="210" y="55">Application</text>
-  <text class="sub" x="210" y="74">/ Web / Apps</text>
+  <!-- red gateway frame -->
+  <rect x="392" y="30" width="182" height="560" rx="10" fill="none" stroke="#e02424" stroke-width="3"/>
 
-  <rect class="fw" x="320" y="40" width="46" height="40" rx="5"/>
-  <text class="sub" x="343" y="100">firewall</text>
+  <!-- ============ AS IS (top) ============ -->
+  <use href="#ico-app" x="58" y="58" width="92" height="85"/>
+  <text x="104" y="160" font-size="14" fill="#111827" text-anchor="middle">Application</text>
+  <use href="#ico-web" x="60" y="172" width="88" height="96"/>
+  <text x="104" y="286" font-size="14" fill="#111827" text-anchor="middle">Web</text>
 
-  <rect class="box old" x="410" y="25" width="150" height="70" rx="8"/>
-  <text class="lbl" x="485" y="55">Web Gateway</text>
-  <text class="sub" x="485" y="74">(generic)</text>
+  <use href="#ico-fw" x="286" y="150" width="66" height="51"/>
+  <use href="#ico-gw" x="398" y="105" width="122" height="92"/>
+  <text x="459" y="214" font-size="15" fill="#111827" text-anchor="middle" font-weight="600">Web Gateway</text>
+  <use href="#ico-fw" x="620" y="150" width="66" height="51"/>
+  <use href="#ico-llm" x="712" y="78" width="168" height="148"/>
+  <text x="796" y="212" font-size="13" fill="#E95420" text-anchor="middle" font-weight="700">ubuntu</text>
+  <text x="796" y="230" font-size="12" fill="#111827" text-anchor="middle" font-weight="700">External LLM PC/Servers</text>
 
-  <rect class="fw" x="610" y="40" width="46" height="40" rx="5"/>
-  <text class="sub" x="633" y="100">firewall</text>
+  <path d="M150,116 H286" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <path d="M148,218 C210,218 240,180 286,178" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <path d="M352,172 C376,168 384,152 398,151" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <path d="M520,151 C560,151 596,168 620,172" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <path d="M686,172 C698,168 704,152 712,151" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
 
-  <rect class="box" x="700" y="25" width="180" height="70" rx="8"/>
-  <text class="lbl" x="790" y="52">Docker / Ubuntu</text>
-  <text class="sub" x="790" y="72">External LLM PC / Servers</text>
+  <text x="60" y="305" font-size="30" font-weight="800" fill="#b91c1c">AS IS</text>
 
-  <path class="flow" d="M270,60 H320" marker-end="url(#arr)"/>
-  <path class="flow" d="M366,60 H410" marker-end="url(#arr)"/>
-  <path class="flow" d="M560,60 H610" marker-end="url(#arr)"/>
-  <path class="flow" d="M656,60 H700" marker-end="url(#arr)"/>
+  <line x1="40" y1="325" x2="880" y2="325" stroke="#e2e8f0" stroke-width="1.5"/>
 
-  <line x1="40" y1="150" x2="920" y2="150" stroke="#e2e8f0" stroke-width="1.5"/>
+  <!-- ============ TO BE (bottom) ============ -->
+  <use href="#ico-app" x="58" y="360" width="92" height="85"/>
+  <text x="104" y="462" font-size="14" fill="#111827" text-anchor="middle">Application</text>
+  <use href="#ico-web" x="60" y="474" width="88" height="96"/>
+  <text x="104" y="588" font-size="14" fill="#111827" text-anchor="middle">Web</text>
 
-  <!-- TO BE row -->
-  <text x="70" y="300" class="tag" fill="#0f9d94">TO BE</text>
-  <rect class="box" x="150" y="270" width="120" height="60" rx="8"/>
-  <text class="lbl" x="210" y="295">Application</text>
-  <text class="sub" x="210" y="314">/ Web / Apps</text>
+  <use href="#ico-fw" x="286" y="452" width="66" height="51"/>
 
-  <rect class="fw" x="320" y="280" width="46" height="40" rx="5"/>
-  <text class="sub" x="343" y="340">firewall</text>
+  <!-- Kong mark + wordmark -->
+  <g transform="translate(414,405)">
+    <path d="M26,4 C14,4 6,14 6,26 C6,34 10,40 16,44 L12,54 L22,54 L26,46 C34,46 44,40 46,28 C48,14 38,4 26,4 Z" fill="url(#kg)"/>
+    <circle cx="20" cy="24" r="3.4" fill="#ffffff"/>
+    <path d="M30,20 C36,20 40,26 38,32" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"/>
+    <text x="58" y="40" font-size="30" font-weight="800" fill="#0B7C74" font-family="Segoe UI, Arial, sans-serif">Kong</text>
+  </g>
+  <text x="459" y="512" font-size="15" fill="#111827" text-anchor="middle" font-weight="600">Kong API Gateway</text>
 
-  <rect class="box kong" x="405" y="258" width="160" height="84" rx="8"/>
-  <text class="lbl" x="485" y="290" font-weight="700" fill="#0b6b64">Kong API</text>
-  <text class="lbl" x="485" y="310" font-weight="700" fill="#0b6b64">Gateway</text>
-  <text class="sub" x="485" y="330">auth · rate-limit · TLS · audit</text>
+  <use href="#ico-fw" x="620" y="452" width="66" height="51"/>
+  <use href="#ico-llm" x="712" y="380" width="168" height="148"/>
+  <text x="796" y="514" font-size="13" fill="#E95420" text-anchor="middle" font-weight="700">ubuntu</text>
+  <text x="796" y="532" font-size="12" fill="#111827" text-anchor="middle" font-weight="700">External LLM PC/Servers</text>
 
-  <rect class="fw" x="610" y="280" width="46" height="40" rx="5"/>
-  <text class="sub" x="633" y="340">firewall</text>
+  <path d="M150,418 H286" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <path d="M148,520 C210,520 240,482 286,480" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <path d="M352,474 C372,466 384,452 398,450" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <path d="M520,450 C560,452 596,470 620,474" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <path d="M686,474 C698,466 704,452 712,450" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
 
-  <rect class="box" x="700" y="270" width="180" height="70" rx="8"/>
-  <text class="lbl" x="790" y="297">Docker / Ubuntu</text>
-  <text class="sub" x="790" y="317">External LLM PC / Servers</text>
+  <text x="60" y="612" font-size="30" font-weight="800" fill="#b91c1c">TO BE</text>
 
-  <path class="flow" d="M270,300 H320" marker-end="url(#arr)"/>
-  <path class="flow" d="M366,300 H405" marker-end="url(#arr)"/>
-  <path class="flow" d="M565,300 H610" marker-end="url(#arr)"/>
-  <path class="flow" d="M656,300 H700" marker-end="url(#arr)"/>
-
-  <!-- goals -->
-  <rect x="150" y="380" width="730" height="115" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="170" y="405" font-size="14" font-weight="700" fill="#0b6b64">Improve Security</text>
-  <text x="170" y="428" font-size="12.5" fill="#374151">• Robust authentication &amp; authorization      • Rate limiting &amp; IP filtering</text>
-  <text x="170" y="450" font-size="12.5" fill="#374151">• SSL/TLS encryption                                    • Detailed audit logs &amp; traffic monitoring</text>
-  <text x="170" y="472" font-size="12.5" fill="#374151">• Bot / DDoS protection                                • Custom &amp; community plugins</text>
-  <text x="170" y="490" font-size="12.5" fill="#374151">• Centralized, consistent security management</text>
+  <!-- ============ Improve Security panel ============ -->
+  <text x="905" y="96" font-size="18" font-weight="800" fill="#0B7C74">Improve Security:</text>
+  <g font-size="12.5" fill="#374151">
+    <text x="905" y="126">❖ Implement robust authentication</text>
+    <text x="921" y="144">and authorization mechanisms.</text>
+    <text x="905" y="170">❖ Prevent abuse with rate limiting</text>
+    <text x="921" y="188">and IP filtering.</text>
+    <text x="905" y="214">❖ Ensure secure communication</text>
+    <text x="921" y="232">with SSL/TLS encryption.</text>
+    <text x="905" y="258">❖ Monitor and analyze traffic with</text>
+    <text x="921" y="276">detailed audit logs.</text>
+    <text x="905" y="302">❖ Protect against threats like bots</text>
+    <text x="921" y="320">and DDoS attacks.</text>
+    <text x="905" y="346">❖ Extend security with custom and</text>
+    <text x="921" y="364">community plugins.</text>
+    <text x="905" y="390">❖ Centralize security management</text>
+    <text x="921" y="408">for consistency and compliance.</text>
+  </g>
 </svg>
