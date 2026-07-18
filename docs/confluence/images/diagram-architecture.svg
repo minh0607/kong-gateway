@@ -56,7 +56,7 @@
   <!-- postgres -->
   <rect x="360" y="385" width="230" height="60" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
   <text class="lbl" x="475" y="410">kong-database</text>
-  <text class="sub" x="475" y="428">PostgreSQL 15 · volume pg_data</text>
+  <text class="sub" x="475" y="428">PostgreSQL 15 · :5432 · volume pg_data</text>
 
   <!-- upstreams -->
   <rect x="760" y="150" width="170" height="260" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4"/>
@@ -72,11 +72,16 @@
 
   <!-- flows -->
   <path class="flow" d="M190,140 H270" marker-end="url(#arr)"/>
-  <text class="sub" x="228" y="132">console</text>
+  <text class="sub" x="228" y="130">console</text>
+  <text class="port" x="228" y="118">:8002</text>
   <path class="flow" d="M190,175 C220,175 240,280 270,280" marker-end="url(#arr)"/>
   <text class="sub" x="214" y="250">API calls</text>
+  <text class="port" x="214" y="264">:8000 / :8443</text>
   <path class="flow" d="M360,175 V210" marker-end="url(#arr)"/>
+  <text class="port" x="395" y="197">→ :8001</text>
   <path class="flow" d="M475,350 V385" marker-end="url(#arr)"/>
+  <text class="port" x="503" y="371">:5432</text>
   <path class="flow" d="M680,280 H760" marker-end="url(#arr)"/>
-  <text class="sub" x="720" y="272">upstream</text>
+  <text class="sub" x="720" y="260">upstream</text>
+  <text class="port" x="720" y="274">:8000 / :11433</text>
 </svg>
