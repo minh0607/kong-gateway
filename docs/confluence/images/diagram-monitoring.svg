@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" font-family="Segoe UI, Arial, sans-serif">
   <defs>
     <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/>
@@ -7,52 +7,61 @@
       .lbl{font-size:13px;fill:#111827;text-anchor:middle;font-weight:600;}
       .sub{font-size:10.5px;fill:#6b7280;text-anchor:middle;}
       .flow{stroke:#6b7280;stroke-width:1.9;fill:none;}
-      .port{font-size:10.5px;fill:#0b6b64;text-anchor:middle;font-weight:700;}
+      .port{font-size:11px;fill:#0b6b64;text-anchor:middle;font-weight:700;}
+      .pill{fill:#ecfdf5;stroke:#0f9d94;stroke-width:1;}
     </style>
   </defs>
-  <rect x="0" y="0" width="960" height="440" fill="#f8fafc"/>
-  <text x="480" y="34" font-size="18" font-weight="700" fill="#0b6b64" text-anchor="middle">Monitoring data flow</text>
+  <rect x="0" y="0" width="960" height="460" fill="#f8fafc"/>
+  <image href="data:image/png;base64,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" x="24" y="14" width="122" height="30" opacity="0.95"/>
+  <text x="480" y="34" font-size="18" font-weight="700" fill="#0b6b64" text-anchor="middle">Monitoring data flow (ports)</text>
 
   <!-- sources -->
-  <rect x="40" y="90" width="200" height="90" rx="8" fill="#e6f7f5" stroke="#0f9d94" stroke-width="1.8"/>
-  <text class="lbl" x="140" y="120">Kong (Status API)</text>
-  <text class="port" x="140" y="140">:8100/metrics</text>
-  <text class="sub" x="140" y="160">Prometheus plugin</text>
+  <rect x="40" y="95" width="210" height="92" rx="8" fill="#e6f7f5" stroke="#0f9d94" stroke-width="1.8"/>
+  <text class="lbl" x="145" y="122">Kong — Status API</text>
+  <rect class="pill" x="95" y="132" width="100" height="20" rx="10"/>
+  <text class="port" x="145" y="146">:8100/metrics</text>
+  <text class="sub" x="145" y="172">Prometheus plugin (read-only)</text>
 
-  <rect x="40" y="230" width="200" height="120" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
-  <text class="lbl" x="140" y="258">vLLM servers</text>
-  <text class="port" x="140" y="278">:8000/metrics</text>
-  <text class="sub" x="140" y="298">prompt_tokens_total</text>
-  <text class="sub" x="140" y="314">generation_tokens_total</text>
-  <text class="sub" x="140" y="334">(~10 machines)</text>
+  <rect x="40" y="235" width="210" height="120" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text class="lbl" x="145" y="262">vLLM servers</text>
+  <rect class="pill" x="95" y="272" width="100" height="20" rx="10"/>
+  <text class="port" x="145" y="286">:8000/metrics</text>
+  <text class="sub" x="145" y="308">prompt / generation _tokens_total</text>
+  <text class="sub" x="145" y="326">(~10 machines · file_sd)</text>
 
   <!-- collectors -->
-  <rect x="360" y="95" width="200" height="80" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.8"/>
-  <text class="lbl" x="460" y="125">Zabbix</text>
-  <text class="sub" x="460" y="145">HTTP-agent · Prometheus</text>
-  <text class="sub" x="460" y="161">preprocessing · LLD · triggers</text>
+  <rect x="365" y="88" width="210" height="92" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.8"/>
+  <text class="lbl" x="470" y="114">Zabbix</text>
+  <text class="sub" x="470" y="133">HTTP-agent · Prometheus preproc.</text>
+  <text class="sub" x="470" y="149">per-route LLD · triggers</text>
+  <text class="port" x="470" y="169">pulls Kong :8100</text>
 
-  <rect x="360" y="245" width="200" height="80" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.8"/>
-  <text class="lbl" x="460" y="275">Prometheus (preview)</text>
-  <text class="sub" x="460" y="295">file_sd_configs</text>
-  <text class="sub" x="460" y="311">vllm-targets.yml</text>
+  <rect x="365" y="238" width="210" height="92" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.8"/>
+  <text class="lbl" x="470" y="264">Prometheus (preview)</text>
+  <rect class="pill" x="425" y="274" width="90" height="20" rx="10" fill="#fef2f2" stroke="#ef4444"/>
+  <text class="port" x="470" y="288" fill="#b91c1c">:9090</text>
+  <text class="sub" x="470" y="312">file_sd_configs · vllm-targets.yml</text>
 
   <!-- visualize -->
-  <rect x="680" y="150" width="220" height="150" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.8"/>
-  <text class="lbl" x="790" y="182">Grafana</text>
-  <text class="sub" x="790" y="204">Zabbix datasource (prod)</text>
-  <text class="sub" x="790" y="222">18-panel dashboard</text>
-  <text class="sub" x="790" y="240">rate · errors · latency p95/p99</text>
-  <text class="sub" x="790" y="258">consumption by route/consumer</text>
-  <text class="sub" x="790" y="278">vLLM token usage · alerts</text>
+  <rect x="680" y="150" width="230" height="170" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.8"/>
+  <text class="lbl" x="795" y="180">Grafana</text>
+  <rect class="pill" x="748" y="190" width="94" height="20" rx="10" fill="#eff6ff" stroke="#3b82f6"/>
+  <text class="port" x="795" y="204" fill="#1d4ed8">:3000</text>
+  <text class="sub" x="795" y="228">Zabbix datasource (prod)</text>
+  <text class="sub" x="795" y="246">18-panel dashboard</text>
+  <text class="sub" x="795" y="264">rate · errors · latency p95/p99</text>
+  <text class="sub" x="795" y="282">consumption by route/consumer</text>
+  <text class="sub" x="795" y="300">vLLM token usage · alerts</text>
 
-  <!-- flows -->
-  <path class="flow" d="M240,135 H360" marker-end="url(#arr)"/>
-  <path class="flow" d="M240,285 H360" marker-end="url(#arr)"/>
-  <path class="flow" d="M240,150 C300,150 300,270 360,275" marker-end="url(#arr)"/>
-  <path class="flow" d="M560,135 C620,135 620,200 680,205" marker-end="url(#arr)"/>
-  <path class="flow" d="M560,285 C620,285 620,250 680,248" marker-end="url(#arr)"/>
+  <!-- flows with port labels -->
+  <path class="flow" d="M250,135 H365" marker-end="url(#arr)"/>
+  <text class="sub" x="307" y="127" fill="#0b6b64">scrape :8100</text>
+  <path class="flow" d="M250,285 H365" marker-end="url(#arr)"/>
+  <text class="sub" x="307" y="277" fill="#0b6b64">scrape :8000</text>
+  <path class="flow" d="M250,150 C300,150 300,270 365,278" marker-end="url(#arr)"/>
+  <path class="flow" d="M575,130 C625,130 630,200 680,208" marker-end="url(#arr)"/>
+  <path class="flow" d="M575,284 C625,284 630,250 680,244" marker-end="url(#arr)"/>
 
-  <text x="480" y="392" font-size="11.5" fill="#374151" text-anchor="middle">Production path: Kong /metrics → Zabbix → Grafana. Preview stack (Prometheus + Loki + Grafana) ships as a separate air-gap bundle.</text>
-  <text x="480" y="412" font-size="11" fill="#b91c1c" text-anchor="middle">Scrape :8100 (Status API), never the Admin API :8001.</text>
+  <text x="480" y="410" font-size="11.5" fill="#374151" text-anchor="middle">Production path: Kong /metrics (:8100) → Zabbix → Grafana (:3000). Preview: Prometheus (:9090) + Loki (:3100) + Grafana + mailpit (:8026).</text>
+  <text x="480" y="430" font-size="11" fill="#b91c1c" text-anchor="middle">Scrape the Status API :8100 — never the Admin API :8001. vLLM :8000 also serves the model API, so firewall it to the scraper IP.</text>
 </svg>
