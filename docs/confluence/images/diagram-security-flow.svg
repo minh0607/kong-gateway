@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/>
+    </marker>
+    <style>
+      .lbl{font-size:13px;fill:#111827;text-anchor:middle;font-weight:600;}
+      .sub{font-size:10.5px;fill:#6b7280;text-anchor:middle;}
+      .flow{stroke:#6b7280;stroke-width:2;fill:none;}
+      .no{font-size:10.5px;fill:#b91c1c;text-anchor:middle;}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="960" height="420" fill="#f8fafc"/>
+  <text x="480" y="34" font-size="18" font-weight="700" fill="#0b6b64" text-anchor="middle">Per-request security pipeline (per service)</text>
+
+  <!-- client -->
+  <rect x="30" y="150" width="120" height="80" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text class="lbl" x="90" y="185">Client</text>
+  <text class="sub" x="90" y="204">API key +</text>
+  <text class="sub" x="90" y="220">HTTPS :8443</text>
+
+  <!-- TLS edge -->
+  <rect x="185" y="140" width="90" height="100" rx="8" fill="#ecfeff" stroke="#06b6d4" stroke-width="1.6"/>
+  <text class="lbl" x="230" y="182">TLS</text>
+  <text class="sub" x="230" y="200">term.</text>
+  <text class="sub" x="230" y="216">:8443</text>
+
+  <!-- pipeline boxes -->
+  <g>
+    <rect x="305" y="150" width="115" height="80" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.6"/>
+    <text class="lbl" x="362" y="180">1 · IP</text>
+    <text class="lbl" x="362" y="197">restriction</text>
+    <text class="sub" x="362" y="216">allow-list</text>
+
+    <rect x="440" y="150" width="115" height="80" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.6"/>
+    <text class="lbl" x="497" y="180">2 · key-auth</text>
+    <text class="sub" x="497" y="200">x-api-key /</text>
+    <text class="sub" x="497" y="216">Authorization</text>
+
+    <rect x="575" y="150" width="115" height="80" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+    <text class="lbl" x="632" y="180">3 · ACL</text>
+    <text class="sub" x="632" y="200">consumer in</text>
+    <text class="sub" x="632" y="216">allowed group</text>
+
+    <rect x="710" y="150" width="115" height="80" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.6"/>
+    <text class="lbl" x="767" y="180">rate-limit</text>
+    <text class="sub" x="767" y="200">per min /</text>
+    <text class="sub" x="767" y="216">per hour</text>
+  </g>
+
+  <!-- upstream -->
+  <rect x="850" y="150" width="90" height="80" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text class="lbl" x="895" y="182">LLM</text>
+  <text class="sub" x="895" y="200">upstream</text>
+
+  <!-- flows -->
+  <path class="flow" d="M150,190 H185" marker-end="url(#arr)"/>
+  <path class="flow" d="M275,190 H305" marker-end="url(#arr)"/>
+  <path class="flow" d="M420,190 H440" marker-end="url(#arr)"/>
+  <path class="flow" d="M555,190 H575" marker-end="url(#arr)"/>
+  <path class="flow" d="M690,190 H710" marker-end="url(#arr)"/>
+  <path class="flow" d="M825,190 H850" marker-end="url(#arr)"/>
+
+  <!-- reject arrows -->
+  <text class="no" x="362" y="270">✗ 403 wrong IP</text>
+  <text class="no" x="497" y="270">✗ 401 no key</text>
+  <text class="no" x="632" y="270">✗ 403 not in group</text>
+  <text class="no" x="767" y="270">✗ 429 too many</text>
+  <line x1="362" y1="230" x2="362" y2="255" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 3"/>
+  <line x1="497" y1="230" x2="497" y2="255" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 3"/>
+  <line x1="632" y1="230" x2="632" y2="255" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 3"/>
+  <line x1="767" y1="230" x2="767" y2="255" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 3"/>
+
+  <text x="480" y="335" font-size="12" fill="#374151" text-anchor="middle">All requests are also recorded for metrics (Status API /metrics) and audit logs.</text>
+  <text x="480" y="358" font-size="11" fill="#6b7280" text-anchor="middle">HTTP :8000 skips TLS termination; the plugin layers still apply.</text>
+</svg>

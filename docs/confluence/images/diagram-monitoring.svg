@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/>
+    </marker>
+    <style>
+      .lbl{font-size:13px;fill:#111827;text-anchor:middle;font-weight:600;}
+      .sub{font-size:10.5px;fill:#6b7280;text-anchor:middle;}
+      .flow{stroke:#6b7280;stroke-width:1.9;fill:none;}
+      .port{font-size:10.5px;fill:#0b6b64;text-anchor:middle;font-weight:700;}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="960" height="440" fill="#f8fafc"/>
+  <text x="480" y="34" font-size="18" font-weight="700" fill="#0b6b64" text-anchor="middle">Monitoring data flow</text>
+
+  <!-- sources -->
+  <rect x="40" y="90" width="200" height="90" rx="8" fill="#e6f7f5" stroke="#0f9d94" stroke-width="1.8"/>
+  <text class="lbl" x="140" y="120">Kong (Status API)</text>
+  <text class="port" x="140" y="140">:8100/metrics</text>
+  <text class="sub" x="140" y="160">Prometheus plugin</text>
+
+  <rect x="40" y="230" width="200" height="120" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text class="lbl" x="140" y="258">vLLM servers</text>
+  <text class="port" x="140" y="278">:8000/metrics</text>
+  <text class="sub" x="140" y="298">prompt_tokens_total</text>
+  <text class="sub" x="140" y="314">generation_tokens_total</text>
+  <text class="sub" x="140" y="334">(~10 machines)</text>
+
+  <!-- collectors -->
+  <rect x="360" y="95" width="200" height="80" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.8"/>
+  <text class="lbl" x="460" y="125">Zabbix</text>
+  <text class="sub" x="460" y="145">HTTP-agent · Prometheus</text>
+  <text class="sub" x="460" y="161">preprocessing · LLD · triggers</text>
+
+  <rect x="360" y="245" width="200" height="80" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.8"/>
+  <text class="lbl" x="460" y="275">Prometheus (preview)</text>
+  <text class="sub" x="460" y="295">file_sd_configs</text>
+  <text class="sub" x="460" y="311">vllm-targets.yml</text>
+
+  <!-- visualize -->
+  <rect x="680" y="150" width="220" height="150" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.8"/>
+  <text class="lbl" x="790" y="182">Grafana</text>
+  <text class="sub" x="790" y="204">Zabbix datasource (prod)</text>
+  <text class="sub" x="790" y="222">18-panel dashboard</text>
+  <text class="sub" x="790" y="240">rate · errors · latency p95/p99</text>
+  <text class="sub" x="790" y="258">consumption by route/consumer</text>
+  <text class="sub" x="790" y="278">vLLM token usage · alerts</text>
+
+  <!-- flows -->
+  <path class="flow" d="M240,135 H360" marker-end="url(#arr)"/>
+  <path class="flow" d="M240,285 H360" marker-end="url(#arr)"/>
+  <path class="flow" d="M240,150 C300,150 300,270 360,275" marker-end="url(#arr)"/>
+  <path class="flow" d="M560,135 C620,135 620,200 680,205" marker-end="url(#arr)"/>
+  <path class="flow" d="M560,285 C620,285 620,250 680,248" marker-end="url(#arr)"/>
+
+  <text x="480" y="392" font-size="11.5" fill="#374151" text-anchor="middle">Production path: Kong /metrics → Zabbix → Grafana. Preview stack (Prometheus + Loki + Grafana) ships as a separate air-gap bundle.</text>
+  <text x="480" y="412" font-size="11" fill="#b91c1c" text-anchor="middle">Scrape :8100 (Status API), never the Admin API :8001.</text>
+</svg>

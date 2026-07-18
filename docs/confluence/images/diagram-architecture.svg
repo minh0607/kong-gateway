@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/>
+    </marker>
+    <style>
+      .lbl{font-size:13px;fill:#111827;text-anchor:middle;}
+      .sub{font-size:10.5px;fill:#6b7280;text-anchor:middle;}
+      .port{font-size:10.5px;fill:#0b6b64;text-anchor:middle;font-weight:700;}
+      .flow{stroke:#6b7280;stroke-width:1.8;fill:none;}
+      .dash{stroke:#94a3b8;stroke-width:1.4;stroke-dasharray:5 4;fill:none;}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="960" height="620" fill="#f8fafc"/>
+  <text x="480" y="34" font-size="18" font-weight="700" fill="#0b6b64" text-anchor="middle">SEHC AI Gateway — Docker stack (Kong OSS 3.9)</text>
+
+  <!-- clients -->
+  <rect x="40" y="80" width="150" height="120" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text class="lbl" x="115" y="105" font-weight="700">Clients</text>
+  <text class="sub" x="115" y="128">Applications</text>
+  <text class="sub" x="115" y="146">n8n · Dify</text>
+  <text class="sub" x="115" y="164">Claude Code</text>
+  <text class="sub" x="115" y="182">internal apps</text>
+
+  <!-- gateway host box -->
+  <rect x="240" y="60" width="470" height="500" rx="12" fill="#ffffff" stroke="#0f9d94" stroke-width="2"/>
+  <text x="475" y="84" font-size="13" font-weight="700" fill="#0b6b64" text-anchor="middle">Gateway host  ·  network: kong-net</text>
+
+  <!-- nginx auth proxy -->
+  <rect x="270" y="105" width="180" height="70" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5"/>
+  <text class="lbl" x="360" y="130">kong-auth-proxy</text>
+  <text class="sub" x="360" y="148">nginx · session auth · RBAC</text>
+  <text class="port" x="360" y="166">:8002 (console /aigw)</text>
+
+  <!-- usermgmt -->
+  <rect x="480" y="105" width="200" height="70" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5"/>
+  <text class="lbl" x="580" y="130">kong-usermgmt</text>
+  <text class="sub" x="580" y="148">Flask · login/MFA/audit</text>
+  <text class="port" x="580" y="166">:8888</text>
+
+  <!-- kong core -->
+  <rect x="270" y="210" width="410" height="140" rx="8" fill="#e6f7f5" stroke="#0f9d94" stroke-width="2"/>
+  <text class="lbl" x="475" y="234" font-weight="700" fill="#0b6b64">kong  (proxy · admin · status)</text>
+  <rect x="290" y="248" width="110" height="44" rx="6" fill="#ffffff" stroke="#0f9d94"/>
+  <text class="port" x="345" y="268">Proxy</text>
+  <text class="sub" x="345" y="284">:8000 / :8443</text>
+  <rect x="410" y="248" width="110" height="44" rx="6" fill="#ffffff" stroke="#0f9d94"/>
+  <text class="port" x="465" y="268">Admin API</text>
+  <text class="sub" x="465" y="284">:8001 / :8444</text>
+  <rect x="530" y="248" width="130" height="44" rx="6" fill="#ffffff" stroke="#0f9d94"/>
+  <text class="port" x="595" y="268">Status /metrics</text>
+  <text class="sub" x="595" y="284">:8100</text>
+  <text class="sub" x="475" y="326">plugins: key-auth · acl · ip-restriction · rate-limiting · prometheus</text>
+
+  <!-- postgres -->
+  <rect x="360" y="385" width="230" height="60" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text class="lbl" x="475" y="410">kong-database</text>
+  <text class="sub" x="475" y="428">PostgreSQL 15 · volume pg_data</text>
+
+  <!-- upstreams -->
+  <rect x="760" y="150" width="170" height="260" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text class="lbl" x="845" y="176" font-weight="700">External LLM servers</text>
+  <text class="sub" x="845" y="194">Docker on Ubuntu</text>
+  <rect x="785" y="210" width="120" height="42" rx="6" fill="#f1f5f9" stroke="#64748b"/>
+  <text class="sub" x="845" y="236">vLLM box :8000</text>
+  <rect x="785" y="262" width="120" height="42" rx="6" fill="#f1f5f9" stroke="#64748b"/>
+  <text class="sub" x="845" y="288">vLLM box :8000</text>
+  <rect x="785" y="314" width="120" height="42" rx="6" fill="#f1f5f9" stroke="#64748b"/>
+  <text class="sub" x="845" y="340">Ollama :11433</text>
+  <text class="sub" x="845" y="384">… ~10 machines</text>
+
+  <!-- flows -->
+  <path class="flow" d="M190,140 H270" marker-end="url(#arr)"/>
+  <text class="sub" x="228" y="132">console</text>
+  <path class="flow" d="M190,175 C220,175 240,280 270,280" marker-end="url(#arr)"/>
+  <text class="sub" x="214" y="250">API calls</text>
+  <path class="flow" d="M360,175 V210" marker-end="url(#arr)"/>
+  <path class="flow" d="M475,350 V385" marker-end="url(#arr)"/>
+  <path class="flow" d="M680,280 H760" marker-end="url(#arr)"/>
+  <text class="sub" x="720" y="272">upstream</text>
+</svg>

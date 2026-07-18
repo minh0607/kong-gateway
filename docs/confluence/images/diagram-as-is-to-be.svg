@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#cbd5e1;stroke-width:1.5;rx:8;}
+      .lbl{font-size:14px;fill:#111827;text-anchor:middle;}
+      .sub{font-size:11px;fill:#6b7280;text-anchor:middle;}
+      .flow{stroke:#6b7280;stroke-width:1.8;fill:none;}
+      .fw{fill:#fee2e2;stroke:#ef4444;stroke-width:1.5;}
+      .kong{fill:#e6f7f5;stroke:#0f9d94;stroke-width:2.5;}
+      .old{fill:#eef2ff;stroke:#6366f1;stroke-width:2;}
+      .tag{font-size:22px;font-weight:700;text-anchor:middle;}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="520" fill="#f8fafc"/>
+
+  <!-- AS IS row -->
+  <text x="70" y="60" class="tag" fill="#b91c1c">AS IS</text>
+  <rect class="box" x="150" y="30" width="120" height="60" rx="8"/>
+  <text class="lbl" x="210" y="55">Application</text>
+  <text class="sub" x="210" y="74">/ Web / Apps</text>
+
+  <rect class="fw" x="320" y="40" width="46" height="40" rx="5"/>
+  <text class="sub" x="343" y="100">firewall</text>
+
+  <rect class="box old" x="410" y="25" width="150" height="70" rx="8"/>
+  <text class="lbl" x="485" y="55">Web Gateway</text>
+  <text class="sub" x="485" y="74">(generic)</text>
+
+  <rect class="fw" x="610" y="40" width="46" height="40" rx="5"/>
+  <text class="sub" x="633" y="100">firewall</text>
+
+  <rect class="box" x="700" y="25" width="180" height="70" rx="8"/>
+  <text class="lbl" x="790" y="52">Docker / Ubuntu</text>
+  <text class="sub" x="790" y="72">External LLM PC / Servers</text>
+
+  <path class="flow" d="M270,60 H320" marker-end="url(#arr)"/>
+  <path class="flow" d="M366,60 H410" marker-end="url(#arr)"/>
+  <path class="flow" d="M560,60 H610" marker-end="url(#arr)"/>
+  <path class="flow" d="M656,60 H700" marker-end="url(#arr)"/>
+
+  <line x1="40" y1="150" x2="920" y2="150" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- TO BE row -->
+  <text x="70" y="300" class="tag" fill="#0f9d94">TO BE</text>
+  <rect class="box" x="150" y="270" width="120" height="60" rx="8"/>
+  <text class="lbl" x="210" y="295">Application</text>
+  <text class="sub" x="210" y="314">/ Web / Apps</text>
+
+  <rect class="fw" x="320" y="280" width="46" height="40" rx="5"/>
+  <text class="sub" x="343" y="340">firewall</text>
+
+  <rect class="box kong" x="405" y="258" width="160" height="84" rx="8"/>
+  <text class="lbl" x="485" y="290" font-weight="700" fill="#0b6b64">Kong API</text>
+  <text class="lbl" x="485" y="310" font-weight="700" fill="#0b6b64">Gateway</text>
+  <text class="sub" x="485" y="330">auth · rate-limit · TLS · audit</text>
+
+  <rect class="fw" x="610" y="280" width="46" height="40" rx="5"/>
+  <text class="sub" x="633" y="340">firewall</text>
+
+  <rect class="box" x="700" y="270" width="180" height="70" rx="8"/>
+  <text class="lbl" x="790" y="297">Docker / Ubuntu</text>
+  <text class="sub" x="790" y="317">External LLM PC / Servers</text>
+
+  <path class="flow" d="M270,300 H320" marker-end="url(#arr)"/>
+  <path class="flow" d="M366,300 H405" marker-end="url(#arr)"/>
+  <path class="flow" d="M565,300 H610" marker-end="url(#arr)"/>
+  <path class="flow" d="M656,300 H700" marker-end="url(#arr)"/>
+
+  <!-- goals -->
+  <rect x="150" y="380" width="730" height="115" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="170" y="405" font-size="14" font-weight="700" fill="#0b6b64">Improve Security</text>
+  <text x="170" y="428" font-size="12.5" fill="#374151">• Robust authentication &amp; authorization      • Rate limiting &amp; IP filtering</text>
+  <text x="170" y="450" font-size="12.5" fill="#374151">• SSL/TLS encryption                                    • Detailed audit logs &amp; traffic monitoring</text>
+  <text x="170" y="472" font-size="12.5" fill="#374151">• Bot / DDoS protection                                • Custom &amp; community plugins</text>
+  <text x="170" y="490" font-size="12.5" fill="#374151">• Centralized, consistent security management</text>
+</svg>
