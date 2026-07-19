@@ -1,87 +1,91 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 640" font-family="Inter, 'Segoe UI', Arial, sans-serif">
   <defs>
-    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#94A3B8"/>
     </marker>
     <style>
-      .lbl{font-size:13px;fill:#111827;text-anchor:middle;}
-      .sub{font-size:10.5px;fill:#6b7280;text-anchor:middle;}
-      .port{font-size:10.5px;fill:#0b6b64;text-anchor:middle;font-weight:700;}
-      .flow{stroke:#6b7280;stroke-width:1.8;fill:none;}
-      .dash{stroke:#94a3b8;stroke-width:1.4;stroke-dasharray:5 4;fill:none;}
+      .h{font-size:13.5px;font-weight:700;fill:#0F172A;text-anchor:middle;}
+      .s{font-size:10.5px;fill:#64748B;text-anchor:middle;}
+      .flow{stroke:#94A3B8;stroke-width:2;fill:none;}
+      .card{fill:#FFFFFF;stroke:#E6E9EF;stroke-width:1;}
+      .pill{fill:#E9FBF8;stroke:#0F9D94;stroke-width:1;}
+      .pt{font-size:10.5px;font-weight:700;fill:#0B7C74;text-anchor:middle;}
     </style>
   </defs>
-  <rect x="0" y="0" width="960" height="620" fill="#f8fafc"/>
-  <image href="data:image/png;base64,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" x="24" y="14" width="122" height="30" opacity="0.95"/>
-  <text x="480" y="34" font-size="18" font-weight="700" fill="#0b6b64" text-anchor="middle">SEHC AI Gateway — Docker stack (Kong OSS 3.9)</text>
+
+  <rect x="0" y="0" width="1000" height="640" fill="#F7F8FA"/>
+  <image xlink:href="data:image/png;base64,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" x="26" y="20" width="120" height="30" opacity="0.95"/>
+  <text x="500" y="42" font-size="19" font-weight="800" fill="#0F172A" text-anchor="middle">Architecture — Docker stack (Kong OSS 3.9)</text>
 
   <!-- clients -->
-  <rect x="40" y="80" width="150" height="120" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
-  <text class="lbl" x="115" y="105" font-weight="700">Clients</text>
-  <text class="sub" x="115" y="128">Applications</text>
-  <text class="sub" x="115" y="146">n8n · Dify</text>
-  <text class="sub" x="115" y="164">Claude Code</text>
-  <text class="sub" x="115" y="182">internal apps</text>
+  <rect class="card" x="36" y="150" width="150" height="150" rx="14"/>
+  <text class="h" x="111" y="176">Clients</text>
+  <line x1="60" y1="188" x2="162" y2="188" stroke="#EEF0F4"/>
+  <text class="s" x="111" y="210">Applications</text>
+  <text class="s" x="111" y="230">n8n · Dify</text>
+  <text class="s" x="111" y="250">Claude Code</text>
+  <text class="s" x="111" y="270">internal apps</text>
 
-  <!-- gateway host box -->
-  <rect x="240" y="60" width="470" height="500" rx="12" fill="#ffffff" stroke="#0f9d94" stroke-width="2"/>
-  <text x="475" y="84" font-size="13" font-weight="700" fill="#0b6b64" text-anchor="middle">Gateway host  ·  network: kong-net</text>
+  <!-- gateway host -->
+  <rect x="226" y="90" width="484" height="474" rx="18" fill="#F4FBFA" stroke="#CDEBE7"/>
+  <text x="468" y="118" font-size="12.5" font-weight="700" fill="#0B7C74" text-anchor="middle">Gateway host · network: kong-net</text>
 
-  <!-- nginx auth proxy -->
-  <rect x="270" y="105" width="180" height="70" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5"/>
-  <text class="lbl" x="360" y="130">kong-auth-proxy</text>
-  <text class="sub" x="360" y="148">nginx · session auth · RBAC</text>
-  <text class="port" x="360" y="166">:8002 (console /aigw)</text>
+  <!-- nginx -->
+  <rect class="card" x="250" y="134" width="205" height="78" rx="12"/>
+  <text class="h" x="352" y="160">kong-auth-proxy</text>
+  <text class="s" x="352" y="178">nginx · session auth · RBAC</text>
+  <rect class="pill" x="300" y="186" width="104" height="18" rx="9"/>
+  <text class="pt" x="352" y="199">:8002 · /aigw</text>
 
   <!-- usermgmt -->
-  <rect x="480" y="105" width="200" height="70" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5"/>
-  <text class="lbl" x="580" y="130">kong-usermgmt</text>
-  <text class="sub" x="580" y="148">Flask · login/MFA/audit</text>
-  <text class="port" x="580" y="166">:8888</text>
+  <rect class="card" x="478" y="134" width="208" height="78" rx="12"/>
+  <text class="h" x="582" y="160">kong-usermgmt</text>
+  <text class="s" x="582" y="178">Flask · login / MFA / audit</text>
+  <rect class="pill" x="548" y="186" width="68" height="18" rx="9"/>
+  <text class="pt" x="582" y="199">:8888</text>
 
   <!-- kong core -->
-  <rect x="270" y="210" width="410" height="140" rx="8" fill="#e6f7f5" stroke="#0f9d94" stroke-width="2"/>
-  <text class="lbl" x="475" y="234" font-weight="700" fill="#0b6b64">kong  (proxy · admin · status)</text>
-  <rect x="290" y="248" width="110" height="44" rx="6" fill="#ffffff" stroke="#0f9d94"/>
-  <text class="port" x="345" y="268">Proxy</text>
-  <text class="sub" x="345" y="284">:8000 / :8443</text>
-  <rect x="410" y="248" width="110" height="44" rx="6" fill="#ffffff" stroke="#0f9d94"/>
-  <text class="port" x="465" y="268">Admin API</text>
-  <text class="sub" x="465" y="284">:8001 / :8444</text>
-  <rect x="530" y="248" width="130" height="44" rx="6" fill="#ffffff" stroke="#0f9d94"/>
-  <text class="port" x="595" y="268">Status /metrics</text>
-  <text class="sub" x="595" y="284">:8100</text>
-  <text class="sub" x="475" y="326">plugins: key-auth · acl · ip-restriction · rate-limiting · prometheus</text>
+  <rect x="250" y="230" width="436" height="150" rx="14" fill="#FFFFFF" stroke="#0F9D94" stroke-width="1.6"/>
+  <text class="h" x="468" y="256" fill="#0B7C74">kong · proxy · admin · status</text>
+  <rect class="card" x="268" y="272" width="128" height="58" rx="10"/>
+  <text class="pt" x="332" y="294" font-size="11.5">Proxy</text>
+  <text class="s" x="332" y="314">:8000 · :8443</text>
+  <rect class="card" x="404" y="272" width="128" height="58" rx="10"/>
+  <text class="pt" x="468" y="294" font-size="11.5">Admin API</text>
+  <text class="s" x="468" y="314">:8001 · :8444</text>
+  <rect class="card" x="540" y="272" width="128" height="58" rx="10"/>
+  <text class="pt" x="604" y="294" font-size="11.5">Status /metrics</text>
+  <text class="s" x="604" y="314">:8100</text>
+  <text class="s" x="468" y="360">plugins: key-auth · acl · ip-restriction · rate-limiting · prometheus</text>
 
   <!-- postgres -->
-  <rect x="360" y="385" width="230" height="60" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
-  <text class="lbl" x="475" y="410">kong-database</text>
-  <text class="sub" x="475" y="428">PostgreSQL 15 · :5432 · volume pg_data</text>
+  <rect class="card" x="330" y="404" width="276" height="66" rx="12"/>
+  <text class="h" x="468" y="430">kong-database</text>
+  <text class="s" x="468" y="450">PostgreSQL 15 · volume pg_data</text>
+  <rect class="pill" x="614" y="426" width="60" height="18" rx="9" fill="#EFF6FF" stroke="#3B82F6"/>
+  <text class="pt" x="644" y="439" fill="#1D4ED8">:5432</text>
 
   <!-- upstreams -->
-  <rect x="760" y="150" width="170" height="260" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4"/>
-  <text class="lbl" x="845" y="176" font-weight="700">External LLM servers</text>
-  <text class="sub" x="845" y="194">Docker on Ubuntu</text>
-  <rect x="785" y="210" width="120" height="42" rx="6" fill="#f1f5f9" stroke="#64748b"/>
-  <text class="sub" x="845" y="236">vLLM box :8000</text>
-  <rect x="785" y="262" width="120" height="42" rx="6" fill="#f1f5f9" stroke="#64748b"/>
-  <text class="sub" x="845" y="288">vLLM box :8000</text>
-  <rect x="785" y="314" width="120" height="42" rx="6" fill="#f1f5f9" stroke="#64748b"/>
-  <text class="sub" x="845" y="340">Ollama :11433</text>
-  <text class="sub" x="845" y="384">… ~10 machines</text>
+  <rect x="742" y="150" width="220" height="290" rx="16" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="7 5"/>
+  <text class="h" x="852" y="178">External LLM servers</text>
+  <text class="s" x="852" y="196">Docker on Ubuntu</text>
+  <rect class="card" x="770" y="212" width="164" height="44" rx="10"/>
+  <text class="s" x="852" y="239" font-size="11.5">vLLM box · :8000</text>
+  <rect class="card" x="770" y="264" width="164" height="44" rx="10"/>
+  <text class="s" x="852" y="291" font-size="11.5">vLLM box · :8000</text>
+  <rect class="card" x="770" y="316" width="164" height="44" rx="10"/>
+  <text class="s" x="852" y="343" font-size="11.5">Ollama · :11433</text>
+  <text class="s" x="852" y="392">… ~10 machines</text>
 
   <!-- flows -->
-  <path class="flow" d="M190,140 H270" marker-end="url(#arr)"/>
-  <text class="sub" x="228" y="130">console</text>
-  <text class="port" x="228" y="118">:8002</text>
-  <path class="flow" d="M190,175 C220,175 240,280 270,280" marker-end="url(#arr)"/>
-  <text class="sub" x="214" y="250">API calls</text>
-  <text class="port" x="214" y="264">:8000 / :8443</text>
-  <path class="flow" d="M360,175 V210" marker-end="url(#arr)"/>
-  <text class="port" x="395" y="197">→ :8001</text>
-  <path class="flow" d="M475,350 V385" marker-end="url(#arr)"/>
-  <text class="port" x="503" y="371">:5432</text>
-  <path class="flow" d="M680,280 H760" marker-end="url(#arr)"/>
-  <text class="sub" x="720" y="260">upstream</text>
-  <text class="port" x="720" y="274">:8000 / :11433</text>
+  <path class="flow" d="M186,200 C210,200 214,168 248,168" marker-end="url(#ar)"/>
+  <text class="pt" x="214" y="150">:8002</text>
+  <path class="flow" d="M186,250 C210,250 220,300 248,300" marker-end="url(#ar)"/>
+  <text class="pt" x="214" y="290">:8000/:8443</text>
+  <path class="flow" d="M352,212 V230" marker-end="url(#ar)"/>
+  <text class="pt" x="384" y="226">:8001</text>
+  <path class="flow" d="M468,380 V404" marker-end="url(#ar)"/>
+  <text class="pt" x="494" y="398">:5432</text>
+  <path class="flow" d="M686,300 C712,300 720,300 742,300" marker-end="url(#ar)"/>
+  <text class="pt" x="714" y="290">:8000</text>
 </svg>

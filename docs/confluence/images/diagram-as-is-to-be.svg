@@ -1,174 +1,151 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1140 640" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1180 660" font-family="Inter, 'Segoe UI', Arial, sans-serif">
   <defs>
-    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L7,3 L0,6 Z" fill="#64748b"/>
-    </marker>
-    <linearGradient id="kg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#16BDCA"/><stop offset="1" stop-color="#0B7C74"/>
+    <linearGradient id="kong" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17C0B6"/><stop offset="1" stop-color="#0B7C74"/>
     </linearGradient>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#94A3B8"/>
+    </marker>
+    <style>
+      .h{font-size:14px;font-weight:700;fill:#0F172A;}
+      .t{font-size:13px;font-weight:600;fill:#0F172A;}
+      .s{font-size:11px;fill:#64748B;}
+      .flow{stroke:#94A3B8;stroke-width:2;fill:none;}
+      .card{fill:#FFFFFF;stroke:#E6E9EF;stroke-width:1;}
+    </style>
 
-    <!-- Application: monitor + gear + app tiles -->
-    <symbol id="ico-app" viewBox="0 0 100 92">
-      <g transform="translate(6,0)">
-        <circle cx="20" cy="16" r="12" fill="#2f6fb0"/>
-        <circle cx="20" cy="16" r="5" fill="#eaf2fb"/>
-        <g stroke="#2f6fb0" stroke-width="3">
-          <line x1="20" y1="1" x2="20" y2="6"/><line x1="20" y1="26" x2="20" y2="31"/>
-          <line x1="5" y1="16" x2="10" y2="16"/><line x1="30" y1="16" x2="35" y2="16"/>
-          <line x1="9" y1="5" x2="12" y2="8"/><line x1="28" y1="24" x2="31" y2="27"/>
-          <line x1="31" y1="5" x2="28" y2="8"/><line x1="12" y1="24" x2="9" y2="27"/>
-        </g>
-      </g>
-      <rect x="8" y="22" width="84" height="54" rx="4" fill="#eef3f8" stroke="#334155" stroke-width="2.5"/>
-      <rect x="18" y="31" width="15" height="12" rx="2" fill="#f59e0b"/>
-      <rect x="42" y="31" width="15" height="12" rx="2" fill="#ef4444"/>
-      <rect x="66" y="31" width="15" height="12" rx="2" fill="#22c55e"/>
-      <rect x="18" y="50" width="15" height="12" rx="2" fill="#3b82f6"/>
-      <rect x="42" y="50" width="15" height="12" rx="2" fill="#a855f7"/>
-      <rect x="66" y="50" width="15" height="12" rx="2" fill="#14b8a6"/>
-      <rect x="44" y="76" width="12" height="8" fill="#334155"/>
-      <rect x="32" y="84" width="36" height="6" rx="2" fill="#334155"/>
+    <symbol id="app" viewBox="0 0 48 44">
+      <rect x="4" y="8" width="40" height="26" rx="3" fill="#EEF2FF" stroke="#4F46E5" stroke-width="2"/>
+      <circle cx="14" cy="17" r="2" fill="#4F46E5"/><circle cx="22" cy="17" r="2" fill="#4F46E5"/><circle cx="30" cy="17" r="2" fill="#4F46E5"/>
+      <rect x="12" y="24" width="24" height="4" rx="2" fill="#C7D2FE"/>
+      <rect x="20" y="34" width="8" height="5" fill="#4F46E5"/><rect x="14" y="39" width="20" height="3" rx="1.5" fill="#4F46E5"/>
     </symbol>
-
-    <!-- Web: globe + refresh + server tower -->
-    <symbol id="ico-web" viewBox="0 0 92 100">
-      <circle cx="34" cy="34" r="26" fill="#d6ebfb" stroke="#3b82f6" stroke-width="2.5"/>
-      <ellipse cx="34" cy="34" rx="12" ry="26" fill="none" stroke="#3b82f6" stroke-width="1.6"/>
-      <line x1="8" y1="34" x2="60" y2="34" stroke="#3b82f6" stroke-width="1.6"/>
-      <line x1="13" y1="22" x2="55" y2="22" stroke="#3b82f6" stroke-width="1.2"/>
-      <line x1="13" y1="46" x2="55" y2="46" stroke="#3b82f6" stroke-width="1.2"/>
-      <path d="M12,50 A26,26 0 1 0 20,20" fill="none" stroke="#22c55e" stroke-width="3.2"/>
-      <path d="M20,14 l3,12 l-12,-3 z" fill="#22c55e"/>
-      <rect x="52" y="54" width="32" height="44" rx="3" fill="#e2e8f0" stroke="#334155" stroke-width="2"/>
-      <line x1="58" y1="63" x2="78" y2="63" stroke="#334155" stroke-width="1.6"/>
-      <line x1="58" y1="72" x2="78" y2="72" stroke="#334155" stroke-width="1.6"/>
-      <circle cx="62" cy="90" r="2.6" fill="#22c55e"/>
+    <symbol id="web" viewBox="0 0 44 44">
+      <circle cx="22" cy="22" r="18" fill="#ECFEFF" stroke="#0891B2" stroke-width="2"/>
+      <ellipse cx="22" cy="22" rx="8" ry="18" fill="none" stroke="#0891B2" stroke-width="1.5"/>
+      <line x1="4" y1="22" x2="40" y2="22" stroke="#0891B2" stroke-width="1.5"/>
+      <path d="M8,13 H36 M8,31 H36" stroke="#0891B2" stroke-width="1.1"/>
     </symbol>
-
-    <!-- Firewall bricks -->
-    <symbol id="ico-fw" viewBox="0 0 72 56">
-      <rect x="0" y="0" width="72" height="56" rx="4" fill="#c0392b"/>
-      <g stroke="#ffffff" stroke-width="2.2">
-        <line x1="0" y1="14" x2="72" y2="14"/><line x1="0" y1="28" x2="72" y2="28"/><line x1="0" y1="42" x2="72" y2="42"/>
-        <line x1="24" y1="0" x2="24" y2="14"/><line x1="48" y1="0" x2="48" y2="14"/>
-        <line x1="12" y1="14" x2="12" y2="28"/><line x1="36" y1="14" x2="36" y2="28"/><line x1="60" y1="14" x2="60" y2="28"/>
-        <line x1="24" y1="28" x2="24" y2="42"/><line x1="48" y1="28" x2="48" y2="42"/>
-        <line x1="12" y1="42" x2="12" y2="56"/><line x1="36" y1="42" x2="36" y2="56"/><line x1="60" y1="42" x2="60" y2="56"/>
+    <symbol id="fw" viewBox="0 0 56 44">
+      <rect x="1" y="1" width="54" height="42" rx="7" fill="#FEF2F2" stroke="#EF4444" stroke-width="2"/>
+      <g stroke="#F87171" stroke-width="1.6">
+        <line x1="1" y1="15" x2="55" y2="15"/><line x1="1" y1="29" x2="55" y2="29"/>
+        <line x1="19" y1="1" x2="19" y2="15"/><line x1="37" y1="1" x2="37" y2="15"/>
+        <line x1="10" y1="15" x2="10" y2="29"/><line x1="28" y1="15" x2="28" y2="29"/><line x1="46" y1="15" x2="46" y2="29"/>
+        <line x1="19" y1="29" x2="19" y2="43"/><line x1="37" y1="29" x2="37" y2="43"/>
       </g>
     </symbol>
-
-    <!-- Web Gateway: globe with open door + arrow entering -->
-    <symbol id="ico-gw" viewBox="0 0 120 90">
-      <circle cx="42" cy="45" r="33" fill="#e0efff" stroke="#3b82f6" stroke-width="2.5"/>
-      <ellipse cx="42" cy="45" rx="15" ry="33" fill="none" stroke="#3b82f6" stroke-width="1.6"/>
-      <line x1="9" y1="45" x2="75" y2="45" stroke="#3b82f6" stroke-width="1.6"/>
-      <line x1="16" y1="30" x2="68" y2="30" stroke="#3b82f6" stroke-width="1.2"/>
-      <line x1="16" y1="60" x2="68" y2="60" stroke="#3b82f6" stroke-width="1.2"/>
-      <rect x="60" y="28" width="30" height="42" rx="2" fill="#ffffff" stroke="#1e40af" stroke-width="2.5"/>
-      <line x1="74" y1="28" x2="74" y2="70" stroke="#1e40af" stroke-width="2"/>
-      <path d="M112,49 H84" stroke="#1e40af" stroke-width="3"/>
-      <path d="M90,42 l-9,7 l9,7 z" fill="#1e40af"/>
+    <symbol id="gw" viewBox="0 0 54 44">
+      <circle cx="18" cy="22" r="16" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+      <ellipse cx="18" cy="22" rx="7" ry="16" fill="none" stroke="#2563EB" stroke-width="1.4"/>
+      <line x1="2" y1="22" x2="34" y2="22" stroke="#2563EB" stroke-width="1.4"/>
+      <rect x="31" y="12" width="19" height="24" rx="2" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/>
+      <path d="M40,12 V36" stroke="#1D4ED8" stroke-width="1.5"/>
+      <path d="M52,24 H41 M45,20 l-4,4 l4,4" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
     </symbol>
-
-    <!-- Docker whale + ubuntu, dashed red box -->
-    <symbol id="ico-llm" viewBox="0 0 170 150">
-      <rect x="2" y="2" width="166" height="146" rx="10" fill="none" stroke="#e02424" stroke-width="2" stroke-dasharray="6 4"/>
-      <g transform="translate(26,26)" fill="#2496ED">
-        <rect x="10" y="8" width="15" height="13"/><rect x="27" y="8" width="15" height="13"/><rect x="44" y="8" width="15" height="13"/>
-        <rect x="27" y="-7" width="15" height="13"/>
-        <path d="M2,24 h74 c4,12 -6,26 -24,26 h-30 c-16,0 -22,-13 -22,-24 z"/>
-        <path d="M78,26 c7,-3 9,4 14,1 c-2,7 -9,7 -14,4 z"/>
-        <path d="M-2,52 c9,5 19,5 28,0" fill="none" stroke="#2496ED" stroke-width="3"/>
-      </g>
-      <g transform="translate(69,92)">
-        <circle cx="16" cy="16" r="17" fill="#E95420"/>
-        <circle cx="16" cy="16" r="4.4" fill="#ffffff"/>
-        <circle cx="31" cy="16" r="3.6" fill="#ffffff"/>
-        <circle cx="8.5" cy="27" r="3.6" fill="#ffffff"/>
-        <circle cx="8.5" cy="5" r="3.6" fill="#ffffff"/>
-        <g stroke="#ffffff" stroke-width="1.6">
-          <line x1="20" y1="16" x2="27" y2="16"/><line x1="14" y1="20" x2="10" y2="24"/><line x1="14" y1="12" x2="10" y2="8"/>
-        </g>
-      </g>
+    <symbol id="docker" viewBox="0 0 66 44">
+      <g fill="#2496ED"><rect x="14" y="11" width="8" height="7" rx="1"/><rect x="23" y="11" width="8" height="7" rx="1"/><rect x="32" y="11" width="8" height="7" rx="1"/><rect x="23" y="3" width="8" height="7" rx="1"/></g>
+      <path d="M6,21 h40 c3,7 -3,15 -13,15 h-16 c-8,0 -12,-7 -12,-13 z" fill="#2496ED"/>
+      <path d="M48,21 c4,-2 5,3 8,1 c-1,4 -5,4 -8,2 z" fill="#2496ED"/>
+      <circle cx="12" cy="26" r="1.5" fill="#FFFFFF"/>
+    </symbol>
+    <symbol id="ubuntu" viewBox="0 0 30 30">
+      <circle cx="15" cy="15" r="14" fill="#E95420"/>
+      <circle cx="15" cy="15" r="3.3" fill="#FFFFFF"/>
+      <g fill="#FFFFFF"><circle cx="25" cy="15" r="2.5"/><circle cx="10" cy="23.5" r="2.5"/><circle cx="10" cy="6.5" r="2.5"/></g>
+      <g stroke="#FFFFFF" stroke-width="1.4"><line x1="18" y1="15" x2="23" y2="15"/><line x1="13" y1="18" x2="11" y2="21.5"/><line x1="13" y1="12" x2="11" y2="8.5"/></g>
     </symbol>
   </defs>
 
-  <rect x="0" y="0" width="1140" height="640" fill="#f8fafc"/>
-  <image href="data:image/png;base64,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" x="24" y="14" width="122" height="30" opacity="0.95"/>
+  <rect x="0" y="0" width="1180" height="660" fill="#F7F8FA"/>
+  <image xlink:href="data:image/png;base64,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" x="26" y="20" width="120" height="30" opacity="0.95"/>
+  <text x="600" y="42" font-size="20" font-weight="800" fill="#0F172A" text-anchor="middle">SEHC AI Gateway — AS IS → TO BE</text>
 
-  <!-- red gateway frame -->
-  <rect x="392" y="30" width="182" height="560" rx="10" fill="none" stroke="#e02424" stroke-width="3"/>
+  <!-- ===== AS IS lane ===== -->
+  <rect x="30" y="70" width="838" height="232" rx="18" fill="#FFFFFF" stroke="#EAECEF"/>
+  <rect x="30" y="70" width="6" height="232" rx="3" fill="#CBD5E1"/>
+  <rect x="52" y="86" width="66" height="24" rx="12" fill="#F1F5F9"/>
+  <text x="85" y="102" font-size="12" font-weight="800" fill="#64748B" text-anchor="middle">AS IS</text>
 
-  <!-- ============ AS IS (top) ============ -->
-  <use href="#ico-app" x="58" y="58" width="92" height="85"/>
-  <text x="104" y="160" font-size="14" fill="#111827" text-anchor="middle">Application</text>
-  <use href="#ico-web" x="60" y="172" width="88" height="96"/>
-  <text x="104" y="286" font-size="14" fill="#111827" text-anchor="middle">Web</text>
+  <!-- clients -->
+  <rect class="card" x="60" y="128" width="172" height="150" rx="14"/>
+  <text class="h" x="146" y="152" text-anchor="middle">Clients</text>
+  <use xlink:href="#app" x="78" y="166" width="34" height="31"/>
+  <text class="t" x="124" y="187">Application</text>
+  <use xlink:href="#web" x="80" y="212" width="30" height="30"/>
+  <text class="t" x="124" y="232">Web</text>
 
-  <use href="#ico-fw" x="286" y="150" width="66" height="51"/>
-  <use href="#ico-gw" x="398" y="105" width="122" height="92"/>
-  <text x="459" y="214" font-size="15" fill="#111827" text-anchor="middle" font-weight="600">Web Gateway</text>
-  <use href="#ico-fw" x="620" y="150" width="66" height="51"/>
-  <use href="#ico-llm" x="712" y="78" width="168" height="148"/>
-  <text x="796" y="212" font-size="13" fill="#E95420" text-anchor="middle" font-weight="700">ubuntu</text>
-  <text x="796" y="230" font-size="12" fill="#111827" text-anchor="middle" font-weight="700">External LLM PC/Servers</text>
+  <use xlink:href="#fw" x="266" y="180" width="52" height="41"/>
+  <text class="s" x="292" y="234" text-anchor="middle">firewall</text>
 
-  <path d="M150,116 H286" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-  <path d="M148,218 C210,218 240,180 286,178" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-  <path d="M352,172 C376,168 384,152 398,151" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-  <path d="M520,151 C560,151 596,168 620,172" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-  <path d="M686,172 C698,168 704,152 712,151" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <rect class="card" x="360" y="150" width="190" height="106" rx="14"/>
+  <use xlink:href="#gw" x="433" y="163" width="44" height="36"/>
+  <text class="h" x="455" y="222" text-anchor="middle">Web Gateway</text>
+  <text class="s" x="455" y="240" text-anchor="middle">generic entry point</text>
 
-  <text x="60" y="305" font-size="30" font-weight="800" fill="#b91c1c">AS IS</text>
+  <use xlink:href="#fw" x="598" y="180" width="52" height="41"/>
+  <text class="s" x="624" y="234" text-anchor="middle">firewall</text>
 
-  <line x1="40" y1="325" x2="880" y2="325" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect class="card" x="690" y="150" width="160" height="106" rx="14"/>
+  <use xlink:href="#docker" x="708" y="170" width="60" height="40"/>
+  <use xlink:href="#ubuntu" x="792" y="172" width="34" height="34"/>
+  <text class="t" x="770" y="228" text-anchor="middle">External LLM Servers</text>
+  <text class="s" x="770" y="245" text-anchor="middle">Docker · Ubuntu</text>
 
-  <!-- ============ TO BE (bottom) ============ -->
-  <use href="#ico-app" x="58" y="360" width="92" height="85"/>
-  <text x="104" y="462" font-size="14" fill="#111827" text-anchor="middle">Application</text>
-  <use href="#ico-web" x="60" y="474" width="88" height="96"/>
-  <text x="104" y="588" font-size="14" fill="#111827" text-anchor="middle">Web</text>
+  <path class="flow" d="M232,203 H262" marker-end="url(#ar)"/>
+  <path class="flow" d="M318,200 H356" marker-end="url(#ar)"/>
+  <path class="flow" d="M550,203 H594" marker-end="url(#ar)"/>
+  <path class="flow" d="M650,200 H686" marker-end="url(#ar)"/>
 
-  <use href="#ico-fw" x="286" y="452" width="66" height="51"/>
+  <!-- ===== TO BE lane ===== -->
+  <rect x="30" y="322" width="838" height="242" rx="18" fill="#F0FBFA" stroke="#CCEEEA"/>
+  <rect x="30" y="322" width="6" height="242" rx="3" fill="#0F9D94"/>
+  <rect x="52" y="338" width="70" height="24" rx="12" fill="#D6F5F1"/>
+  <text x="87" y="354" font-size="12" font-weight="800" fill="#0B7C74" text-anchor="middle">TO BE</text>
 
-  <!-- Kong mark + wordmark -->
-  <g transform="translate(414,405)">
-    <path d="M26,4 C14,4 6,14 6,26 C6,34 10,40 16,44 L12,54 L22,54 L26,46 C34,46 44,40 46,28 C48,14 38,4 26,4 Z" fill="url(#kg)"/>
-    <circle cx="20" cy="24" r="3.4" fill="#ffffff"/>
-    <path d="M30,20 C36,20 40,26 38,32" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"/>
-    <text x="58" y="40" font-size="30" font-weight="800" fill="#0B7C74" font-family="Segoe UI, Arial, sans-serif">Kong</text>
-  </g>
-  <text x="459" y="512" font-size="15" fill="#111827" text-anchor="middle" font-weight="600">Kong API Gateway</text>
+  <rect class="card" x="60" y="386" width="172" height="150" rx="14"/>
+  <text class="h" x="146" y="410" text-anchor="middle">Clients</text>
+  <use xlink:href="#app" x="78" y="424" width="34" height="31"/>
+  <text class="t" x="124" y="445">Application</text>
+  <use xlink:href="#web" x="80" y="470" width="30" height="30"/>
+  <text class="t" x="124" y="490">Web</text>
 
-  <use href="#ico-fw" x="620" y="452" width="66" height="51"/>
-  <use href="#ico-llm" x="712" y="380" width="168" height="148"/>
-  <text x="796" y="514" font-size="13" fill="#E95420" text-anchor="middle" font-weight="700">ubuntu</text>
-  <text x="796" y="532" font-size="12" fill="#111827" text-anchor="middle" font-weight="700">External LLM PC/Servers</text>
+  <use xlink:href="#fw" x="266" y="438" width="52" height="41"/>
+  <text class="s" x="292" y="492" text-anchor="middle">firewall</text>
 
-  <path d="M150,418 H286" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-  <path d="M148,520 C210,520 240,482 286,480" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-  <path d="M352,474 C372,466 384,452 398,450" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-  <path d="M520,450 C560,452 596,470 620,474" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-  <path d="M686,474 C698,466 704,452 712,450" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <!-- Kong gateway card -->
+  <rect x="360" y="404" width="190" height="122" rx="14" fill="#FFFFFF" stroke="#0F9D94" stroke-width="2"/>
+  <image xlink:href="data:image/png;base64,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" x="431" y="419" width="48" height="42"/>
+  <text class="h" x="455" y="484" text-anchor="middle" fill="#0B7C74">Kong API Gateway</text>
+  <text class="s" x="455" y="502" text-anchor="middle">auth · rate-limit</text>
+  <text class="s" x="455" y="518" text-anchor="middle">TLS · audit · plugins</text>
 
-  <text x="60" y="612" font-size="30" font-weight="800" fill="#b91c1c">TO BE</text>
+  <use xlink:href="#fw" x="598" y="438" width="52" height="41"/>
+  <text class="s" x="624" y="492" text-anchor="middle">firewall</text>
 
-  <!-- ============ Improve Security panel ============ -->
-  <text x="905" y="96" font-size="18" font-weight="800" fill="#0B7C74">Improve Security:</text>
-  <g font-size="12.5" fill="#374151">
-    <text x="905" y="126">❖ Implement robust authentication</text>
-    <text x="921" y="144">and authorization mechanisms.</text>
-    <text x="905" y="170">❖ Prevent abuse with rate limiting</text>
-    <text x="921" y="188">and IP filtering.</text>
-    <text x="905" y="214">❖ Ensure secure communication</text>
-    <text x="921" y="232">with SSL/TLS encryption.</text>
-    <text x="905" y="258">❖ Monitor and analyze traffic with</text>
-    <text x="921" y="276">detailed audit logs.</text>
-    <text x="905" y="302">❖ Protect against threats like bots</text>
-    <text x="921" y="320">and DDoS attacks.</text>
-    <text x="905" y="346">❖ Extend security with custom and</text>
-    <text x="921" y="364">community plugins.</text>
-    <text x="905" y="390">❖ Centralize security management</text>
-    <text x="921" y="408">for consistency and compliance.</text>
+  <rect class="card" x="690" y="410" width="160" height="106" rx="14"/>
+  <use xlink:href="#docker" x="708" y="430" width="60" height="40"/>
+  <use xlink:href="#ubuntu" x="792" y="432" width="34" height="34"/>
+  <text class="t" x="770" y="488" text-anchor="middle">External LLM Servers</text>
+  <text class="s" x="770" y="505" text-anchor="middle">Docker · Ubuntu</text>
+
+  <path class="flow" d="M232,461 H262" marker-end="url(#ar)"/>
+  <path class="flow" d="M318,458 H356" marker-end="url(#ar)"/>
+  <path class="flow" d="M550,463 H594" marker-end="url(#ar)"/>
+  <path class="flow" d="M650,458 H686" marker-end="url(#ar)"/>
+
+  <!-- ===== Improve Security card ===== -->
+  <rect class="card" x="892" y="70" width="258" height="494" rx="18"/>
+  <path d="M892,88 a18,18 0 0 1 18,-18 h222 a18,18 0 0 1 18,18 v34 h-258 z" fill="#0B7C74"/>
+  <text x="1021" y="103" font-size="16" font-weight="800" fill="#FFFFFF" text-anchor="middle">Improve Security</text>
+
+  <g font-size="12.5" fill="#334155">
+    <g transform="translate(912,150)"><circle cx="6" cy="-4" r="8" fill="#D6F5F1"/><path d="M2,-4 l3,3 l6,-6" fill="none" stroke="#0B7C74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="-6">Robust authentication</text><text x="24" y="10">and authorization.</text></g>
+    <g transform="translate(912,204)"><circle cx="6" cy="-4" r="8" fill="#D6F5F1"/><path d="M2,-4 l3,3 l6,-6" fill="none" stroke="#0B7C74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="-6">Rate limiting &amp; IP</text><text x="24" y="10">filtering.</text></g>
+    <g transform="translate(912,258)"><circle cx="6" cy="-4" r="8" fill="#D6F5F1"/><path d="M2,-4 l3,3 l6,-6" fill="none" stroke="#0B7C74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="-6">SSL/TLS encryption.</text></g>
+    <g transform="translate(912,300)"><circle cx="6" cy="-4" r="8" fill="#D6F5F1"/><path d="M2,-4 l3,3 l6,-6" fill="none" stroke="#0B7C74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="-6">Detailed audit logs &amp;</text><text x="24" y="10">traffic monitoring.</text></g>
+    <g transform="translate(912,354)"><circle cx="6" cy="-4" r="8" fill="#D6F5F1"/><path d="M2,-4 l3,3 l6,-6" fill="none" stroke="#0B7C74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="-6">Bot / DDoS protection.</text></g>
+    <g transform="translate(912,396)"><circle cx="6" cy="-4" r="8" fill="#D6F5F1"/><path d="M2,-4 l3,3 l6,-6" fill="none" stroke="#0B7C74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="-6">Custom &amp; community</text><text x="24" y="10">plugins.</text></g>
+    <g transform="translate(912,450)"><circle cx="6" cy="-4" r="8" fill="#D6F5F1"/><path d="M2,-4 l3,3 l6,-6" fill="none" stroke="#0B7C74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="-6">Centralized security</text><text x="24" y="10">management.</text></g>
   </g>
 </svg>

@@ -1,80 +1,82 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1040 470" font-family="Inter, 'Segoe UI', Arial, sans-serif">
   <defs>
-    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#94A3B8"/>
     </marker>
     <style>
-      .lbl{font-size:13px;fill:#111827;text-anchor:middle;font-weight:600;}
-      .sub{font-size:10.5px;fill:#6b7280;text-anchor:middle;}
-      .flow{stroke:#6b7280;stroke-width:2;fill:none;}
-      .no{font-size:10.5px;fill:#b91c1c;text-anchor:middle;}
-      .port{font-size:10.5px;fill:#0b6b64;text-anchor:middle;font-weight:700;}
+      .h{font-size:13px;font-weight:700;fill:#0F172A;text-anchor:middle;}
+      .s{font-size:10.5px;fill:#64748B;text-anchor:middle;}
+      .flow{stroke:#94A3B8;stroke-width:2;fill:none;}
+      .card{fill:#FFFFFF;stroke:#E6E9EF;stroke-width:1;}
+      .num{font-size:12px;font-weight:800;fill:#FFFFFF;text-anchor:middle;}
+      .rej{font-size:10px;font-weight:600;fill:#B91C1C;text-anchor:middle;}
+      .pt{font-size:11px;font-weight:700;fill:#0B7C74;text-anchor:middle;}
     </style>
   </defs>
-  <rect x="0" y="0" width="960" height="420" fill="#f8fafc"/>
-  <image href="data:image/png;base64,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" x="24" y="14" width="122" height="30" opacity="0.95"/>
-  <text x="480" y="34" font-size="18" font-weight="700" fill="#0b6b64" text-anchor="middle">Per-request security pipeline (per service)</text>
-  <text class="port" x="512" y="120">Entry — Kong Proxy  :8443 (TLS)  ·  :8000 (HTTP)</text>
+
+  <rect x="0" y="0" width="1040" height="470" fill="#F7F8FA"/>
+  <image xlink:href="data:image/png;base64,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" x="26" y="20" width="120" height="30" opacity="0.95"/>
+  <text x="520" y="42" font-size="19" font-weight="800" fill="#0F172A" text-anchor="middle">Per-request security pipeline (per service)</text>
+  <rect x="360" y="58" width="320" height="26" rx="13" fill="#E9FBF8" stroke="#0F9D94"/>
+  <text class="pt" x="520" y="75" font-size="11.5">Entry — Kong Proxy  :8443 (TLS)  ·  :8000 (HTTP)</text>
 
   <!-- client -->
-  <rect x="30" y="150" width="120" height="80" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
-  <text class="lbl" x="90" y="185">Client</text>
-  <text class="sub" x="90" y="204">API key +</text>
-  <text class="sub" x="90" y="220">HTTPS :8443</text>
+  <rect class="card" x="28" y="150" width="128" height="96" rx="13"/>
+  <text class="h" x="92" y="188">Client</text>
+  <text class="s" x="92" y="208">API key +</text>
+  <text class="s" x="92" y="224">HTTPS / HTTP</text>
 
-  <!-- TLS edge -->
-  <rect x="185" y="140" width="90" height="100" rx="8" fill="#ecfeff" stroke="#06b6d4" stroke-width="1.6"/>
-  <text class="lbl" x="230" y="182">TLS</text>
-  <text class="sub" x="230" y="200">term.</text>
-  <text class="sub" x="230" y="216">:8443</text>
+  <!-- TLS -->
+  <rect x="176" y="162" width="84" height="72" rx="12" fill="#ECFEFF" stroke="#06B6D4"/>
+  <text class="h" x="218" y="192" fill="#0E7490">TLS</text>
+  <text class="s" x="218" y="210">term. :8443</text>
 
-  <!-- pipeline boxes -->
+  <!-- pipeline -->
   <g>
-    <rect x="305" y="150" width="115" height="80" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.6"/>
-    <text class="lbl" x="362" y="180">1 · IP</text>
-    <text class="lbl" x="362" y="197">restriction</text>
-    <text class="sub" x="362" y="216">allow-list</text>
+    <rect class="card" x="284" y="150" width="132" height="96" rx="13"/>
+    <circle cx="308" cy="176" r="12" fill="#EF4444"/><text class="num" x="308" y="180">1</text>
+    <text class="h" x="360" y="180" font-size="12.5">IP restriction</text>
+    <text class="s" x="350" y="212">allow-list of</text><text class="s" x="350" y="227">source IPs</text>
+    <rect x="290" y="272" width="120" height="24" rx="12" fill="#FEF2F2" stroke="#FCA5A5"/>
+    <text class="rej" x="350" y="288">✕ 403 · wrong IP</text>
 
-    <rect x="440" y="150" width="115" height="80" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.6"/>
-    <text class="lbl" x="497" y="180">2 · key-auth</text>
-    <text class="sub" x="497" y="200">x-api-key /</text>
-    <text class="sub" x="497" y="216">Authorization</text>
+    <rect class="card" x="431" y="150" width="132" height="96" rx="13"/>
+    <circle cx="455" cy="176" r="12" fill="#F59E0B"/><text class="num" x="455" y="180">2</text>
+    <text class="h" x="505" y="180" font-size="12.5">key-auth</text>
+    <text class="s" x="497" y="212">x-api-key /</text><text class="s" x="497" y="227">Authorization</text>
+    <rect x="437" y="272" width="120" height="24" rx="12" fill="#FEF2F2" stroke="#FCA5A5"/>
+    <text class="rej" x="497" y="288">✕ 401 · no key</text>
 
-    <rect x="575" y="150" width="115" height="80" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
-    <text class="lbl" x="632" y="180">3 · ACL</text>
-    <text class="sub" x="632" y="200">consumer in</text>
-    <text class="sub" x="632" y="216">allowed group</text>
+    <rect class="card" x="578" y="150" width="132" height="96" rx="13"/>
+    <circle cx="602" cy="176" r="12" fill="#2563EB"/><text class="num" x="602" y="180">3</text>
+    <text class="h" x="650" y="180" font-size="12.5">ACL</text>
+    <text class="s" x="644" y="212">consumer in</text><text class="s" x="644" y="227">allowed group</text>
+    <rect x="584" y="272" width="120" height="24" rx="12" fill="#FEF2F2" stroke="#FCA5A5"/>
+    <text class="rej" x="644" y="288">✕ 403 · not in group</text>
 
-    <rect x="710" y="150" width="115" height="80" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.6"/>
-    <text class="lbl" x="767" y="180">rate-limit</text>
-    <text class="sub" x="767" y="200">per min /</text>
-    <text class="sub" x="767" y="216">per hour</text>
+    <rect class="card" x="725" y="150" width="132" height="96" rx="13"/>
+    <circle cx="749" cy="176" r="12" fill="#16A34A"/><text class="num" x="749" y="180">4</text>
+    <text class="h" x="795" y="180" font-size="12.5">rate-limit</text>
+    <text class="s" x="791" y="212">per minute /</text><text class="s" x="791" y="227">per hour</text>
+    <rect x="731" y="272" width="120" height="24" rx="12" fill="#FEF2F2" stroke="#FCA5A5"/>
+    <text class="rej" x="791" y="288">✕ 429 · too many</text>
   </g>
 
   <!-- upstream -->
-  <rect x="850" y="150" width="90" height="80" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
-  <text class="lbl" x="895" y="176">LLM</text>
-  <text class="sub" x="895" y="194">upstream</text>
-  <text class="port" x="895" y="212">:8000/:11433</text>
+  <rect x="878" y="150" width="132" height="96" rx="13" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="7 5"/>
+  <text class="h" x="944" y="186">LLM upstream</text>
+  <rect x="900" y="200" width="88" height="20" rx="10" fill="#E9FBF8" stroke="#0F9D94"/>
+  <text class="pt" x="944" y="214">:8000/:11433</text>
 
   <!-- flows -->
-  <path class="flow" d="M150,190 H185" marker-end="url(#arr)"/>
-  <path class="flow" d="M275,190 H305" marker-end="url(#arr)"/>
-  <path class="flow" d="M420,190 H440" marker-end="url(#arr)"/>
-  <path class="flow" d="M555,190 H575" marker-end="url(#arr)"/>
-  <path class="flow" d="M690,190 H710" marker-end="url(#arr)"/>
-  <path class="flow" d="M825,190 H850" marker-end="url(#arr)"/>
+  <path class="flow" d="M156,198 H174" marker-end="url(#ar)"/>
+  <path class="flow" d="M260,198 H282" marker-end="url(#ar)"/>
+  <path class="flow" d="M416,198 H429" marker-end="url(#ar)"/>
+  <path class="flow" d="M563,198 H576" marker-end="url(#ar)"/>
+  <path class="flow" d="M710,198 H723" marker-end="url(#ar)"/>
+  <path class="flow" d="M857,198 H876" marker-end="url(#ar)"/>
 
-  <!-- reject arrows -->
-  <text class="no" x="362" y="270">✗ 403 wrong IP</text>
-  <text class="no" x="497" y="270">✗ 401 no key</text>
-  <text class="no" x="632" y="270">✗ 403 not in group</text>
-  <text class="no" x="767" y="270">✗ 429 too many</text>
-  <line x1="362" y1="230" x2="362" y2="255" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 3"/>
-  <line x1="497" y1="230" x2="497" y2="255" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 3"/>
-  <line x1="632" y1="230" x2="632" y2="255" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 3"/>
-  <line x1="767" y1="230" x2="767" y2="255" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 3"/>
-
-  <text x="480" y="335" font-size="12" fill="#374151" text-anchor="middle">All requests are also recorded for metrics (Status API /metrics) and audit logs.</text>
-  <text x="480" y="358" font-size="11" fill="#6b7280" text-anchor="middle">HTTP :8000 skips TLS termination; the plugin layers still apply.</text>
+  <rect class="card" x="180" y="332" width="680" height="56" rx="12"/>
+  <text x="520" y="357" font-size="12" fill="#334155" text-anchor="middle">Every request is recorded for metrics (Status API :8100 /metrics) and audit logs.</text>
+  <text x="520" y="376" font-size="11" fill="#64748B" text-anchor="middle">HTTP :8000 skips TLS termination — the four plugin layers still apply.</text>
 </svg>
