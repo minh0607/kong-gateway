@@ -36,6 +36,50 @@ for x in d:
     print(x.get('id'))" 2>/dev/null
 }
 
+# ------------------------------------------------------------------------------
+# HELPER CHUẨN 3-TRỤC (Model=Service, Dự án=Consumer)
+# ------------------------------------------------------------------------------
+# kapi METHOD PATH [--data ...] -> 0 nếu 2xx; in body lỗi thật của Kong nếu không.
+KAPI_CODE=""; KAPI_BODY=""
+kapi() {
+    local method="$1" path="$2"; shift 2
+    local resp
+    resp=$(curl -s -w $'\n%{http_code}' -X "$method" "${KONG_ADMIN}${path}" "$@")
+    KAPI_CODE="${resp##*$'\n'}"; KAPI_BODY="${resp%$'\n'*}"
+    [ "${KAPI_CODE:0:1}" = "2" ] && return 0
+    local msg
+    msg=$(printf '%s' "$KAPI_BODY" | python3 -c "import sys,json
+try:
+    d=json.load(sys.stdin); print(d.get('message') or d.get('fields') or d)
+except Exception:
+    print(sys.stdin.read()[:300])" 2>/dev/null)
+    echo -e "${RED}   ✘ ${method} ${path} → HTTP ${KAPI_CODE}: ${msg}${NC}"
+    return 1
+}
+
+valid_slug() { [[ "$1" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; }
+valid_url()  { [[ "$1" =~ ^https?://[^/[:space:]]+ ]]; }
+
+# in backend url của 1 service (rỗng nếu chưa có)
+svc_backend() {
+    curl -s "${KONG_ADMIN}/services/$1" | python3 -c "import sys,json
+try:
+    x=json.load(sys.stdin)
+    if 'name' in x: print('%s://%s:%s%s'%(x.get('protocol'),x.get('host'),x.get('port'),x.get('path') or ''))
+except Exception: pass" 2>/dev/null
+}
+
+# bật hoặc PATCH 1 plugin trên service (idempotent)
+ensure_service_plugin() {
+    local svc="$1" name="$2"; shift 2
+    local pid
+    pid=$(curl -s "${KONG_ADMIN}/services/${svc}/plugins" | python3 -c "import sys,json
+try:
+    [print(p['id']) for p in json.load(sys.stdin).get('data',[]) if p.get('name')=='$name']
+except Exception: pass" 2>/dev/null | head -1)
+    if [ -n "$pid" ]; then kapi PATCH "/plugins/${pid}" "$@"; else kapi POST "/services/${svc}/plugins" --data "name=${name}" "$@"; fi
+}
+
 # ==============================================================================
 # TÁC VỤ 1: TẠO MỚI TOÀN BỘ (Service + Route + Consumer + Bảo mật 3 lớp)
 # ==============================================================================
@@ -729,6 +773,155 @@ PYEOF
 }
 
 # ==============================================================================
+# TÁC VỤ 18: ĐĂNG KÝ MODEL (Service + Route theo chuẩn 3-trục)
+#   Tên theo NĂNG LỰC (svc-<slug>, /<slug>); server nằm ở TAG (box:...).
+#   Trùng backend khác → tự gợi ý hậu tố server. Idempotent + preview + rollback.
+# ==============================================================================
+task_register_model() {
+    echo -e "\n${GREEN}[ĐĂNG KÝ MODEL — Service + Route chuẩn 3-trục]${NC}"
+    read -p "1. SLUG năng lực (a-z0-9-, vd: embed, rerank, gemma): " SLUG
+    valid_slug "$SLUG" || { echo -e "${RED}Slug không hợp lệ (chỉ a-z 0-9 -, không hoa/space/_).${NC}"; return; }
+    read -p "2. Backend URL (vd: http://107.118.109.33:8001): " BURL
+    valid_url "$BURL" || { echo -e "${RED}URL không hợp lệ.${NC}"; return; }
+    read -p "3. Server label cho tag (vd: vllm03) [trống nếu bỏ]: " BOX
+    read -p "4. Tên model cho tag (vd: bge-m3) [tuỳ chọn]: " MODEL
+    echo "5. Header key client sẽ gửi:  1) x-api-key (n8n)   2) Authorization+Bearer (Dify)"
+    read -p "   Chọn (1/2): " HT
+    [ "$HT" = "2" ] && HEADER="Authorization" || HEADER="x-api-key"
+
+    local SVC="svc-${SLUG}" RT="rt-${SLUG}" PATHP="/${SLUG}" ACL="acl-${SLUG}"
+    local existing; existing=$(svc_backend "$SVC")
+    if [ -n "$existing" ] && [ "$existing" != "$BURL" ]; then
+        echo -e "${YELLOW}⚠ '${SVC}' đã tồn tại với backend KHÁC (${existing}).${NC}"
+        [ -z "$BOX" ] && { echo -e "${RED}Trùng tên mà không có Server label để phân biệt → nhập lại kèm server label.${NC}"; return; }
+        SVC="svc-${SLUG}-${BOX}"; RT="rt-${SLUG}-${BOX}"; PATHP="/${SLUG}-${BOX}"; ACL="acl-${SLUG}-${BOX}"
+        echo -e "${YELLOW}→ Dùng hậu tố server: ${SVC} (path ${PATHP})${NC}"
+    fi
+
+    local TAGS="env:pca,kind:vllm,cap:${SLUG}"
+    [ -n "$BOX" ] && TAGS="${TAGS},box:${BOX}"
+    [ -n "$MODEL" ] && TAGS="${TAGS},model:${MODEL}"
+
+    echo -e "\n${CYAN}────── SẼ TẠO/CẬP NHẬT ──────${NC}"
+    echo "  Service : ${SVC}  →  ${BURL}"
+    echo "  Route   : ${RT}   path ${PATHP}  (strip_path=true)"
+    echo "  Bảo mật : key-auth (header ${HEADER}) + acl allow=${ACL}"
+    echo "  Tags    : ${TAGS}"
+    read -p "Gõ YES để thực hiện: " C; [ "$C" = "YES" ] || { echo "Hủy."; return; }
+
+    local PREEXIST; PREEXIST=$(svc_backend "$SVC")
+    local oIFS=$IFS
+
+    echo -e "\n🚀 Đang triển khai..."
+    local svc_args=(--data "url=${BURL}" --data "connect_timeout=60000" --data "read_timeout=600000" --data "write_timeout=600000")
+    IFS=','; for t in $TAGS; do svc_args+=(--data "tags[]=$t"); done; IFS=$oIFS
+    kapi PUT "/services/${SVC}" "${svc_args[@]}" || { echo -e "${RED}Lỗi tạo service. Dừng.${NC}"; return; }
+    echo -e "${GREEN}   ✔ service ${SVC}${NC}"
+
+    local rt_args=(--data "paths[]=${PATHP}" --data "strip_path=true")
+    IFS=','; for t in $TAGS; do rt_args+=(--data "tags[]=$t"); done; IFS=$oIFS
+    if ! kapi PUT "/services/${SVC}/routes/${RT}" "${rt_args[@]}"; then
+        echo -e "${RED}Lỗi tạo route → rollback.${NC}"
+        [ -z "$PREEXIST" ] && kapi DELETE "/services/${SVC}" >/dev/null
+        return
+    fi
+    echo -e "${GREEN}   ✔ route ${RT} (${PATHP})${NC}"
+
+    ensure_service_plugin "$SVC" key-auth --data "config.key_names=${HEADER}" && echo -e "${GREEN}   ✔ key-auth (${HEADER})${NC}"
+    ensure_service_plugin "$SVC" acl --data "config.allow=${ACL}" && echo -e "${GREEN}   ✔ acl allow=${ACL}${NC}"
+
+    local SIP; SIP=$(hostname -I | awk '{print $1}')
+    echo -e "\n${GREEN}✔ XONG. Model '${SLUG}' sẵn sàng.${NC}"
+    echo "  Client gọi: http://${SIP}:8000${PATHP}/v1/...  (kèm token, header ${HEADER})"
+    echo "  → Gán dự án vào model này bằng tác vụ 19."
+}
+
+# ==============================================================================
+# TÁC VỤ 19: GÁN DỰ ÁN vào model(s) — token + IP riêng
+#   Dự án = Consumer (prj-<slug>): token riêng + ACL từng model + ip-restriction
+#   scope=consumer (tự test, fallback service+consumer nếu Kong không cho).
+# ==============================================================================
+task_assign_project() {
+    echo -e "\n${YELLOW}[GÁN DỰ ÁN vào model(s) — token + IP riêng]${NC}"
+    read -p "1. Tên dự án (a-z0-9-, vd: sparepart): " PJ
+    valid_slug "$PJ" || { echo -e "${RED}Tên không hợp lệ.${NC}"; return; }
+    local CON="prj-${PJ}"
+    read -p "2. TOKEN cấp cho dự án (chuỗi bí mật): " RAW
+    [ -z "$RAW" ] && { echo -e "${RED}Chưa nhập token.${NC}"; return; }
+    read -p "3. IP được phép (cách nhau phẩy, vd: 10.1.1.10,10.1.1.11) [trống=không giới hạn]: " IPS
+    echo -e "${GREEN}» Model đang có:${NC}"
+    curl -s "${KONG_ADMIN}/services" | python3 -c "import sys,json
+try:
+    [print('   -', s['name'][4:]) for s in json.load(sys.stdin).get('data',[]) if (s.get('name') or '').startswith('svc-')]
+except Exception: pass" 2>/dev/null
+    read -p "4. Dự án dùng model NÀO (slug, cách nhau phẩy, vd: embed,rerank): " MODELS
+    [ -z "$MODELS" ] && { echo -e "${RED}Chưa chọn model.${NC}"; return; }
+    echo "5. Header dự án gửi:  1) x-api-key   2) Authorization+Bearer"
+    read -p "   Chọn (1/2): " HT
+    if [ "$HT" = "2" ]; then FKEY="Bearer ${RAW}"; HNAME="Authorization: Bearer"; else FKEY="${RAW}"; HNAME="x-api-key"; fi
+
+    echo -e "\n${CYAN}────── SẼ CẤU HÌNH ──────${NC}"
+    echo "  Consumer   : ${CON}"
+    echo "  Token      : ${RAW}"
+    echo "  Vào model  : ${MODELS}"
+    echo "  Giới hạn IP: ${IPS:-<không giới hạn>}"
+    read -p "Gõ YES để thực hiện: " C; [ "$C" = "YES" ] || { echo "Hủy."; return; }
+
+    local oIFS=$IFS
+    kapi PUT "/consumers/${CON}" || { echo -e "${RED}Lỗi tạo consumer.${NC}"; return; }
+    echo -e "${GREEN}   ✔ consumer ${CON}${NC}"
+
+    local nkeys; nkeys=$(curl -s "${KONG_ADMIN}/consumers/${CON}/key-auth" | python3 -c "import sys,json;print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
+    if [ "${nkeys:-0}" = "0" ]; then
+        kapi POST "/consumers/${CON}/key-auth" --data "key=${FKEY}" && echo -e "${GREEN}   ✔ cấp token${NC}"
+    else
+        echo -e "${YELLOW}   • consumer đã có ${nkeys} key — giữ nguyên (đổi bằng tác vụ 6).${NC}"
+    fi
+
+    IFS=','
+    for m in $MODELS; do
+        m=$(echo "$m" | xargs); [ -z "$m" ] && continue
+        local grp="acl-${m}"
+        local has; has=$(curl -s "${KONG_ADMIN}/consumers/${CON}/acls" | python3 -c "import sys,json;print(sum(1 for a in json.load(sys.stdin).get('data',[]) if a.get('group')=='$grp'))" 2>/dev/null)
+        if [ "${has:-0}" = "0" ]; then kapi POST "/consumers/${CON}/acls" --data "group=${grp}" && echo -e "${GREEN}   ✔ join ${grp}${NC}"
+        else echo -e "${YELLOW}   • đã ở ${grp}${NC}"; fi
+    done
+    IFS=$oIFS
+
+    if [ -n "$IPS" ]; then
+        # config.allow phải là MẢNG: mỗi IP một --data config.allow[]=
+        local ip_args=()
+        IFS=','; for ip in $IPS; do ip=$(echo "$ip" | xargs); [ -n "$ip" ] && ip_args+=(--data "config.allow[]=$ip"); done; IFS=$oIFS
+        local existpid; existpid=$(curl -s "${KONG_ADMIN}/consumers/${CON}/plugins" | python3 -c "import sys,json
+try:
+    [print(p['id']) for p in json.load(sys.stdin).get('data',[]) if p.get('name')=='ip-restriction']
+except Exception: pass" 2>/dev/null | head -1)
+        if [ -n "$existpid" ]; then
+            kapi PATCH "/plugins/${existpid}" "${ip_args[@]}" && echo -e "${GREEN}   ✔ cập nhật IP (consumer-scope)${NC}"
+        elif kapi POST "/consumers/${CON}/plugins" --data "name=ip-restriction" "${ip_args[@]}"; then
+            echo -e "${GREEN}   ✔ IP restriction (consumer-scope — áp cho mọi model của dự án)${NC}"
+        else
+            echo -e "${YELLOW}   • Kong không cho ip-restriction scope consumer → fallback theo từng service:${NC}"
+            local cid; cid=$(curl -s "${KONG_ADMIN}/consumers/${CON}" | python3 -c "import sys,json;print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+            IFS=','
+            for m in $MODELS; do
+                m=$(echo "$m" | xargs); [ -z "$m" ] && continue
+                kapi POST "/services/svc-${m}/plugins" --data "name=ip-restriction" --data "consumer.id=${cid}" "${ip_args[@]}" \
+                  && echo -e "${GREEN}   ✔ IP trên svc-${m}${NC}"
+            done
+            IFS=$oIFS
+        fi
+    fi
+
+    local SIP; SIP=$(hostname -I | awk '{print $1}')
+    echo -e "\n${GREEN}✔ XONG. Dự án '${PJ}' đã được cấp quyền.${NC}"
+    echo "  Token: ${RAW}   (header: ${HNAME})"
+    IFS=','
+    for m in $MODELS; do m=$(echo "$m" | xargs); [ -z "$m" ] && continue; echo "  Gọi : http://${SIP}:8000/${m}/v1/...  ${HNAME}: <token>"; done
+    IFS=$oIFS
+}
+
+# ==============================================================================
 # VÒNG LẶP MENU CHÍNH
 # ==============================================================================
 while true; do
@@ -755,9 +948,12 @@ while true; do
     echo -e "15) ${YELLOW}BẬT/TẮT${NC} tạm 1 Plugin"
     echo -e "16) ${YELLOW}XEM API KEY${NC} thật của 1 Consumer"
     echo -e "17) ${CYAN}RESTORE${NC} cấu hình từ file backup (.json)"
-    echo "18) Thoát"
+    echo -e "${GREEN}★★★ CHUẨN 3-TRỤC (KHUYÊN DÙNG — thay cho 1/2/10) ★★★${NC}"
+    echo -e "18) ${GREEN}ĐĂNG KÝ MODEL${NC}  (svc-<slug> + route + tag server)"
+    echo -e "19) ${GREEN}GÁN DỰ ÁN${NC}    vào model(s) — token + IP riêng (consumer)"
+    echo "20) Thoát"
     echo "------------------------------------------------------------"
-    read -p "Nhập lựa chọn của bạn (1-18): " MAIN_CHOICE || { echo; exit 0; }
+    read -p "Nhập lựa chọn của bạn (1-20): " MAIN_CHOICE || { echo; exit 0; }
 
     case "$MAIN_CHOICE" in
         1) task_create_full ;;
@@ -777,7 +973,9 @@ while true; do
         15) task_toggle_plugin ;;
         16) task_show_keys ;;
         17) task_restore ;;
-        18) echo "Tạm biệt!"; exit 0 ;;
+        18) task_register_model ;;
+        19) task_assign_project ;;
+        20) echo "Tạm biệt!"; exit 0 ;;
         *) echo -e "${RED}Lựa chọn không hợp lệ.${NC}" ;;
     esac
 
