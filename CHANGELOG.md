@@ -4,6 +4,25 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.4] — 2026-07-26
+
+Monitoring release: turn on vLLM token monitoring end-to-end and ship it to PCA.
+
+### Added
+- **vLLM scrape job** in `monitoring-preview/prometheus.yml` (`job_name: vllm` via
+  `file_sd_configs`), plus `vllm-targets.yml` pre-populated with the 7 production
+  vLLM hosts (`107.118.109.31–36`, `.46`). Prometheus hot-reloads the target file
+  (~30s) — add/remove machines without a restart.
+- Grafana **"vLLM Token Usage"** panels (token rate by model/machine) are wired to
+  the same Prometheus datasource that scrapes Kong — one stack monitors both.
+
+### Notes
+- Each vLLM host must run **without** `--disable-log-stats`, listen on
+  `0.0.0.0:<port>`, and allow the Prometheus host through the firewall.
+- A separate share-externally dashboard variant (datasource prompt on import +
+  Grafana-12-compatible ranked tables) is available for importing into other
+  Grafana instances; the provisioned copies keep concrete datasource UIDs.
+
 ## [1.0.3] — 2026-06-15
 
 Security hardening, full monitoring + alerting, and a documentation refresh.

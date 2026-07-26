@@ -3,16 +3,22 @@
 # friendly name via labels (shown in the dashboard instead of the raw IP).
 # Prometheus reloads this file automatically within ~30s — no restart needed.
 #
-# Example with two machines:
-#   - targets: ['10.0.0.11:8000', '10.0.0.12:8000']
-#     labels: { group: 'vllm' }
+# A host running SEVERAL vLLM instances (different ports) = one line per ip:port.
 #
-# Or per-machine friendly names (one block each):
-#   - targets: ['10.0.0.11:8000']
-#     labels: { node: 'vllm-01', group: 'vllm' }
-#   - targets: ['10.0.0.12:8000']
-#     labels: { node: 'vllm-02', group: 'vllm' }
+# Prereqs per machine: vLLM started WITHOUT --disable-log-stats, listening on
+# 0.0.0.0:<port>, and the Prometheus host allowed through the firewall to it.
 
-- targets: []
-  labels:
-    group: 'vllm'
+- targets: ['107.118.109.31:8000']
+  labels: { node: 'vllm-31', group: 'vllm' }
+- targets: ['107.118.109.32:8000']
+  labels: { node: 'vllm-32', group: 'vllm' }
+- targets: ['107.118.109.33:8000']
+  labels: { node: 'vllm-33-coder', group: 'vllm' }
+- targets: ['107.118.109.34:8000']
+  labels: { node: 'vllm-34', group: 'vllm' }
+- targets: ['107.118.109.35:8000']
+  labels: { node: 'vllm-35', group: 'vllm' }
+- targets: ['107.118.109.36:8000']
+  labels: { node: 'vllm-36-dify', group: 'vllm' }
+- targets: ['107.118.109.46:8000']
+  labels: { node: 'vllm-46', group: 'vllm' }
