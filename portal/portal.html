@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SEHC AI Gateway — Portal</title>
+<style>
+  :root{
+    --bg:#f9fafb; --card:#ffffff; --line:#e5e7eb; --text:#111827; --sub:#6b7280;
+    --sidebar:#ffffff; --sbline:#e5e7eb;
+    --primary:#2563eb; --primary-h:#3b82f6; --primary-l:#eff6ff; --ind:#60a5fa; --primary-t:#1d4ed8;
+    --hover:#f3f4f6; --input:#ffffff;
+    --shadow:0 10px 15px -3px rgba(0,0,0,.05),0 4px 6px -4px rgba(0,0,0,.05);
+    --btnsh:0 10px 15px -3px rgba(37,99,235,.3);
+    --red:#dc2626;
+  }
+  html.dark{
+    --bg:#030712; --card:#1e293b; --line:#334155; --text:#f1f5f9; --sub:#94a3b8;
+    --sidebar:#0f172a; --sbline:#1e293b; --primary-l:#1e293b; --primary-t:#93c5fd;
+    --hover:#1e293b; --input:#0f172a;
+    --shadow:0 10px 15px -3px rgba(0,0,0,.3);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,ui-sans-serif,system-ui,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  ::-webkit-scrollbar{width:6px;height:6px} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:20px}
+  html.dark ::-webkit-scrollbar-thumb{background:#475569}
+  a{color:inherit;text-decoration:none}
+
+  /* ---------- Sidebar ---------- */
+  aside{position:fixed;top:0;left:0;bottom:0;width:236px;background:var(--sidebar);border-right:1px solid var(--sbline);display:flex;flex-direction:column;z-index:10}
+  .sb-head{height:64px;display:flex;align-items:center;gap:11px;padding:0 18px;border-bottom:1px solid var(--sbline)}
+  .sb-head img{height:30px;object-fit:contain}
+  .sb-head .light-logo{display:block} .sb-head .dark-logo{display:none}
+  html.dark .sb-head .light-logo{display:none} html.dark .sb-head .dark-logo{display:block}
+  .sb-title{font-weight:800;font-size:13px;letter-spacing:.2px;line-height:1.1}
+  .sb-sub{font-size:10px;color:var(--sub);font-weight:600}
+  nav{flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:3px}
+  nav .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.15em;color:var(--sub);padding:14px 12px 6px}
+  .nav-item{position:relative;display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:12px;color:var(--sub);font-weight:600;cursor:pointer;transition:all .2s}
+  .nav-item:hover{background:var(--hover);color:var(--text)}
+  .nav-item.active{background:var(--primary-l);color:var(--primary-t)}
+  .nav-item.active::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:22px;border-radius:0 4px 4px 0;background:var(--ind)}
+  .nav-item .ic{width:18px;text-align:center}
+  .sb-foot{padding:12px;border-top:1px solid var(--sbline);display:flex;align-items:center;justify-content:space-between}
+  .sb-foot #conn{font-size:11px;font-weight:600;color:var(--sub)}
+  .toggle{background:var(--hover);border:1px solid var(--line);border-radius:9px;padding:6px 9px;cursor:pointer;font-size:13px;color:var(--text)}
+
+  /* ---------- Main ---------- */
+  main{margin-left:236px;min-height:100vh}
+  .topbar{height:64px;display:flex;align-items:center;gap:14px;padding:0 26px;border-bottom:1px solid var(--line);background:var(--card)}
+  .topbar h1{font-size:17px;font-weight:800;margin:0}
+  .topbar .sub{font-size:12px;color:var(--sub)}
+  .content{padding:24px 26px;max-width:1180px}
+  .split{display:grid;grid-template-columns:350px 1fr;gap:20px}
+  @media(max-width:900px){aside{width:64px}.sb-title,.sb-sub,.nav-item span,nav .lbl{display:none}main{margin-left:64px}.split{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px}
+  .card h2{margin:0 0 3px;font-size:15px;font-weight:700}
+  .card .hint{margin:0 0 16px;color:var(--sub);font-size:12.5px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--sub);margin:0 0 6px}
+  .muted{color:var(--sub);font-size:12px}
+  input,select{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:11px;font-size:13.5px;background:var(--input);color:var(--text)}
+  input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+  .fld{margin-bottom:12px}
+  .row{display:flex;gap:12px} .row>*{flex:1}
+  .btn{background:var(--primary);color:#fff;border:0;padding:10px 18px;border-radius:12px;font-weight:700;font-size:13.5px;cursor:pointer;box-shadow:var(--btnsh);transition:all .3s}
+  .btn:hover{background:var(--primary-h)} .btn:active{transform:scale(.97)}
+  .btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .btn.sec:hover{background:var(--hover)}
+  .btn.sm{padding:6px 12px;font-size:12px;border-radius:9px;box-shadow:none} .btn.red{background:var(--red)} .btn.gray{background:#64748b;box-shadow:none}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--sub);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:10px;border-bottom:1px solid var(--line)}
+  td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  code{background:var(--hover);padding:2px 7px;border-radius:6px;font-size:12px;font-family:ui-monospace,monospace}
+  .pill{display:inline-block;background:var(--primary-l);color:var(--primary-t);border:1px solid var(--line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600;margin:2px 3px 2px 0}
+  .pill.box{background:#eff6ff;color:#1d4ed8} .pill.model{background:#fff7ed;color:#b45309}
+  html.dark .pill.box{background:#1e293b;color:#93c5fd} html.dark .pill.model{background:#292524;color:#fdba74}
+  .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px;border:1px solid var(--line);border-radius:11px;padding:11px;max-height:150px;overflow:auto;background:var(--input)}
+  .checks label{display:flex;align-items:center;gap:8px;font-weight:500;color:var(--text);margin:0;cursor:pointer;font-size:13px}
+  .checks input{width:auto}
+  .tokwrap{display:flex;align-items:center;gap:6px}
+  .toast{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:9px;z-index:60;max-width:430px}
+  .toast div{padding:12px 16px;border-radius:12px;font-size:13px;font-weight:500;color:#fff;background:#1e293b;box-shadow:var(--shadow);animation:in .2s}
+  .toast div.ok{background:var(--primary)} .toast div.err{background:#be123c}
+  @keyframes in{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<aside>
+  <div class="sb-head">
+    <img class="light-logo" src="data:image/png;base64,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" alt="SEHC"/>
+    <img class="dark-logo"  src="data:image/png;base64,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" alt="SEHC"/>
+  </div>
+  <nav>
+    <div class="lbl">AI Gateway</div>
+    <div class="nav-item active" data-tab="models"><span class="ic">🧩</span><span>Models</span></div>
+    <div class="nav-item" data-tab="projects"><span class="ic">🗂️</span><span>Dự án</span></div>
+  </nav>
+  <div class="sb-foot">
+    <span id="conn">đang kết nối…</span>
+    <button class="toggle" onclick="toggleDark()" title="Sáng / Tối">🌓</button>
+  </div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <div>
+      <h1 id="page-title">Models</h1>
+      <div class="sub" id="page-sub">Đăng ký &amp; quản lý model (Service + Route theo năng lực)</div>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- ===== MODELS ===== -->
+    <section id="tab-models">
+      <div class="split">
+        <div class="card">
+          <h2>➕ Đăng ký Model</h2>
+          <p class="hint">Tên theo năng lực; server nằm ở tag.</p>
+          <div class="fld"><label>Slug năng lực <span class="muted">(a-z0-9-)</span></label><input id="m_slug" placeholder="embed"/></div>
+          <div class="fld"><label>Backend URL</label><input id="m_url" placeholder="http://107.118.109.33:8001"/></div>
+          <div class="fld row">
+            <div><label>Server (tag)</label><input id="m_box" placeholder="vllm03"/></div>
+            <div><label>Model (tag)</label><input id="m_model" placeholder="bge-m3"/></div>
+          </div>
+          <div class="fld"><label>Header key</label>
+            <select id="m_header"><option value="x-api-key">x-api-key (n8n)</option><option value="Authorization">Authorization + Bearer (Dify)</option></select></div>
+          <button class="btn" onclick="registerModel()">Đăng ký</button>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Models đã có</h2><button class="btn sec sm" onclick="loadModels()">↻ Tải lại</button></div>
+          <div style="height:14px"></div>
+          <div style="overflow:auto">
+          <table><thead><tr><th>Service / Path</th><th>Backend</th><th>Tags</th><th>Bảo mật</th></tr></thead>
+            <tbody id="models_body"><tr><td colspan="4" class="muted">Đang tải…</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PROJECTS ===== -->
+    <section id="tab-projects" class="hidden">
+      <div class="split">
+        <div class="card">
+          <h2>➕ Gán Dự án</h2>
+          <p class="hint">Dự án = consumer: token riêng + IP riêng.</p>
+          <div class="fld"><label>Tên dự án <span class="muted">(a-z0-9-)</span></label><input id="p_name" placeholder="sparepart"/></div>
+          <div class="fld"><label>Token</label><input id="p_token" placeholder="chuỗi bí mật"/></div>
+          <div class="fld"><label>IP cho phép <span class="muted">(phẩy)</span></label><input id="p_ips" placeholder="10.1.1.10,10.1.1.11"/></div>
+          <div class="fld"><label>Dùng model nào</label><div id="p_models" class="checks"><span class="muted">Đang tải…</span></div></div>
+          <div class="fld"><label>Header</label>
+            <select id="p_header"><option value="x-api-key">x-api-key</option><option value="Authorization">Authorization + Bearer</option></select></div>
+          <button class="btn" onclick="assignProject()">Gán quyền</button>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Dự án đã có</h2><button class="btn sec sm" onclick="loadProjects()">↻ Tải lại</button></div>
+          <div style="height:14px"></div>
+          <div style="overflow:auto">
+          <table><thead><tr><th>Consumer</th><th>Token</th><th>Model (ACL)</th><th>IP allow</th><th></th></tr></thead>
+            <tbody id="projects_body"><tr><td colspan="5" class="muted">Đang tải…</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API=(localStorage.getItem('kong_api')||'/api').replace(/\/$/,'');
+const $=s=>document.querySelector(s);
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+if(localStorage.getItem('portal_dark')==='1')document.documentElement.classList.add('dark');
+function toggleDark(){const d=document.documentElement.classList.toggle('dark');localStorage.setItem('portal_dark',d?'1':'0');}
+function toast(m,k='ok'){const e=document.createElement('div');e.className=k;e.textContent=m;$('#toast').appendChild(e);setTimeout(()=>e.remove(),k==='err'?6000:3500);}
+async function api(method,path,body){const o={method,headers:{}};if(body!==undefined){o.headers['Content-Type']='application/json';o.body=JSON.stringify(body);}
+  const r=await fetch(API+path,o);const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch(e){d=t}
+  if(!r.ok){const m=(d&&d.message)||(typeof d==='string'?d:JSON.stringify(d));throw new Error(m||('HTTP '+r.status));}return d;}
+const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
+function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
+
+const PAGES={models:['Models','Đăng ký & quản lý model (Service + Route theo năng lực)'],projects:['Dự án','Gán dự án vào model — token & IP riêng (consumer)']};
+document.querySelectorAll('.nav-item').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
+  const tab=t.dataset.tab;$('#tab-models').classList.toggle('hidden',tab!=='models');$('#tab-projects').classList.toggle('hidden',tab!=='projects');
+  $('#page-title').textContent=PAGES[tab][0];$('#page-sub').textContent=PAGES[tab][1];
+  if(tab==='projects'){loadModelChecks();loadProjects();}
+});
+async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong OK';$('#conn').style.color='#16a34a';}
+  catch(e){$('#conn').textContent='✕ mất kết nối';$('#conn').style.color='#dc2626';}}
+
+// ===== MODELS =====
+async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td colspan="4" class="muted">Đang tải…</td></tr>';
+  try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
+    const routes=(await api('GET','/routes?size=1000')).data;const rows=[];
+    for(const s of svcs){const rt=routes.find(r=>r.service&&r.service.id===s.id);
+      const plugins=(await api('GET','/services/'+s.name+'/plugins')).data.map(p=>p.name);
+      const back=`${s.protocol}://${s.host}:${s.port}${s.path||''}`;const path=rt?(rt.paths||[]).join(', '):'—';
+      rows.push(`<tr><td><b>${esc(s.name)}</b><br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td></tr>`);}
+    body.innerHTML=rows.join('')||'<tr><td colspan="4" class="muted">Chưa có model nào (svc-*).</td></tr>';
+  }catch(e){body.innerHTML=`<tr><td colspan="4" style="color:var(--red)">Lỗi: ${esc(e.message)}</td></tr>`;}}
+async function registerModel(){const slug=$('#m_slug').value.trim(),url=$('#m_url').value.trim(),box=$('#m_box').value.trim(),model=$('#m_model').value.trim(),header=$('#m_header').value;
+  if(!slugOk(slug))return toast('Slug không hợp lệ (a-z0-9-)','err');
+  if(!/^https?:\/\/[^/\s]+/.test(url))return toast('URL không hợp lệ','err');
+  let svc='svc-'+slug,rt='rt-'+slug,path='/'+slug,acl='acl-'+slug;
+  try{const ex=await api('GET','/services/'+svc);const eb=`${ex.protocol}://${ex.host}:${ex.port}${ex.path||''}`;
+    if(ex.id&&eb!==url){if(!box)return toast('Trùng '+svc+' backend khác — nhập Server (tag) để thêm hậu tố','err');
+      svc+='-'+box;rt+='-'+box;path+='-'+box;acl+='-'+box;toast('Trùng backend → '+svc,'ok');}}catch(e){}
+  const tags=['env:pca','kind:vllm','cap:'+slug];if(box)tags.push('box:'+box);if(model)tags.push('model:'+model);
+  try{await api('PUT','/services/'+svc,{url,connect_timeout:60000,read_timeout:600000,write_timeout:600000,tags});
+    await api('PUT','/services/'+svc+'/routes/'+rt,{paths:[path],strip_path:true,tags});
+    await ensurePlugin(svc,'key-auth',{key_names:[header]});await ensurePlugin(svc,'acl',{allow:[acl]});
+    toast('✔ Đã đăng ký '+svc+'  ('+path+')','ok');
+    $('#m_slug').value=$('#m_url').value=$('#m_box').value=$('#m_model').value='';loadModels();
+  }catch(e){toast('Lỗi: '+e.message,'err');}}
+async function ensurePlugin(svc,name,config){const pls=(await api('GET','/services/'+svc+'/plugins')).data;const ex=pls.find(p=>p.name===name);
+  if(ex)return api('PATCH','/plugins/'+ex.id,{config});return api('POST','/services/'+svc+'/plugins',{name,config});}
+
+// ===== PROJECTS =====
+async function loadModelChecks(){const box=$('#p_models');box.innerHTML='<span class="muted">Đang tải…</span>';
+  try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
+    box.innerHTML=svcs.map(s=>{const slug=s.name.slice(4);return `<label><input type="checkbox" value="${esc(slug)}"> ${esc(slug)}</label>`;}).join('')||'<span class="muted">Chưa có model.</span>';
+  }catch(e){box.innerHTML=`<span style="color:var(--red)">Lỗi: ${esc(e.message)}</span>`;}}
+async function loadProjects(){const body=$('#projects_body');body.innerHTML='<tr><td colspan="5" class="muted">Đang tải…</td></tr>';
+  try{const cons=(await api('GET','/consumers?size=1000')).data.filter(c=>(c.username||'').startsWith('prj-'));const rows=[];
+    for(const c of cons){const keys=(await api('GET','/consumers/'+c.username+'/key-auth')).data.map(k=>k.key);
+      const acls=(await api('GET','/consumers/'+c.username+'/acls')).data.map(a=>a.group);
+      const pls=(await api('GET','/consumers/'+c.username+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
+      const ips=ipr?(ipr.config.allow||[]).join(', '):'<span class="muted">không giới hạn</span>';
+      const tok=keys[0]||'—';const tid='t'+Math.abs(hash(c.username));
+      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')">👁</button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td><button class="btn red sm" onclick="delProject('${esc(c.username)}')">Xóa</button></td></tr>`);}
+    body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">Chưa có dự án nào (prj-*).</td></tr>';
+  }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Lỗi: ${esc(e.message)}</td></tr>`;}}
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
+function revToken(id,val){const el=document.getElementById(id);el.textContent=el.dataset.on?'••••••':val;el.dataset.on=el.dataset.on?'':'1';}
+async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_token').value.trim(),header=$('#p_header').value;
+  const ips=$('#p_ips').value.split(',').map(x=>x.trim()).filter(Boolean);
+  const models=[...document.querySelectorAll('#p_models input:checked')].map(x=>x.value);
+  if(!slugOk(name))return toast('Tên dự án không hợp lệ','err');if(!token)return toast('Chưa nhập token','err');if(!models.length)return toast('Chọn ít nhất 1 model','err');
+  const con='prj-'+name;const fkey=header==='Authorization'?('Bearer '+token):token;
+  try{await api('PUT','/consumers/'+con,{});
+    const nk=(await api('GET','/consumers/'+con+'/key-auth')).data.length;if(nk===0)await api('POST','/consumers/'+con+'/key-auth',{key:fkey});
+    const have=(await api('GET','/consumers/'+con+'/acls')).data.map(a=>a.group);
+    for(const m of models){const g='acl-'+m;if(!have.includes(g))await api('POST','/consumers/'+con+'/acls',{group:g});}
+    if(ips.length){const pls=(await api('GET','/consumers/'+con+'/plugins')).data;const ex=pls.find(p=>p.name==='ip-restriction');
+      if(ex)await api('PATCH','/plugins/'+ex.id,{config:{allow:ips}});else await api('POST','/consumers/'+con+'/plugins',{name:'ip-restriction',config:{allow:ips}});}
+    toast('✔ Đã gán '+con+' → '+models.join(', '),'ok');
+    $('#p_name').value=$('#p_token').value=$('#p_ips').value='';document.querySelectorAll('#p_models input:checked').forEach(x=>x.checked=false);loadProjects();
+  }catch(e){toast('Lỗi: '+e.message,'err');}}
+async function delProject(con){if(!confirm('Xóa dự án '+con+' (kèm token + ACL + IP)?'))return;
+  try{await api('DELETE','/consumers/'+con);toast('Đã xóa '+con,'ok');loadProjects();}catch(e){toast('Lỗi: '+e.message,'err');}}
+
+ping();loadModels();
+</script>
+</body>
+</html>
