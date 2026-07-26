@@ -144,7 +144,12 @@
           <h2>➕ Assign Project</h2>
           <p class="hint">A project is a consumer: its own token + its own allowed IPs.</p>
           <div class="fld"><label>Project name <span class="muted">(a-z0-9-)</span></label><input id="p_name" placeholder="sparepart"/></div>
-          <div class="fld"><label>Token</label><input id="p_token" placeholder="secret string"/></div>
+          <div class="fld"><label>Token</label>
+            <div style="display:flex;gap:8px">
+              <input id="p_token" placeholder="secret string, or click Generate"/>
+              <button type="button" class="btn sec" style="white-space:nowrap" onclick="genToken()">🎲 Generate</button>
+            </div>
+          </div>
           <div class="fld"><label>Allowed IPs <span class="muted">(comma-separated)</span></label><input id="p_ips" placeholder="10.1.1.10,10.1.1.11"/></div>
           <div class="fld"><label>Models this project may use</label><div id="p_models" class="checks"><span class="muted">Loading…</span></div></div>
           <div class="fld"><label>Header</label>
@@ -175,6 +180,7 @@ const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;
 if(localStorage.getItem('portal_dark')==='1')document.documentElement.classList.add('dark');
 function toggleDark(){const d=document.documentElement.classList.toggle('dark');localStorage.setItem('portal_dark',d?'1':'0');}
 function toast(m,k='ok'){const e=document.createElement('div');e.className=k;e.textContent=m;$('#toast').appendChild(e);setTimeout(()=>e.remove(),k==='err'?6000:3500);}
+function genToken(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];const el=$('#p_token');el.value=s;el.focus();el.select();toast('Generated a 36-char secure token','ok');}
 async function api(method,path,body){const o={method,headers:{},credentials:'same-origin'};if(body!==undefined){o.headers['Content-Type']='application/json';o.body=JSON.stringify(body);}
   const r=await fetch(API+path,o);const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch(e){d=t}
   if(!r.ok){const m=(d&&d.message)||(typeof d==='string'?d:JSON.stringify(d));throw new Error(m||('HTTP '+r.status));}return d;}
