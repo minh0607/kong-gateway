@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -32,8 +32,6 @@
   .sb-head img{height:30px;object-fit:contain}
   .sb-head .light-logo{display:block} .sb-head .dark-logo{display:none}
   html.dark .sb-head .light-logo{display:none} html.dark .sb-head .dark-logo{display:block}
-  .sb-title{font-weight:800;font-size:13px;letter-spacing:.2px;line-height:1.1}
-  .sb-sub{font-size:10px;color:var(--sub);font-weight:600}
   nav{flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:3px}
   nav .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.15em;color:var(--sub);padding:14px 12px 6px}
   .nav-item{position:relative;display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:12px;color:var(--sub);font-weight:600;cursor:pointer;transition:all .2s}
@@ -52,7 +50,7 @@
   .topbar .sub{font-size:12px;color:var(--sub)}
   .content{padding:24px 26px;max-width:1180px}
   .split{display:grid;grid-template-columns:350px 1fr;gap:20px}
-  @media(max-width:900px){aside{width:64px}.sb-title,.sb-sub,.nav-item span,nav .lbl{display:none}main{margin-left:64px}.split{grid-template-columns:1fr}}
+  @media(max-width:900px){aside{width:64px}.nav-item span,nav .lbl{display:none}main{margin-left:64px}.split{grid-template-columns:1fr}}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px}
   .card h2{margin:0 0 3px;font-size:15px;font-weight:700}
@@ -95,11 +93,11 @@
   <nav>
     <div class="lbl">AI Gateway</div>
     <div class="nav-item active" data-tab="models"><span class="ic">🧩</span><span>Models</span></div>
-    <div class="nav-item" data-tab="projects"><span class="ic">🗂️</span><span>Dự án</span></div>
+    <div class="nav-item" data-tab="projects"><span class="ic">🗂️</span><span>Projects</span></div>
   </nav>
   <div class="sb-foot">
-    <span id="conn">đang kết nối…</span>
-    <button class="toggle" onclick="toggleDark()" title="Sáng / Tối">🌓</button>
+    <span id="conn">connecting…</span>
+    <button class="toggle" onclick="toggleDark()" title="Light / Dark">🌓</button>
   </div>
 </aside>
 
@@ -107,7 +105,7 @@
   <div class="topbar">
     <div>
       <h1 id="page-title">Models</h1>
-      <div class="sub" id="page-sub">Đăng ký &amp; quản lý model (Service + Route theo năng lực)</div>
+      <div class="sub" id="page-sub">Register &amp; manage models (Service + Route, named by capability)</div>
     </div>
   </div>
   <div class="content">
@@ -116,24 +114,24 @@
     <section id="tab-models">
       <div class="split">
         <div class="card">
-          <h2>➕ Đăng ký Model</h2>
-          <p class="hint">Tên theo năng lực; server nằm ở tag.</p>
-          <div class="fld"><label>Slug năng lực <span class="muted">(a-z0-9-)</span></label><input id="m_slug" placeholder="embed"/></div>
+          <h2>➕ Register Model</h2>
+          <p class="hint">Name by capability; the server lives in a tag.</p>
+          <div class="fld"><label>Capability slug <span class="muted">(a-z0-9-)</span></label><input id="m_slug" placeholder="embed"/></div>
           <div class="fld"><label>Backend URL</label><input id="m_url" placeholder="http://107.118.109.33:8001"/></div>
           <div class="fld row">
             <div><label>Server (tag)</label><input id="m_box" placeholder="vllm03"/></div>
             <div><label>Model (tag)</label><input id="m_model" placeholder="bge-m3"/></div>
           </div>
-          <div class="fld"><label>Header key</label>
+          <div class="fld"><label>API-key header</label>
             <select id="m_header"><option value="x-api-key">x-api-key (n8n)</option><option value="Authorization">Authorization + Bearer (Dify)</option></select></div>
-          <button class="btn" onclick="registerModel()">Đăng ký</button>
+          <button class="btn" onclick="registerModel()">Register</button>
         </div>
         <div class="card">
-          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Models đã có</h2><button class="btn sec sm" onclick="loadModels()">↻ Tải lại</button></div>
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Existing models</h2><button class="btn sec sm" onclick="loadModels()">↻ Refresh</button></div>
           <div style="height:14px"></div>
           <div style="overflow:auto">
-          <table><thead><tr><th>Service / Path</th><th>Backend</th><th>Tags</th><th>Bảo mật</th></tr></thead>
-            <tbody id="models_body"><tr><td colspan="4" class="muted">Đang tải…</td></tr></tbody></table>
+          <table><thead><tr><th>Service / Path</th><th>Backend</th><th>Tags</th><th>Security</th></tr></thead>
+            <tbody id="models_body"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -143,22 +141,22 @@
     <section id="tab-projects" class="hidden">
       <div class="split">
         <div class="card">
-          <h2>➕ Gán Dự án</h2>
-          <p class="hint">Dự án = consumer: token riêng + IP riêng.</p>
-          <div class="fld"><label>Tên dự án <span class="muted">(a-z0-9-)</span></label><input id="p_name" placeholder="sparepart"/></div>
-          <div class="fld"><label>Token</label><input id="p_token" placeholder="chuỗi bí mật"/></div>
-          <div class="fld"><label>IP cho phép <span class="muted">(phẩy)</span></label><input id="p_ips" placeholder="10.1.1.10,10.1.1.11"/></div>
-          <div class="fld"><label>Dùng model nào</label><div id="p_models" class="checks"><span class="muted">Đang tải…</span></div></div>
+          <h2>➕ Assign Project</h2>
+          <p class="hint">A project is a consumer: its own token + its own allowed IPs.</p>
+          <div class="fld"><label>Project name <span class="muted">(a-z0-9-)</span></label><input id="p_name" placeholder="sparepart"/></div>
+          <div class="fld"><label>Token</label><input id="p_token" placeholder="secret string"/></div>
+          <div class="fld"><label>Allowed IPs <span class="muted">(comma-separated)</span></label><input id="p_ips" placeholder="10.1.1.10,10.1.1.11"/></div>
+          <div class="fld"><label>Models this project may use</label><div id="p_models" class="checks"><span class="muted">Loading…</span></div></div>
           <div class="fld"><label>Header</label>
             <select id="p_header"><option value="x-api-key">x-api-key</option><option value="Authorization">Authorization + Bearer</option></select></div>
-          <button class="btn" onclick="assignProject()">Gán quyền</button>
+          <button class="btn" onclick="assignProject()">Grant access</button>
         </div>
         <div class="card">
-          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Dự án đã có</h2><button class="btn sec sm" onclick="loadProjects()">↻ Tải lại</button></div>
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Existing projects</h2><button class="btn sec sm" onclick="loadProjects()">↻ Refresh</button></div>
           <div style="height:14px"></div>
           <div style="overflow:auto">
-          <table><thead><tr><th>Consumer</th><th>Token</th><th>Model (ACL)</th><th>IP allow</th><th></th></tr></thead>
-            <tbody id="projects_body"><tr><td colspan="5" class="muted">Đang tải…</td></tr></tbody></table>
+          <table><thead><tr><th>Consumer</th><th>Token</th><th>Models (ACL)</th><th>Allowed IPs</th><th></th></tr></thead>
+            <tbody id="projects_body"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -170,76 +168,77 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API=(localStorage.getItem('kong_api')||'/api').replace(/\/$/,'');
+// API base is prefix-aware: /aigw/api when served via IT Portal forward, else /api.
+const API=(function(){const p=location.pathname;const base=(p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/api':'/api';return (localStorage.getItem('kong_api')||base).replace(/\/$/,'');})();
 const $=s=>document.querySelector(s);
 const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 if(localStorage.getItem('portal_dark')==='1')document.documentElement.classList.add('dark');
 function toggleDark(){const d=document.documentElement.classList.toggle('dark');localStorage.setItem('portal_dark',d?'1':'0');}
 function toast(m,k='ok'){const e=document.createElement('div');e.className=k;e.textContent=m;$('#toast').appendChild(e);setTimeout(()=>e.remove(),k==='err'?6000:3500);}
-async function api(method,path,body){const o={method,headers:{}};if(body!==undefined){o.headers['Content-Type']='application/json';o.body=JSON.stringify(body);}
+async function api(method,path,body){const o={method,headers:{},credentials:'same-origin'};if(body!==undefined){o.headers['Content-Type']='application/json';o.body=JSON.stringify(body);}
   const r=await fetch(API+path,o);const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch(e){d=t}
   if(!r.ok){const m=(d&&d.message)||(typeof d==='string'?d:JSON.stringify(d));throw new Error(m||('HTTP '+r.status));}return d;}
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={models:['Models','Đăng ký & quản lý model (Service + Route theo năng lực)'],projects:['Dự án','Gán dự án vào model — token & IP riêng (consumer)']};
+const PAGES={models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)']};
 document.querySelectorAll('.nav-item').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;$('#tab-models').classList.toggle('hidden',tab!=='models');$('#tab-projects').classList.toggle('hidden',tab!=='projects');
   $('#page-title').textContent=PAGES[tab][0];$('#page-sub').textContent=PAGES[tab][1];
   if(tab==='projects'){loadModelChecks();loadProjects();}
 });
-async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong OK';$('#conn').style.color='#16a34a';}
-  catch(e){$('#conn').textContent='✕ mất kết nối';$('#conn').style.color='#dc2626';}}
+async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong connected';$('#conn').style.color='#16a34a';}
+  catch(e){$('#conn').textContent='✕ disconnected';$('#conn').style.color='#dc2626';}}
 
 // ===== MODELS =====
-async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td colspan="4" class="muted">Đang tải…</td></tr>';
+async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td colspan="4" class="muted">Loading…</td></tr>';
   try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
     const routes=(await api('GET','/routes?size=1000')).data;const rows=[];
     for(const s of svcs){const rt=routes.find(r=>r.service&&r.service.id===s.id);
       const plugins=(await api('GET','/services/'+s.name+'/plugins')).data.map(p=>p.name);
       const back=`${s.protocol}://${s.host}:${s.port}${s.path||''}`;const path=rt?(rt.paths||[]).join(', '):'—';
       rows.push(`<tr><td><b>${esc(s.name)}</b><br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td></tr>`);}
-    body.innerHTML=rows.join('')||'<tr><td colspan="4" class="muted">Chưa có model nào (svc-*).</td></tr>';
-  }catch(e){body.innerHTML=`<tr><td colspan="4" style="color:var(--red)">Lỗi: ${esc(e.message)}</td></tr>`;}}
+    body.innerHTML=rows.join('')||'<tr><td colspan="4" class="muted">No models yet (svc-*).</td></tr>';
+  }catch(e){body.innerHTML=`<tr><td colspan="4" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 async function registerModel(){const slug=$('#m_slug').value.trim(),url=$('#m_url').value.trim(),box=$('#m_box').value.trim(),model=$('#m_model').value.trim(),header=$('#m_header').value;
-  if(!slugOk(slug))return toast('Slug không hợp lệ (a-z0-9-)','err');
-  if(!/^https?:\/\/[^/\s]+/.test(url))return toast('URL không hợp lệ','err');
+  if(!slugOk(slug))return toast('Invalid slug (a-z0-9-)','err');
+  if(!/^https?:\/\/[^/\s]+/.test(url))return toast('Invalid URL','err');
   let svc='svc-'+slug,rt='rt-'+slug,path='/'+slug,acl='acl-'+slug;
   try{const ex=await api('GET','/services/'+svc);const eb=`${ex.protocol}://${ex.host}:${ex.port}${ex.path||''}`;
-    if(ex.id&&eb!==url){if(!box)return toast('Trùng '+svc+' backend khác — nhập Server (tag) để thêm hậu tố','err');
-      svc+='-'+box;rt+='-'+box;path+='-'+box;acl+='-'+box;toast('Trùng backend → '+svc,'ok');}}catch(e){}
+    if(ex.id&&eb!==url){if(!box)return toast('"'+svc+'" exists with a different backend — set Server (tag) to add a suffix','err');
+      svc+='-'+box;rt+='-'+box;path+='-'+box;acl+='-'+box;toast('Name clash → using '+svc,'ok');}}catch(e){}
   const tags=['env:pca','kind:vllm','cap:'+slug];if(box)tags.push('box:'+box);if(model)tags.push('model:'+model);
   try{await api('PUT','/services/'+svc,{url,connect_timeout:60000,read_timeout:600000,write_timeout:600000,tags});
     await api('PUT','/services/'+svc+'/routes/'+rt,{paths:[path],strip_path:true,tags});
     await ensurePlugin(svc,'key-auth',{key_names:[header]});await ensurePlugin(svc,'acl',{allow:[acl]});
-    toast('✔ Đã đăng ký '+svc+'  ('+path+')','ok');
+    toast('✔ Registered '+svc+'  ('+path+')','ok');
     $('#m_slug').value=$('#m_url').value=$('#m_box').value=$('#m_model').value='';loadModels();
-  }catch(e){toast('Lỗi: '+e.message,'err');}}
+  }catch(e){toast('Error: '+e.message,'err');}}
 async function ensurePlugin(svc,name,config){const pls=(await api('GET','/services/'+svc+'/plugins')).data;const ex=pls.find(p=>p.name===name);
   if(ex)return api('PATCH','/plugins/'+ex.id,{config});return api('POST','/services/'+svc+'/plugins',{name,config});}
 
 // ===== PROJECTS =====
-async function loadModelChecks(){const box=$('#p_models');box.innerHTML='<span class="muted">Đang tải…</span>';
+async function loadModelChecks(){const box=$('#p_models');box.innerHTML='<span class="muted">Loading…</span>';
   try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
-    box.innerHTML=svcs.map(s=>{const slug=s.name.slice(4);return `<label><input type="checkbox" value="${esc(slug)}"> ${esc(slug)}</label>`;}).join('')||'<span class="muted">Chưa có model.</span>';
-  }catch(e){box.innerHTML=`<span style="color:var(--red)">Lỗi: ${esc(e.message)}</span>`;}}
-async function loadProjects(){const body=$('#projects_body');body.innerHTML='<tr><td colspan="5" class="muted">Đang tải…</td></tr>';
+    box.innerHTML=svcs.map(s=>{const slug=s.name.slice(4);return `<label><input type="checkbox" value="${esc(slug)}"> ${esc(slug)}</label>`;}).join('')||'<span class="muted">No models. Create one first.</span>';
+  }catch(e){box.innerHTML=`<span style="color:var(--red)">Error: ${esc(e.message)}</span>`;}}
+async function loadProjects(){const body=$('#projects_body');body.innerHTML='<tr><td colspan="5" class="muted">Loading…</td></tr>';
   try{const cons=(await api('GET','/consumers?size=1000')).data.filter(c=>(c.username||'').startsWith('prj-'));const rows=[];
     for(const c of cons){const keys=(await api('GET','/consumers/'+c.username+'/key-auth')).data.map(k=>k.key);
       const acls=(await api('GET','/consumers/'+c.username+'/acls')).data.map(a=>a.group);
       const pls=(await api('GET','/consumers/'+c.username+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
-      const ips=ipr?(ipr.config.allow||[]).join(', '):'<span class="muted">không giới hạn</span>';
+      const ips=ipr?(ipr.config.allow||[]).join(', '):'<span class="muted">unrestricted</span>';
       const tok=keys[0]||'—';const tid='t'+Math.abs(hash(c.username));
-      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')">👁</button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td><button class="btn red sm" onclick="delProject('${esc(c.username)}')">Xóa</button></td></tr>`);}
-    body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">Chưa có dự án nào (prj-*).</td></tr>';
-  }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Lỗi: ${esc(e.message)}</td></tr>`;}}
+      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')">👁</button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td><button class="btn red sm" onclick="delProject('${esc(c.username)}')">Delete</button></td></tr>`);}
+    body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No projects yet (prj-*).</td></tr>';
+  }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
 function revToken(id,val){const el=document.getElementById(id);el.textContent=el.dataset.on?'••••••':val;el.dataset.on=el.dataset.on?'':'1';}
 async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_token').value.trim(),header=$('#p_header').value;
   const ips=$('#p_ips').value.split(',').map(x=>x.trim()).filter(Boolean);
   const models=[...document.querySelectorAll('#p_models input:checked')].map(x=>x.value);
-  if(!slugOk(name))return toast('Tên dự án không hợp lệ','err');if(!token)return toast('Chưa nhập token','err');if(!models.length)return toast('Chọn ít nhất 1 model','err');
+  if(!slugOk(name))return toast('Invalid project name','err');if(!token)return toast('Token is required','err');if(!models.length)return toast('Select at least one model','err');
   const con='prj-'+name;const fkey=header==='Authorization'?('Bearer '+token):token;
   try{await api('PUT','/consumers/'+con,{});
     const nk=(await api('GET','/consumers/'+con+'/key-auth')).data.length;if(nk===0)await api('POST','/consumers/'+con+'/key-auth',{key:fkey});
@@ -247,11 +246,11 @@ async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_
     for(const m of models){const g='acl-'+m;if(!have.includes(g))await api('POST','/consumers/'+con+'/acls',{group:g});}
     if(ips.length){const pls=(await api('GET','/consumers/'+con+'/plugins')).data;const ex=pls.find(p=>p.name==='ip-restriction');
       if(ex)await api('PATCH','/plugins/'+ex.id,{config:{allow:ips}});else await api('POST','/consumers/'+con+'/plugins',{name:'ip-restriction',config:{allow:ips}});}
-    toast('✔ Đã gán '+con+' → '+models.join(', '),'ok');
+    toast('✔ Granted '+con+' → '+models.join(', '),'ok');
     $('#p_name').value=$('#p_token').value=$('#p_ips').value='';document.querySelectorAll('#p_models input:checked').forEach(x=>x.checked=false);loadProjects();
-  }catch(e){toast('Lỗi: '+e.message,'err');}}
-async function delProject(con){if(!confirm('Xóa dự án '+con+' (kèm token + ACL + IP)?'))return;
-  try{await api('DELETE','/consumers/'+con);toast('Đã xóa '+con,'ok');loadProjects();}catch(e){toast('Lỗi: '+e.message,'err');}}
+  }catch(e){toast('Error: '+e.message,'err');}}
+async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL + IP)?'))return;
+  try{await api('DELETE','/consumers/'+con);toast('Deleted '+con,'ok');loadProjects();}catch(e){toast('Error: '+e.message,'err');}}
 
 ping();loadModels();
 </script>
