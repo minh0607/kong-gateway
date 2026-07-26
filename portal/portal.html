@@ -82,6 +82,13 @@
   .toast div.ok{background:var(--primary)} .toast div.err{background:#be123c}
   @keyframes in{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
   .hidden{display:none}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+  .statc{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px}
+  .statc .n{font-size:26px;font-weight:800;color:var(--primary-t)}
+  .statc .l{font-size:11px;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+  table.matrix th,table.matrix td{text-align:center;white-space:nowrap}
+  table.matrix th:first-child,table.matrix td:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:1}
+  table.matrix .yes{color:#16a34a;font-weight:800;font-size:15px} table.matrix .no{color:var(--line)}
 </style>
 </head>
 <body>
@@ -92,7 +99,8 @@
   </div>
   <nav>
     <div class="lbl">AI Gateway</div>
-    <div class="nav-item active" data-tab="models"><span class="ic">🧩</span><span>Models</span></div>
+    <div class="nav-item active" data-tab="overview"><span class="ic">🔗</span><span>Overview</span></div>
+    <div class="nav-item" data-tab="models"><span class="ic">🧩</span><span>Models</span></div>
     <div class="nav-item" data-tab="projects"><span class="ic">🗂️</span><span>Projects</span></div>
   </nav>
   <div class="sb-foot">
@@ -104,14 +112,20 @@
 <main>
   <div class="topbar">
     <div>
-      <h1 id="page-title">Models</h1>
-      <div class="sub" id="page-sub">Register &amp; manage models (Service + Route, named by capability)</div>
+      <h1 id="page-title">Overview</h1>
+      <div class="sub" id="page-sub">How models, routes, ACL groups and projects are linked</div>
     </div>
   </div>
   <div class="content">
 
+    <!-- ===== OVERVIEW ===== -->
+    <section id="tab-overview">
+      <div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn sec sm" onclick="loadOverview()">↻ Refresh</button></div>
+      <div id="ov"><div class="card muted">Loading…</div></div>
+    </section>
+
     <!-- ===== MODELS ===== -->
-    <section id="tab-models">
+    <section id="tab-models" class="hidden">
       <div class="split">
         <div class="card">
           <h2>➕ Register Model</h2>
@@ -187,11 +201,13 @@ async function api(method,path,body){const o={method,headers:{},credentials:'sam
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)']};
+const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)']};
 document.querySelectorAll('.nav-item').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
-  const tab=t.dataset.tab;$('#tab-models').classList.toggle('hidden',tab!=='models');$('#tab-projects').classList.toggle('hidden',tab!=='projects');
+  const tab=t.dataset.tab;
+  document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.classList.toggle('hidden', s.id!=='tab-'+tab));
   $('#page-title').textContent=PAGES[tab][0];$('#page-sub').textContent=PAGES[tab][1];
+  if(tab==='overview') loadOverview();
   if(tab==='projects'){loadModelChecks();loadProjects();}
 });
 async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong connected';$('#conn').style.color='#16a34a';}
@@ -258,7 +274,41 @@ async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_
 async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL + IP)?'))return;
   try{await api('DELETE','/consumers/'+con);toast('Deleted '+con,'ok');loadProjects();}catch(e){toast('Error: '+e.message,'err');}}
 
-ping();loadModels();
+// ===== OVERVIEW =====
+function stat(n,l){return `<div class="statc"><div class="n">${n}</div><div class="l">${l}</div></div>`;}
+async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML='<div class="card muted">Loading…</div>';
+  try{
+    const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
+    const routes=(await api('GET','/routes?size=1000')).data;
+    const cons=(await api('GET','/consumers?size=1000')).data.filter(c=>(c.username||'').startsWith('prj-'));
+    const models=[];
+    for(const s of svcs){const pls=(await api('GET','/services/'+s.name+'/plugins')).data;
+      const aclp=pls.find(p=>p.name==='acl');const allow=aclp?(aclp.config.allow||[]):[];
+      const rt=routes.find(r=>r.service&&r.service.id===s.id);
+      models.push({slug:s.name.slice(4),path:rt?((rt.paths||[])[0]||'—'):'—',allow,back:s.host+':'+s.port});}
+    const projects=[];
+    for(const c of cons){const acls=(await api('GET','/consumers/'+c.username+'/acls')).data.map(a=>a.group);
+      const pls=(await api('GET','/consumers/'+c.username+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
+      projects.push({slug:c.username.slice(4),groups:acls,ips:ipr?(ipr.config.allow||[]):[]});}
+    const grpCount=new Set(models.flatMap(m=>m.allow)).size;
+    let html=`<div class="stats">${stat(models.length,'Models')}${stat(projects.length,'Projects')}${stat(routes.length,'Routes')}${stat(grpCount,'ACL groups')}</div>`;
+    if(!models.length||!projects.length){
+      html+=`<div class="card muted">Need at least one model and one project to show the access map.</div>`;
+    }else{
+      html+=`<div class="card"><h2>Access map — which project can call which model</h2><p class="hint">✓ = allowed via a shared ACL group. Column = model (hover for path/backend), row = project.</p><div style="overflow:auto"><table class="matrix"><thead><tr><th>Project \\ Model</th>`;
+      for(const m of models) html+=`<th title="${esc(m.path)}  →  ${esc(m.back)}">${esc(m.slug)}</th>`;
+      html+=`</tr></thead><tbody>`;
+      for(const p of projects){
+        html+=`<tr><td><b>${esc(p.slug)}</b>${p.ips.length?` <span class="pill box" title="${esc(p.ips.join(', '))}">${p.ips.length} IP</span>`:''}</td>`;
+        for(const m of models){const ok=p.groups.some(g=>m.allow.includes(g));html+=`<td>${ok?'<span class="yes">✓</span>':'<span class="no">·</span>'}</td>`;}
+        html+=`</tr>`;
+      }
+      html+=`</tbody></table></div></div>`;
+    }
+    host.innerHTML=html;
+  }catch(e){host.innerHTML=`<div class="card" style="color:var(--red)">Error: ${esc(e.message)}</div>`;}}
+
+ping();loadOverview();
 </script>
 </body>
 </html>
