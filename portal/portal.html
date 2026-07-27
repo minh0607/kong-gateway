@@ -208,6 +208,7 @@ document.querySelectorAll('.nav-item').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.classList.toggle('hidden', s.id!=='tab-'+tab));
   $('#page-title').textContent=PAGES[tab][0];$('#page-sub').textContent=PAGES[tab][1];
   if(tab==='overview') loadOverview();
+  if(tab==='models') loadModels();
   if(tab==='projects'){loadModelChecks();loadProjects();}
 });
 async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong connected';$('#conn').style.color='#16a34a';}
