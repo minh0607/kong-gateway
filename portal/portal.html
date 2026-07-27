@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>SEHC AI Gateway — Portal</title>
+<link rel="icon" href="data:,"/>
 <style>
   :root{
     --bg:#f9fafb; --card:#ffffff; --line:#e5e7eb; --text:#111827; --sub:#6b7280;
@@ -89,6 +90,11 @@
   table.matrix th,table.matrix td{text-align:center;white-space:nowrap}
   table.matrix th:first-child,table.matrix td:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:1}
   table.matrix .yes{color:#16a34a;font-weight:800;font-size:15px} table.matrix .no{color:var(--line)}
+  .chipbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:7px 9px;background:var(--input)}
+  .chipbox input{border:0;box-shadow:none;flex:1;min-width:120px;padding:2px 4px;background:transparent}
+  .chipbox input:focus{box-shadow:none}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-l);color:var(--primary-t);border:1px solid var(--line);border-radius:20px;padding:2px 6px 2px 11px;font-size:12px;font-weight:600}
+  .chip b{cursor:pointer;font-weight:800;opacity:.6;font-size:14px;line-height:1} .chip b:hover{opacity:1}
 </style>
 </head>
 <body>
@@ -165,6 +171,9 @@
             </div>
           </div>
           <div class="fld"><label>Allowed IPs <span class="muted">(comma-separated)</span></label><input id="p_ips" placeholder="10.1.1.10,10.1.1.11"/></div>
+          <div class="fld"><label>Tags <span class="muted">(add many — type &amp; Enter, e.g. team:soc)</span></label>
+            <div class="chipbox" id="p_tagbox"><span id="p_chips"></span><input id="p_taginput" placeholder="type a tag, press Enter"/></div>
+          </div>
           <div class="fld"><label>Models this project may use</label><div id="p_models" class="checks"><span class="muted">Loading…</span></div></div>
           <div class="fld"><label>Header</label>
             <select id="p_header"><option value="x-api-key">x-api-key</option><option value="Authorization">Authorization + Bearer</option></select></div>
@@ -174,7 +183,7 @@
           <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Existing projects</h2><button class="btn sec sm" onclick="loadProjects()">↻ Refresh</button></div>
           <div style="height:14px"></div>
           <div style="overflow:auto">
-          <table><thead><tr><th>Consumer</th><th>Token</th><th>Models (ACL)</th><th>Allowed IPs</th><th></th></tr></thead>
+          <table><thead><tr><th>Consumer</th><th>Token</th><th>Models (ACL)</th><th>Allowed IPs</th><th>Tags</th><th></th></tr></thead>
             <tbody id="projects_body"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table>
           </div>
         </div>
@@ -195,6 +204,11 @@ if(localStorage.getItem('portal_dark')==='1')document.documentElement.classList.
 function toggleDark(){const d=document.documentElement.classList.toggle('dark');localStorage.setItem('portal_dark',d?'1':'0');}
 function toast(m,k='ok'){const e=document.createElement('div');e.className=k;e.textContent=m;$('#toast').appendChild(e);setTimeout(()=>e.remove(),k==='err'?6000:3500);}
 function genToken(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];const el=$('#p_token');el.value=s;el.focus();el.select();toast('Generated a 36-char secure token','ok');}
+// ----- project tag chips (add many) -----
+let projectTags=[];
+function renderChips(){$('#p_chips').innerHTML=projectTags.map((t,i)=>`<span class="chip">${esc(t)}<b onclick="rmTag(${i})">×</b></span>`).join('');}
+function addTag(v){v=(v||'').trim();if(v&&!projectTags.includes(v)){projectTags.push(v);renderChips();}}
+function rmTag(i){projectTags.splice(i,1);renderChips();}
 async function api(method,path,body){const o={method,headers:{},credentials:'same-origin'};if(body!==undefined){o.headers['Content-Type']='application/json';o.body=JSON.stringify(body);}
   const r=await fetch(API+path,o);const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch(e){d=t}
   if(!r.ok){const m=(d&&d.message)||(typeof d==='string'?d:JSON.stringify(d));throw new Error(m||('HTTP '+r.status));}return d;}
@@ -253,7 +267,7 @@ async function loadProjects(){const body=$('#projects_body');body.innerHTML='<tr
       const pls=(await api('GET','/consumers/'+c.username+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
       const ips=ipr?(ipr.config.allow||[]).join(', '):'<span class="muted">unrestricted</span>';
       const tok=keys[0]||'—';const tid='t'+Math.abs(hash(c.username));
-      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')">👁</button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td><button class="btn red sm" onclick="delProject('${esc(c.username)}')">Delete</button></td></tr>`);}
+      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')">👁</button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td><td><button class="btn red sm" onclick="delProject('${esc(c.username)}')">Delete</button></td></tr>`);}
     body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No projects yet (prj-*).</td></tr>';
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
@@ -262,15 +276,19 @@ async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_
   const ips=$('#p_ips').value.split(',').map(x=>x.trim()).filter(Boolean);
   const models=[...document.querySelectorAll('#p_models input:checked')].map(x=>x.value);
   if(!slugOk(name))return toast('Invalid project name','err');if(!token)return toast('Token is required','err');if(!models.length)return toast('Select at least one model','err');
+  addTag($('#p_taginput').value);$('#p_taginput').value='';
   const con='prj-'+name;const fkey=header==='Authorization'?('Bearer '+token):token;
-  try{await api('PUT','/consumers/'+con,{});
+  try{
+    let curTags=[];try{curTags=(await api('GET','/consumers/'+con)).tags||[]}catch(e){}
+    const tags=projectTags.length?projectTags.slice():curTags;
+    await api('PUT','/consumers/'+con,{tags});
     const nk=(await api('GET','/consumers/'+con+'/key-auth')).data.length;if(nk===0)await api('POST','/consumers/'+con+'/key-auth',{key:fkey});
     const have=(await api('GET','/consumers/'+con+'/acls')).data.map(a=>a.group);
     for(const m of models){const g='acl-'+m;if(!have.includes(g))await api('POST','/consumers/'+con+'/acls',{group:g});}
     if(ips.length){const pls=(await api('GET','/consumers/'+con+'/plugins')).data;const ex=pls.find(p=>p.name==='ip-restriction');
       if(ex)await api('PATCH','/plugins/'+ex.id,{config:{allow:ips}});else await api('POST','/consumers/'+con+'/plugins',{name:'ip-restriction',config:{allow:ips}});}
     toast('✔ Granted '+con+' → '+models.join(', '),'ok');
-    $('#p_name').value=$('#p_token').value=$('#p_ips').value='';document.querySelectorAll('#p_models input:checked').forEach(x=>x.checked=false);loadProjects();
+    $('#p_name').value=$('#p_token').value=$('#p_ips').value='';projectTags=[];renderChips();document.querySelectorAll('#p_models input:checked').forEach(x=>x.checked=false);loadProjects();
   }catch(e){toast('Error: '+e.message,'err');}}
 async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL + IP)?'))return;
   try{await api('DELETE','/consumers/'+con);toast('Deleted '+con,'ok');loadProjects();}catch(e){toast('Error: '+e.message,'err');}}
@@ -300,7 +318,7 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
     for(const c of cons){const keys=(await api('GET','/consumers/'+c.username+'/key-auth')).data.map(k=>k.key);
       const acls=(await api('GET','/consumers/'+c.username+'/acls')).data.map(a=>a.group);
       const pls=(await api('GET','/consumers/'+c.username+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
-      projects.push({name:c.username,slug:c.username.slice(4),token:keys[0]||'—',groups:acls,ips:ipr?(ipr.config.allow||[]):[]});}
+      projects.push({name:c.username,slug:c.username.slice(4),token:keys[0]||'—',groups:acls,ips:ipr?(ipr.config.allow||[]):[],tags:c.tags||[]});}
     for(const m of models) m.usedBy=projects.filter(p=>p.groups.some(g=>m.allow.includes(g))).map(p=>p.slug);
     for(const p of projects) p.models=models.filter(m=>p.groups.some(g=>m.allow.includes(g)));
     const grpCount=new Set(models.flatMap(m=>m.allow)).size;
@@ -321,12 +339,13 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
     html+=`</tbody></table></div></div>`;
 
     // ---- Projects detail ----
-    html+=`<div class="card"><h2>🗂️ Projects</h2><p class="hint">Consumer → token, models it may call, and its allowed IPs.</p><div style="overflow:auto"><table><thead><tr><th>Project</th><th>Token</th><th>Models</th><th>Allowed IPs</th></tr></thead><tbody>`;
+    html+=`<div class="card"><h2>🗂️ Projects</h2><p class="hint">Consumer → token, models it may call, and its allowed IPs.</p><div style="overflow:auto"><table><thead><tr><th>Project</th><th>Token</th><th>Models</th><th>Allowed IPs</th><th>Tags</th></tr></thead><tbody>`;
     html+= projects.length? projects.map(p=>{const tid='ov'+Math.abs(hash(p.name));return `<tr>
       <td><b>${esc(p.name)}</b></td>
       <td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(p.token)}')">👁</button></td>
       <td>${p.models.length?p.models.map(m=>`<span class="pill" title="${esc(m.path)} → ${esc(m.back)}">${esc(m.slug)}</span>`).join(''):'<span class="muted">none</span>'}</td>
-      <td>${p.ips.length?p.ips.map(i=>`<code>${esc(i)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td></tr>`;}).join('')
+      <td>${p.ips.length?p.ips.map(i=>`<code>${esc(i)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td>
+      <td>${p.tags.length?p.tags.map(t=>`<span class="pill model">${esc(t)}</span>`).join(''):'<span class="muted">—</span>'}</td></tr>`;}).join('')
       : '<tr><td colspan="4" class="muted">No projects yet.</td></tr>';
     html+=`</tbody></table></div></div>`;
 
@@ -343,6 +362,7 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
     host.innerHTML=html;
   }catch(e){host.innerHTML=`<div class="card" style="color:var(--red)">Error: ${esc(e.message)}</div>`;}}
 
+$('#p_taginput').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===','){e.preventDefault();addTag(e.target.value);e.target.value='';}});
 ping();loadOverview();
 </script>
 </body>
