@@ -277,6 +277,14 @@ async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL 
 
 // ===== OVERVIEW =====
 function stat(n,l){return `<div class="statc"><div class="n">${n}</div><div class="l">${l}</div></div>`;}
+function tagVal(tags,pfx){const t=(tags||[]).find(x=>x.startsWith(pfx));return t?t.slice(pfx.length):'';}
+function plSummary(pls){return pls.map(p=>{const c=p.config||{};
+  if(p.name==='key-auth')  return `<span class="pill">🔑 ${esc((c.key_names||[]).join('/'))}</span>`;
+  if(p.name==='acl')       return `<span class="pill">👥 ${esc((c.allow||[]).join(','))}</span>`;
+  if(p.name==='rate-limiting') return `<span class="pill model">⏱ ${c.minute?c.minute+'/m':''}${c.hour?' '+c.hour+'/h':''}</span>`;
+  if(p.name==='ip-restriction') return `<span class="pill box">🛡 ${(c.allow||[]).length} IP</span>`;
+  if(p.name==='prometheus') return `<span class="pill">📊 metrics</span>`;
+  return `<span class="pill">${esc(p.name)}</span>`;}).join(' ')||'<span class="muted">none</span>';}
 async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML='<div class="card muted">Loading…</div>';
   try{
     const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
@@ -284,26 +292,52 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
     const cons=(await api('GET','/consumers?size=1000')).data.filter(c=>(c.username||'').startsWith('prj-'));
     const models=[];
     for(const s of svcs){const pls=(await api('GET','/services/'+s.name+'/plugins')).data;
-      const aclp=pls.find(p=>p.name==='acl');const allow=aclp?(aclp.config.allow||[]):[];
-      const rt=routes.find(r=>r.service&&r.service.id===s.id);
-      models.push({slug:s.name.slice(4),path:rt?((rt.paths||[])[0]||'—'):'—',allow,back:s.host+':'+s.port});}
+      const aclp=pls.find(p=>p.name==='acl');const rt=routes.find(r=>r.service&&r.service.id===s.id);
+      models.push({name:s.name,slug:s.name.slice(4),path:rt?((rt.paths||[])[0]||'—'):'—',
+        back:`${s.protocol}://${s.host}:${s.port}`,box:tagVal(s.tags,'box:'),mtag:tagVal(s.tags,'model:'),
+        allow:aclp?(aclp.config.allow||[]):[],pls});}
     const projects=[];
-    for(const c of cons){const acls=(await api('GET','/consumers/'+c.username+'/acls')).data.map(a=>a.group);
+    for(const c of cons){const keys=(await api('GET','/consumers/'+c.username+'/key-auth')).data.map(k=>k.key);
+      const acls=(await api('GET','/consumers/'+c.username+'/acls')).data.map(a=>a.group);
       const pls=(await api('GET','/consumers/'+c.username+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
-      projects.push({slug:c.username.slice(4),groups:acls,ips:ipr?(ipr.config.allow||[]):[]});}
+      projects.push({name:c.username,slug:c.username.slice(4),token:keys[0]||'—',groups:acls,ips:ipr?(ipr.config.allow||[]):[]});}
+    for(const m of models) m.usedBy=projects.filter(p=>p.groups.some(g=>m.allow.includes(g))).map(p=>p.slug);
+    for(const p of projects) p.models=models.filter(m=>p.groups.some(g=>m.allow.includes(g)));
     const grpCount=new Set(models.flatMap(m=>m.allow)).size;
-    let html=`<div class="stats">${stat(models.length,'Models')}${stat(projects.length,'Projects')}${stat(routes.length,'Routes')}${stat(grpCount,'ACL groups')}</div>`;
-    if(!models.length||!projects.length){
-      html+=`<div class="card muted">Need at least one model and one project to show the access map.</div>`;
-    }else{
-      html+=`<div class="card"><h2>Access map — which project can call which model</h2><p class="hint">✓ = allowed via a shared ACL group. Column = model (hover for path/backend), row = project.</p><div style="overflow:auto"><table class="matrix"><thead><tr><th>Project \\ Model</th>`;
-      for(const m of models) html+=`<th title="${esc(m.path)}  →  ${esc(m.back)}">${esc(m.slug)}</th>`;
+    const plgCount=models.reduce((a,m)=>a+m.pls.length,0);
+
+    let html=`<div class="stats">${stat(models.length,'Models')}${stat(projects.length,'Projects')}${stat(routes.length,'Routes')}${stat(cons.length,'Consumers')}${stat(grpCount,'ACL groups')}${stat(plgCount,'Plugins')}</div>`;
+
+    // ---- Models detail ----
+    html+=`<div class="card"><h2>🧩 Models</h2><p class="hint">Capability → client endpoint, backend, server tag, security plugins, and the projects allowed to call it.</p><div style="overflow:auto"><table><thead><tr><th>Model</th><th>Client endpoint</th><th>Backend</th><th>Server</th><th>Security</th><th>Used by</th></tr></thead><tbody>`;
+    html+= models.length? models.map(m=>`<tr>
+      <td><b>${esc(m.name)}</b>${m.mtag?`<br><span class="muted">${esc(m.mtag)}</span>`:''}</td>
+      <td><code>:8000${esc(m.path)}/v1</code></td>
+      <td>${esc(m.back)}</td>
+      <td>${m.box?`<span class="pill box">${esc(m.box)}</span>`:'—'}</td>
+      <td>${plSummary(m.pls)}</td>
+      <td>${m.usedBy.length?m.usedBy.map(u=>`<span class="pill">${esc(u)}</span>`).join(''):'<span class="muted">none</span>'}</td></tr>`).join('')
+      : '<tr><td colspan="6" class="muted">No models yet.</td></tr>';
+    html+=`</tbody></table></div></div>`;
+
+    // ---- Projects detail ----
+    html+=`<div class="card"><h2>🗂️ Projects</h2><p class="hint">Consumer → token, models it may call, and its allowed IPs.</p><div style="overflow:auto"><table><thead><tr><th>Project</th><th>Token</th><th>Models</th><th>Allowed IPs</th></tr></thead><tbody>`;
+    html+= projects.length? projects.map(p=>{const tid='ov'+Math.abs(hash(p.name));return `<tr>
+      <td><b>${esc(p.name)}</b></td>
+      <td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(p.token)}')">👁</button></td>
+      <td>${p.models.length?p.models.map(m=>`<span class="pill" title="${esc(m.path)} → ${esc(m.back)}">${esc(m.slug)}</span>`).join(''):'<span class="muted">none</span>'}</td>
+      <td>${p.ips.length?p.ips.map(i=>`<code>${esc(i)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td></tr>`;}).join('')
+      : '<tr><td colspan="4" class="muted">No projects yet.</td></tr>';
+    html+=`</tbody></table></div></div>`;
+
+    // ---- Access matrix ----
+    if(models.length&&projects.length){
+      html+=`<div class="card"><h2>🔗 Access matrix</h2><p class="hint">✓ = project may call the model (via a shared ACL group).</p><div style="overflow:auto"><table class="matrix"><thead><tr><th>Project \\ Model</th>`;
+      for(const m of models) html+=`<th title="${esc(m.path)} → ${esc(m.back)}">${esc(m.slug)}</th>`;
       html+=`</tr></thead><tbody>`;
-      for(const p of projects){
-        html+=`<tr><td><b>${esc(p.slug)}</b>${p.ips.length?` <span class="pill box" title="${esc(p.ips.join(', '))}">${p.ips.length} IP</span>`:''}</td>`;
+      for(const p of projects){html+=`<tr><td><b>${esc(p.slug)}</b></td>`;
         for(const m of models){const ok=p.groups.some(g=>m.allow.includes(g));html+=`<td>${ok?'<span class="yes">✓</span>':'<span class="no">·</span>'}</td>`;}
-        html+=`</tr>`;
-      }
+        html+=`</tr>`;}
       html+=`</tbody></table></div></div>`;
     }
     host.innerHTML=html;
