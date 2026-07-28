@@ -184,9 +184,15 @@
             </div>
           </div>
           <div style="height:14px"></div>
+          <div id="m_editbox" class="hidden" style="margin-bottom:14px;padding:14px 16px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)">
+            <h2 style="margin:0 0 10px">✏️ Edit — <span id="me_name"></span></h2>
+            <div class="fld"><label>Backend URL</label><input id="me_url" placeholder="http://host:port/path"/></div>
+            <div class="fld"><label>Route path <span class="muted">(leave blank if none)</span></label><input id="me_path" placeholder="/slug"/></div>
+            <div class="row" style="gap:8px"><button class="btn sm" onclick="saveService()">Save</button><button class="btn sec sm" onclick="document.getElementById('m_editbox').classList.add('hidden')">Cancel</button></div>
+          </div>
           <div style="overflow:auto">
-          <table><thead><tr><th>Service / Path</th><th>Backend</th><th>Tags</th><th>Security</th></tr></thead>
-            <tbody id="models_body"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody></table>
+          <table><thead><tr><th>Service / Path</th><th>Backend</th><th>Tags</th><th>Security</th><th></th></tr></thead>
+            <tbody id="models_body"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -341,9 +347,21 @@ async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td
       const plugins=(await api('GET','/services/'+encodeURIComponent(s.name)+'/plugins')).data.map(p=>p.name);
       const back=`${s.protocol}://${s.host}:${s.port}${s.path||''}`;const path=rt?(rt.paths||[]).join(', '):'—';
       const legacy=!(s.name||'').startsWith('svc-')?' <span class="pill model">legacy</span>':'';
-      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td></tr>`);}
-    body.innerHTML=rows.join('')||`<tr><td colspan="4" class="muted">${showAll?'No services.':'No models yet (svc-*). Tick “Show all” to see legacy services.'}</td></tr>`;
-  }catch(e){body.innerHTML=`<tr><td colspan="4" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+      const rid=rt?rt.id:'';
+      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td><td><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button></td></tr>`);}
+    body.innerHTML=rows.join('')||`<tr><td colspan="5" class="muted">${showAll?'No services.':'No models yet (svc-*). Tick “Show all” to see legacy services.'}</td></tr>`;
+  }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+let _editSvc=null,_editRoute=null;
+function editService(name,back,rid,path){_editSvc=name;_editRoute=rid||null;
+  $('#me_name').textContent=name;$('#me_url').value=back;$('#me_path').value=(path||'').split(',')[0].trim();
+  $('#m_editbox').classList.remove('hidden');$('#m_editbox').scrollIntoView({behavior:'smooth',block:'center'});}
+async function saveService(){if(!_editSvc)return;const url=$('#me_url').value.trim(),path=$('#me_path').value.trim();
+  if(!url)return toast('Backend URL required','err');
+  try{await api('PATCH','/services/'+encodeURIComponent(_editSvc),{url});
+    if(path){if(_editRoute){await api('PATCH','/routes/'+_editRoute,{paths:[path]});}
+      else{await api('POST','/services/'+encodeURIComponent(_editSvc)+'/routes',{paths:[path],strip_path:false});}}
+    toast('Saved '+_editSvc,'ok');$('#m_editbox').classList.add('hidden');loadModels();
+  }catch(e){toast('Error: '+e.message,'err');}}
 async function registerModel(){const slug=$('#m_slug').value.trim(),url=$('#m_url').value.trim(),box=$('#m_box').value.trim(),model=$('#m_model').value.trim(),header=$('#m_header').value;
   if(!slugOk(slug))return toast('Invalid slug (a-z0-9-)','err');
   if(!/^https?:\/\/[^/\s]+/.test(url))return toast('Invalid URL','err');
