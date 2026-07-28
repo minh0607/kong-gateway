@@ -170,7 +170,13 @@
           <button class="btn" onclick="registerModel()">Register</button>
         </div>
         <div class="card">
-          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Existing models</h2><button class="btn sec sm" onclick="loadModels()">↻ Refresh</button></div>
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <h2 style="margin:0">Existing models</h2>
+            <div class="row" style="gap:14px;align-items:center;flex:0 0 auto">
+              <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;color:var(--text)"><input type="checkbox" id="m_showall" onchange="loadModels()" style="width:auto"/> Show all (incl. legacy)</label>
+              <button class="btn sec sm" onclick="loadModels()">↻ Refresh</button>
+            </div>
+          </div>
           <div style="height:14px"></div>
           <div style="overflow:auto">
           <table><thead><tr><th>Service / Path</th><th>Backend</th><th>Tags</th><th>Security</th></tr></thead>
@@ -292,13 +298,15 @@ async function ping(){try{await api('GET','/status');$('#conn').textContent='●
 
 // ===== MODELS =====
 async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td colspan="4" class="muted">Loading…</td></tr>';
-  try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
+  const showAll=$('#m_showall')&&$('#m_showall').checked;
+  try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>showAll?true:(s.name||'').startsWith('svc-'));
     const routes=(await api('GET','/routes?size=1000')).data;const rows=[];
     for(const s of svcs){const rt=routes.find(r=>r.service&&r.service.id===s.id);
-      const plugins=(await api('GET','/services/'+s.name+'/plugins')).data.map(p=>p.name);
+      const plugins=(await api('GET','/services/'+encodeURIComponent(s.name)+'/plugins')).data.map(p=>p.name);
       const back=`${s.protocol}://${s.host}:${s.port}${s.path||''}`;const path=rt?(rt.paths||[]).join(', '):'—';
-      rows.push(`<tr><td><b>${esc(s.name)}</b><br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td></tr>`);}
-    body.innerHTML=rows.join('')||'<tr><td colspan="4" class="muted">No models yet (svc-*).</td></tr>';
+      const legacy=!(s.name||'').startsWith('svc-')?' <span class="pill model">legacy</span>':'';
+      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td></tr>`);}
+    body.innerHTML=rows.join('')||`<tr><td colspan="4" class="muted">${showAll?'No services.':'No models yet (svc-*). Tick “Show all” to see legacy services.'}</td></tr>`;
   }catch(e){body.innerHTML=`<tr><td colspan="4" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 async function registerModel(){const slug=$('#m_slug').value.trim(),url=$('#m_url').value.trim(),box=$('#m_box').value.trim(),model=$('#m_model').value.trim(),header=$('#m_header').value;
   if(!slugOk(slug))return toast('Invalid slug (a-z0-9-)','err');
