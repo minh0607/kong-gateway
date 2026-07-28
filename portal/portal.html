@@ -90,14 +90,22 @@
   table.matrix th,table.matrix td{text-align:center;white-space:nowrap}
   table.matrix th:first-child,table.matrix td:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:1}
   table.matrix .yes{color:#16a34a;font-weight:800;font-size:15px} table.matrix .no{color:var(--line)}
-  .grp{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px;background:var(--input)}
-  .grphead{margin-bottom:4px;font-size:13.5px;display:flex;align-items:center;gap:8px}
-  .plrow{display:grid;grid-template-columns:170px 1fr auto;gap:12px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
-  .plrow:first-of-type{border-top:0}
-  .plname{font-size:13px} .stateon{color:#16a34a;font-size:11px;font-weight:700} .stateoff{color:#94a3b8;font-size:11px;font-weight:700}
-  .plcfg{display:flex;flex-wrap:wrap;gap:6px} .cfgkv{background:var(--hover);border-radius:7px;padding:2px 9px;font-size:12px;font-family:ui-monospace,monospace}
-  .plact{display:flex;gap:6px}
-  @media(max-width:760px){.plrow{grid-template-columns:1fr}}
+  .psec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--sub);margin:18px 0 2px}
+  .prow{display:grid;grid-template-columns:40px 1fr auto 46px;gap:14px;align-items:center;padding:13px 0;border-top:1px solid var(--line)}
+  .prow:first-of-type{border-top:0}
+  .pico{font-size:20px;text-align:center}
+  .pinfo b{display:block;font-size:14px} .pinfo span{font-size:12px;color:var(--sub)}
+  .pcfg{display:flex;align-items:center;gap:7px}
+  .pin{width:80px;padding:7px 9px} .pin.wide{width:170px}
+  .badge{font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px} .badge.on{background:#dcfce7;color:#15803d} .badge.off{background:var(--hover);color:var(--sub)}
+  html.dark .badge.on{background:#052e16;color:#4ade80}
+  .switch{position:relative;display:inline-block;width:44px;height:24px}
+  .switch input{opacity:0;width:0;height:0}
+  .switch .sl{position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:24px;transition:.2s}
+  .switch .sl:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .switch input:checked+.sl{background:var(--primary)} .switch input:checked+.sl:before{transform:translateX(20px)}
+  html.dark .switch .sl{background:#475569}
+  @media(max-width:640px){.prow{grid-template-columns:32px 1fr 44px}.pcfg{grid-column:1/-1}}
   .chipbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:7px 9px;background:var(--input)}
   .chipbox input{border:0;box-shadow:none;flex:1;min-width:120px;padding:2px 4px;background:transparent}
   .chipbox input:focus{box-shadow:none}
@@ -203,24 +211,12 @@
 
     <!-- ===== PLUGINS ===== -->
     <section id="tab-plugins" class="hidden">
-      <div class="split">
-        <div class="card">
-          <h2>➕ Add plugin to a model</h2>
-          <p class="hint">Attach traffic / security plugins to a model's service.</p>
-          <div class="fld"><label>Model</label><select id="pl_svc"></select></div>
-          <div class="fld"><label>Plugin</label><select id="pl_name" onchange="plFields()">
-            <option value="rate-limiting">rate-limiting</option>
-            <option value="request-size-limiting">request-size-limiting</option>
-            <option value="bot-detection">bot-detection</option>
-            <option value="cors">cors</option>
-          </select></div>
-          <div id="pl_cfg"></div>
-          <button class="btn" onclick="addPlugin()">Apply</button>
+      <div class="card" style="max-width:800px">
+        <div class="row" style="justify-content:space-between;align-items:flex-end">
+          <div style="flex:0 0 auto"><label>Choose a model</label><select id="pl_svc" onchange="loadModelProtections()" style="min-width:250px"></select></div>
+          <button class="btn sec sm" onclick="loadModelProtections()">↻ Refresh</button>
         </div>
-        <div>
-          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="margin:0">Plugins by target</h2><button class="btn sec sm" onclick="loadPlugins()">↻ Refresh</button></div>
-          <div id="plugins_host"><div class="card muted">Loading…</div></div>
-        </div>
+        <div id="pl_body" style="margin-top:6px"><div class="muted" style="padding:12px 0">Select a model to manage its protections.</div></div>
       </div>
     </section>
 
@@ -258,7 +254,7 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   if(tab==='overview') loadOverview();
   if(tab==='models') loadModels();
   if(tab==='projects'){loadModelChecks();loadProjects();}
-  if(tab==='plugins'){loadPluginModels();plFields();loadPlugins();}
+  if(tab==='plugins') loadPluginModels();
 });
 async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong connected';$('#conn').style.color='#16a34a';}
   catch(e){$('#conn').textContent='✕ disconnected';$('#conn').style.color='#dc2626';}}
@@ -328,64 +324,48 @@ async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_
 async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL + IP)?'))return;
   try{await api('DELETE','/consumers/'+con);toast('Deleted '+con,'ok');loadProjects();}catch(e){toast('Error: '+e.message,'err');}}
 
-// ===== PLUGINS =====
-function plFields(){const n=$('#pl_name').value;let h='';
-  if(n==='rate-limiting')h=`<div class="fld row"><div><label>Per minute</label><input id="pl_min" placeholder="60"/></div><div><label>Per hour</label><input id="pl_hour" placeholder="1000"/></div></div>`;
-  else if(n==='request-size-limiting')h=`<div class="fld"><label>Max payload (MB)</label><input id="pl_size" placeholder="8"/></div>`;
-  else if(n==='cors')h=`<div class="fld"><label>Allowed origins <span class="muted">(comma, * = any)</span></label><input id="pl_origins" placeholder="*"/></div>`;
-  else h=`<p class="muted" style="margin:0 0 12px">No extra config needed.</p>`;
-  $('#pl_cfg').innerHTML=h;}
+// ===== PLUGINS (simple, per-model protections) =====
 async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
-  sel.innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')||'<option value="">(no models — create one first)</option>';}
-function plCfg(p){const c=p.config||{};const rows=[];
-  const add=(k,v)=>{if(v===null||v===undefined||v==='')return;if(Array.isArray(v)){if(!v.length)return;v=v.join(', ');}rows.push(k+': '+v);};
-  if(p.name==='key-auth'){add('header',(c.key_names||[]).join('/'));add('hide_credentials',c.hide_credentials);}
-  else if(p.name==='acl'){add('allow',c.allow);add('deny',c.deny);}
-  else if(p.name==='rate-limiting'){add('second',c.second);add('minute',c.minute);add('hour',c.hour);add('policy',c.policy);}
-  else if(p.name==='ip-restriction'){add('allow',c.allow);add('deny',c.deny);}
-  else if(p.name==='request-size-limiting'){add('max_MB',c.allowed_payload_size);}
-  else if(p.name==='cors'){add('origins',c.origins);}
-  else if(p.name==='bot-detection'){add('allow',c.allow);add('deny',c.deny);}
-  else if(p.name==='prometheus'){add('per_consumer',c.per_consumer);add('status_code_metrics',c.status_code_metrics);add('latency_metrics',c.latency_metrics);}
-  else {Object.entries(c).forEach(([k,v])=>{if(v&&typeof v!=='object')add(k,v);});}
-  return rows.length?rows.map(r=>`<span class="cfgkv">${esc(r)}</span>`).join(''):'<span class="muted">default config</span>';}
-function plRow(p){return `<div class="plrow"><div class="plname"><b>${esc(p.name)}</b> ${p.enabled?'<span class="stateon">● on</span>':'<span class="stateoff">● off</span>'}</div><div class="plcfg">${plCfg(p)}</div><div class="plact"><button class="btn gray sm" onclick="togglePlugin('${p.id}',${p.enabled})">${p.enabled?'Disable':'Enable'}</button><button class="btn red sm" onclick="delPlugin('${p.id}','${esc(p.name)}')">Delete</button></div></div>`;}
-async function loadPlugins(){const host=$('#plugins_host');host.innerHTML='<div class="card muted">Loading…</div>';
+  sel.innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name.slice(4))} — ${esc(s.name)}</option>`).join('')||'<option value="">(no models — create one first)</option>';
+  loadModelProtections();}
+function coreRow(ic,name,desc,on){return `<div class="prow"><div class="pico">${ic}</div><div class="pinfo"><b>${name}</b><span>${desc}</span></div><div>${on?'<span class="badge on">✓ Active</span>':'<span class="badge off">Not set</span>'}</div><div></div></div>`;}
+function toggleRow(pname,ic,name,desc,svc,plugin,kind,unit,cfgKey,def){
+  const on=!!plugin;let cur=on&&plugin.config?plugin.config[cfgKey]:'';if(Array.isArray(cur))cur=cur.join(',');
+  let cfg='';
+  if(on&&kind==='num')cfg=`<input class="pin" id="cfg_${pname}" value="${esc(cur||def)}"/><span class="muted">${unit}</span><button class="btn sm" onclick="savePlugin('${svc}','${pname}','${cfgKey}','${kind}')">Save</button>`;
+  else if(on&&kind==='text')cfg=`<input class="pin wide" id="cfg_${pname}" placeholder="* = any" value="${esc(cur||'*')}"/><button class="btn sm" onclick="savePlugin('${svc}','${pname}','${cfgKey}','${kind}')">Save</button>`;
+  return `<div class="prow"><div class="pico">${ic}</div><div class="pinfo"><b>${name}</b><span>${desc}</span></div><div class="pcfg">${cfg}</div><label class="switch"><input type="checkbox" ${on?'checked':''} onchange="toggleProtection('${svc}','${pname}','${cfgKey}','${kind}','${def}',this.checked)"/><span class="sl"></span></label></div>`;}
+async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$('#pl_body');
+  if(!svc){body.innerHTML='<div class="muted" style="padding:12px 0">No model.</div>';return;}
+  body.innerHTML='<div class="muted" style="padding:12px 0">Loading…</div>';
+  try{const pls=(await api('GET','/services/'+svc+'/plugins')).data;const has=n=>pls.find(p=>p.name===n);
+    let h=`<div class="psec">Core security · set when the model was created</div>`;
+    h+=coreRow('🔑','API key required','Callers must send a valid API key',has('key-auth'));
+    h+=coreRow('👥','Project allow-list','Only allowed projects (ACL) can call',has('acl'));
+    h+=`<div class="psec">Optional protection · flip a switch</div>`;
+    h+=toggleRow('rate-limiting','⏱','Rate limit','Cap how many requests per minute',svc,has('rate-limiting'),'num','req / min','minute',60);
+    h+=toggleRow('request-size-limiting','📦','Max request size','Reject payloads bigger than',svc,has('request-size-limiting'),'num','MB','allowed_payload_size',10);
+    h+=toggleRow('bot-detection','🤖','Block bad bots','Deny known bad user-agents',svc,has('bot-detection'),'none');
+    h+=toggleRow('cors','🌐','Allow browser (CORS)','Let web pages call this model',svc,has('cors'),'text','','origins','*');
+    body.innerHTML=h;
+  }catch(e){body.innerHTML=`<div style="color:var(--red);padding:12px 0">Error: ${esc(e.message)}</div>`;}}
+async function toggleProtection(svc,pname,cfgKey,kind,def,on){
   try{
-    const svcs=(await api('GET','/services?size=1000')).data;
-    const cons=(await api('GET','/consumers?size=1000')).data;
-    const routes=(await api('GET','/routes?size=1000')).data;
-    const pls=(await api('GET','/plugins?size=1000')).data;
-    const conName={};cons.forEach(c=>conName[c.id]=c.username);
-    const bySvc={},byCon={},glob=[];
-    for(const p of pls){
-      if(p.service){(bySvc[p.service.id]=bySvc[p.service.id]||[]).push(p);}
-      else if(p.route){const r=routes.find(x=>x.id===p.route.id);const k=r&&r.service?r.service.id:('route:'+p.route.id);(bySvc[k]=bySvc[k]||[]).push(p);}
-      else if(p.consumer){(byCon[p.consumer.id]=byCon[p.consumer.id]||[]).push(p);}
-      else glob.push(p);}
-    const models=svcs.filter(s=>(s.name||'').startsWith('svc-'));
-    let html=`<div class="card"><h2>🧩 By model (service)</h2><p class="hint">Plugins on each model's service, with their config.</p>`;
-    html+= models.length? models.map(s=>{const list=bySvc[s.id]||[];const rt=routes.find(r=>r.service&&r.service.id===s.id);
-      return `<div class="grp"><div class="grphead"><b>${esc(s.name)}</b>${rt?`<span class="muted">${esc((rt.paths||[])[0]||'')}</span>`:''}</div>${list.length?list.map(plRow).join(''):'<div class="muted" style="padding:6px 0">No plugins.</div>'}</div>`;}).join('') : '<div class="muted">No models.</div>';
-    const otherSvc=svcs.filter(s=>!(s.name||'').startsWith('svc-')&&(bySvc[s.id]||[]).length);
-    html+= otherSvc.map(s=>`<div class="grp"><div class="grphead"><b>${esc(s.name)}</b> <span class="muted">(other service)</span></div>${bySvc[s.id].map(plRow).join('')}</div>`).join('');
-    html+=`</div>`;
-    const conKeys=Object.keys(byCon);
-    if(conKeys.length){html+=`<div class="card"><h2>🗂️ By project (consumer)</h2>`+conKeys.map(cid=>`<div class="grp"><div class="grphead"><b>${esc(conName[cid]||cid)}</b></div>${byCon[cid].map(plRow).join('')}</div>`).join('')+`</div>`;}
-    if(glob.length){html+=`<div class="card"><h2>🌐 Global</h2><p class="hint">Applied to every request across the gateway.</p><div class="grp">${glob.map(plRow).join('')}</div></div>`;}
-    host.innerHTML=html;
-  }catch(e){host.innerHTML=`<div class="card" style="color:var(--red)">Error: ${esc(e.message)}</div>`;}}
-async function addPlugin(){const svc=$('#pl_svc').value,name=$('#pl_name').value;if(!svc)return toast('No model selected','err');
-  let config={};
-  if(name==='rate-limiting'){const m=parseInt($('#pl_min').value),h=parseInt($('#pl_hour').value);if(m)config.minute=m;if(h)config.hour=h;config.policy='local';if(!m&&!h)return toast('Set per-minute or per-hour','err');}
-  else if(name==='request-size-limiting'){const s=parseInt($('#pl_size').value);if(!s)return toast('Set max payload MB','err');config.allowed_payload_size=s;}
-  else if(name==='cors'){const o=$('#pl_origins').value.split(',').map(x=>x.trim()).filter(Boolean);config.origins=o.length?o:['*'];}
-  try{const ex=(await api('GET','/services/'+svc+'/plugins')).data.find(p=>p.name===name);
-    if(ex)await api('PATCH','/plugins/'+ex.id,{config,enabled:true});else await api('POST','/services/'+svc+'/plugins',{name,config});
-    toast('✔ '+name+' applied to '+svc,'ok');loadPlugins();
+    if(on){let config={};
+      if(kind==='num')config[cfgKey]=parseInt(def)||60;
+      else if(kind==='text')config[cfgKey]=['*'];
+      if(pname==='rate-limiting')config.policy='local';
+      await api('POST','/services/'+svc+'/plugins',{name:pname,config});toast('Enabled: '+pname,'ok');
+    }else{const ex=(await api('GET','/services/'+svc+'/plugins')).data.find(p=>p.name===pname);if(ex)await api('DELETE','/plugins/'+ex.id);toast('Disabled: '+pname,'ok');}
+    loadModelProtections();
+  }catch(e){toast('Error: '+e.message,'err');loadModelProtections();}}
+async function savePlugin(svc,pname,cfgKey,kind){const v=($('#cfg_'+pname).value||'').trim();let config={};
+  if(kind==='num'){const n=parseInt(v);if(!n)return toast('Enter a number','err');config[cfgKey]=n;if(pname==='rate-limiting')config.policy='local';}
+  else if(kind==='text'){config[cfgKey]=v?v.split(',').map(x=>x.trim()).filter(Boolean):['*'];}
+  try{const ex=(await api('GET','/services/'+svc+'/plugins')).data.find(p=>p.name===pname);
+    if(ex)await api('PATCH','/plugins/'+ex.id,{config});else await api('POST','/services/'+svc+'/plugins',{name:pname,config});
+    toast('Saved','ok');loadModelProtections();
   }catch(e){toast('Error: '+e.message,'err');}}
-async function togglePlugin(id,en){try{await api('PATCH','/plugins/'+id,{enabled:!en});toast('Plugin '+(!en?'enabled':'disabled'),'ok');loadPlugins();}catch(e){toast('Error: '+e.message,'err');}}
-async function delPlugin(id,name){if(!confirm('Delete plugin '+name+'?'))return;try{await api('DELETE','/plugins/'+id);toast('Deleted '+name,'ok');loadPlugins();}catch(e){toast('Error: '+e.message,'err');}}
 
 // ===== OVERVIEW =====
 function stat(n,l){return `<div class="statc"><div class="n">${n}</div><div class="l">${l}</div></div>`;}
