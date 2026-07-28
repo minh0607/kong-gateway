@@ -355,7 +355,7 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
     h+=`<div class="psec">Other plugins on this model</div>`;
     h+= others.length? others.map(p=>`<div class="orow"><div class="pico">🔌</div><div class="oinfo"><b>${esc(p.name)}</b><span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
     const avail=await availablePlugins();
-    const opts=(avail.length?avail:[]).filter(n=>!curated.includes(n)).sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}${curated.includes(n)?' — managed above':''}</option>`).join('');
     h+=`<div class="psec">Add any plugin (advanced)</div>
       <div class="advbox">
         <select id="adv_plugin" style="min-width:210px">${opts||'<option value="">(list unavailable)</option>'}</select>
