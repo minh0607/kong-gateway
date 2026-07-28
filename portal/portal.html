@@ -90,6 +90,14 @@
   table.matrix th,table.matrix td{text-align:center;white-space:nowrap}
   table.matrix th:first-child,table.matrix td:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:1}
   table.matrix .yes{color:#16a34a;font-weight:800;font-size:15px} table.matrix .no{color:var(--line)}
+  .grp{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px;background:var(--input)}
+  .grphead{margin-bottom:4px;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .plrow{display:grid;grid-template-columns:170px 1fr auto;gap:12px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+  .plrow:first-of-type{border-top:0}
+  .plname{font-size:13px} .stateon{color:#16a34a;font-size:11px;font-weight:700} .stateoff{color:#94a3b8;font-size:11px;font-weight:700}
+  .plcfg{display:flex;flex-wrap:wrap;gap:6px} .cfgkv{background:var(--hover);border-radius:7px;padding:2px 9px;font-size:12px;font-family:ui-monospace,monospace}
+  .plact{display:flex;gap:6px}
+  @media(max-width:760px){.plrow{grid-template-columns:1fr}}
   .chipbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:7px 9px;background:var(--input)}
   .chipbox input{border:0;box-shadow:none;flex:1;min-width:120px;padding:2px 4px;background:transparent}
   .chipbox input:focus{box-shadow:none}
@@ -209,13 +217,9 @@
           <div id="pl_cfg"></div>
           <button class="btn" onclick="addPlugin()">Apply</button>
         </div>
-        <div class="card">
-          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">All plugins</h2><button class="btn sec sm" onclick="loadPlugins()">↻ Refresh</button></div>
-          <div style="height:14px"></div>
-          <div style="overflow:auto">
-          <table><thead><tr><th>Plugin</th><th>Scope</th><th>Target</th><th>Config</th><th>State</th><th></th></tr></thead>
-            <tbody id="plugins_body"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody></table>
-          </div>
+        <div>
+          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="margin:0">Plugins by target</h2><button class="btn sec sm" onclick="loadPlugins()">↻ Refresh</button></div>
+          <div id="plugins_host"><div class="card muted">Loading…</div></div>
         </div>
       </div>
     </section>
@@ -333,30 +337,44 @@ function plFields(){const n=$('#pl_name').value;let h='';
   $('#pl_cfg').innerHTML=h;}
 async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
   sel.innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')||'<option value="">(no models — create one first)</option>';}
-function plSummaryTxt(p){const c=p.config||{};
-  if(p.name==='rate-limiting')return `${c.minute||'∞'}/m${c.hour?' '+c.hour+'/h':''}`;
-  if(p.name==='key-auth')return (c.key_names||[]).join('/');
-  if(p.name==='acl')return 'allow '+(c.allow||[]).join(',');
-  if(p.name==='ip-restriction')return 'allow '+(c.allow||[]).join(',');
-  if(p.name==='request-size-limiting')return (c.allowed_payload_size||'?')+' MB';
-  if(p.name==='cors')return 'origins '+((c.origins||[]).join(',')||'*');
-  if(p.name==='prometheus')return 'metrics';
-  return '';}
-async function loadPlugins(){const body=$('#plugins_body');body.innerHTML='<tr><td colspan="6" class="muted">Loading…</td></tr>';
-  try{const svcMap={},conMap={};
-    (await api('GET','/services?size=1000')).data.forEach(s=>svcMap[s.id]=s.name);
-    (await api('GET','/consumers?size=1000')).data.forEach(c=>conMap[c.id]=c.username);
+function plCfg(p){const c=p.config||{};const rows=[];
+  const add=(k,v)=>{if(v===null||v===undefined||v==='')return;if(Array.isArray(v)){if(!v.length)return;v=v.join(', ');}rows.push(k+': '+v);};
+  if(p.name==='key-auth'){add('header',(c.key_names||[]).join('/'));add('hide_credentials',c.hide_credentials);}
+  else if(p.name==='acl'){add('allow',c.allow);add('deny',c.deny);}
+  else if(p.name==='rate-limiting'){add('second',c.second);add('minute',c.minute);add('hour',c.hour);add('policy',c.policy);}
+  else if(p.name==='ip-restriction'){add('allow',c.allow);add('deny',c.deny);}
+  else if(p.name==='request-size-limiting'){add('max_MB',c.allowed_payload_size);}
+  else if(p.name==='cors'){add('origins',c.origins);}
+  else if(p.name==='bot-detection'){add('allow',c.allow);add('deny',c.deny);}
+  else if(p.name==='prometheus'){add('per_consumer',c.per_consumer);add('status_code_metrics',c.status_code_metrics);add('latency_metrics',c.latency_metrics);}
+  else {Object.entries(c).forEach(([k,v])=>{if(v&&typeof v!=='object')add(k,v);});}
+  return rows.length?rows.map(r=>`<span class="cfgkv">${esc(r)}</span>`).join(''):'<span class="muted">default config</span>';}
+function plRow(p){return `<div class="plrow"><div class="plname"><b>${esc(p.name)}</b> ${p.enabled?'<span class="stateon">● on</span>':'<span class="stateoff">● off</span>'}</div><div class="plcfg">${plCfg(p)}</div><div class="plact"><button class="btn gray sm" onclick="togglePlugin('${p.id}',${p.enabled})">${p.enabled?'Disable':'Enable'}</button><button class="btn red sm" onclick="delPlugin('${p.id}','${esc(p.name)}')">Delete</button></div></div>`;}
+async function loadPlugins(){const host=$('#plugins_host');host.innerHTML='<div class="card muted">Loading…</div>';
+  try{
+    const svcs=(await api('GET','/services?size=1000')).data;
+    const cons=(await api('GET','/consumers?size=1000')).data;
+    const routes=(await api('GET','/routes?size=1000')).data;
     const pls=(await api('GET','/plugins?size=1000')).data;
-    body.innerHTML= pls.length? pls.map(p=>{let scope='global',target='—';
-      if(p.consumer){scope='consumer';target=conMap[p.consumer.id]||p.consumer.id;}
-      else if(p.service){scope='service';target=svcMap[p.service.id]||p.service.id;}
-      else if(p.route){scope='route';target=p.route.id;}
-      return `<tr><td><b>${esc(p.name)}</b></td><td><span class="pill">${scope}</span></td><td>${esc(target)}</td>
-        <td><code>${esc(plSummaryTxt(p))}</code></td>
-        <td>${p.enabled?'<span class="yes">●</span> on':'<span class="no">●</span> off'}</td>
-        <td><button class="btn gray sm" onclick="togglePlugin('${p.id}',${p.enabled})">${p.enabled?'Disable':'Enable'}</button> <button class="btn red sm" onclick="delPlugin('${p.id}','${esc(p.name)}')">Delete</button></td></tr>`;}).join('')
-      : '<tr><td colspan="6" class="muted">No plugins.</td></tr>';
-  }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+    const conName={};cons.forEach(c=>conName[c.id]=c.username);
+    const bySvc={},byCon={},glob=[];
+    for(const p of pls){
+      if(p.service){(bySvc[p.service.id]=bySvc[p.service.id]||[]).push(p);}
+      else if(p.route){const r=routes.find(x=>x.id===p.route.id);const k=r&&r.service?r.service.id:('route:'+p.route.id);(bySvc[k]=bySvc[k]||[]).push(p);}
+      else if(p.consumer){(byCon[p.consumer.id]=byCon[p.consumer.id]||[]).push(p);}
+      else glob.push(p);}
+    const models=svcs.filter(s=>(s.name||'').startsWith('svc-'));
+    let html=`<div class="card"><h2>🧩 By model (service)</h2><p class="hint">Plugins on each model's service, with their config.</p>`;
+    html+= models.length? models.map(s=>{const list=bySvc[s.id]||[];const rt=routes.find(r=>r.service&&r.service.id===s.id);
+      return `<div class="grp"><div class="grphead"><b>${esc(s.name)}</b>${rt?`<span class="muted">${esc((rt.paths||[])[0]||'')}</span>`:''}</div>${list.length?list.map(plRow).join(''):'<div class="muted" style="padding:6px 0">No plugins.</div>'}</div>`;}).join('') : '<div class="muted">No models.</div>';
+    const otherSvc=svcs.filter(s=>!(s.name||'').startsWith('svc-')&&(bySvc[s.id]||[]).length);
+    html+= otherSvc.map(s=>`<div class="grp"><div class="grphead"><b>${esc(s.name)}</b> <span class="muted">(other service)</span></div>${bySvc[s.id].map(plRow).join('')}</div>`).join('');
+    html+=`</div>`;
+    const conKeys=Object.keys(byCon);
+    if(conKeys.length){html+=`<div class="card"><h2>🗂️ By project (consumer)</h2>`+conKeys.map(cid=>`<div class="grp"><div class="grphead"><b>${esc(conName[cid]||cid)}</b></div>${byCon[cid].map(plRow).join('')}</div>`).join('')+`</div>`;}
+    if(glob.length){html+=`<div class="card"><h2>🌐 Global</h2><p class="hint">Applied to every request across the gateway.</p><div class="grp">${glob.map(plRow).join('')}</div></div>`;}
+    host.innerHTML=html;
+  }catch(e){host.innerHTML=`<div class="card" style="color:var(--red)">Error: ${esc(e.message)}</div>`;}}
 async function addPlugin(){const svc=$('#pl_svc').value,name=$('#pl_name').value;if(!svc)return toast('No model selected','err');
   let config={};
   if(name==='rate-limiting'){const m=parseInt($('#pl_min').value),h=parseInt($('#pl_hour').value);if(m)config.minute=m;if(h)config.hour=h;config.policy='local';if(!m&&!h)return toast('Set per-minute or per-hour','err');}
