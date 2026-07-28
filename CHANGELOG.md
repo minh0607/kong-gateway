@@ -10,10 +10,11 @@ Portal management upgrades — cover the full Kong object model and make plugin
 config foolproof.
 
 ### Added
-- **Consumers tab** — add any consumer (incl. non-convention / legacy names) and
-  manage ACL group membership (add/remove groups). Lists **every** consumer with
-  its groups, key count and tags, so pre-existing config (e.g. `n8n`) is visible,
-  not hidden by the `prj-` convention.
+- **Consumers tab** — add any consumer (incl. non-convention / legacy names),
+  manage ACL group membership (add/remove groups), and **issue / view / delete
+  API keys** (`key-auth` credentials — blank = auto-generate a 36-char secure
+  key). Lists **every** consumer with its groups, keys and tags, so pre-existing
+  config (e.g. `n8n`) is visible, not hidden by the `prj-` convention.
 - **Upstreams tab** — create load-balancing pools (round-robin / least-connections
   / consistent-hashing), add backend targets (`host:port` + weight) with health
   badges, remove targets or delete upstreams. Point a model's backend host at an

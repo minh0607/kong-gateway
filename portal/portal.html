@@ -245,12 +245,20 @@
           <div class="fld"><label>Consumer</label><select id="c_sel"></select></div>
           <div class="fld"><label>ACL group</label><input id="c_group" placeholder="e.g. acl-embed"/></div>
           <button class="btn" onclick="addConsumerAcl()">Add to group</button>
+          <div style="height:22px"></div>
+          <h2>🔑 Create API key</h2>
+          <p class="hint">Issue a <code>key-auth</code> credential. Leave the key blank to auto-generate a secure one.</p>
+          <div class="fld"><label>Consumer</label><select id="k_sel"></select></div>
+          <div class="fld"><label>Key <span class="muted">(blank = auto)</span></label>
+            <div style="display:flex;gap:8px"><input id="k_key" placeholder="custom key, or Generate"/><button type="button" class="btn sec" style="white-space:nowrap" onclick="genKey()">🎲 Generate</button></div>
+          </div>
+          <button class="btn" onclick="addConsumerKey()">Create key</button>
         </div>
         <div class="card">
           <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">All consumers</h2><button class="btn sec sm" onclick="loadConsumers()">↻ Refresh</button></div>
           <div style="height:14px"></div>
           <div style="overflow:auto">
-          <table><thead><tr><th>Consumer</th><th>ACL groups</th><th>Keys</th><th>Tags</th><th></th></tr></thead>
+          <table><thead><tr><th>Consumer</th><th>ACL groups</th><th>API keys</th><th>Tags</th><th></th></tr></thead>
             <tbody id="consumers_body"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table>
           </div>
         </div>
@@ -420,20 +428,27 @@ async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL 
 // ===== CONSUMERS (all, incl. legacy) =====
 async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<tr><td colspan="5" class="muted">Loading…</td></tr>';
   try{const cons=(await api('GET','/consumers?size=1000')).data;
-    const sel=$('#c_sel');if(sel)sel.innerHTML=cons.map(c=>`<option value="${esc(c.username)}">${esc(c.username)}</option>`).join('')||'<option value="">(none)</option>';
+    const opts=cons.map(c=>`<option value="${esc(c.username)}">${esc(c.username)}</option>`).join('')||'<option value="">(none)</option>';
+    if($('#c_sel'))$('#c_sel').innerHTML=opts; if($('#k_sel'))$('#k_sel').innerHTML=opts;
     const rows=[];
     for(const c of cons){
       const acls=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/acls')).data;
-      const nk=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/key-auth')).data.length;
+      const keys=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/key-auth')).data;
       const kind=(c.username||'').startsWith('prj-')?'<span class="pill">project</span>':'<span class="pill model">legacy</span>';
+      const keycell=keys.length?keys.map(k=>{const id='k'+Math.abs(hash(c.username+k.id));
+        return `<span class="chip"><code id="${id}">••••••</code><b style="cursor:pointer" onclick="revToken('${id}','${esc(k.key)}')">👁</b><b onclick="delConsumerKey('${esc(c.username)}','${k.id}')">×</b></span>`;}).join(''):'<span class="muted">—</span>';
       rows.push(`<tr><td><b>${esc(c.username)}</b> ${kind}</td>
         <td>${acls.length?acls.map(a=>`<span class="chip">${esc(a.group)}<b onclick="removeConsumerAcl('${esc(c.username)}','${a.id}')">×</b></span>`).join(''):'<span class="muted">—</span>'}</td>
-        <td>${nk}</td>
+        <td>${keycell}</td>
         <td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td>
         <td><button class="btn red sm" onclick="delConsumer('${esc(c.username)}')">Delete</button></td></tr>`);
     }
     body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No consumers.</td></tr>';
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+function genKey(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];const el=$('#k_key');el.value=s;el.focus();el.select();toast('Generated a 36-char secure key','ok');}
+async function addConsumerKey(){const c=$('#k_sel').value,k=$('#k_key').value.trim();if(!c)return toast('Pick a consumer','err');
+  try{await api('POST','/consumers/'+encodeURIComponent(c)+'/key-auth',k?{key:k}:{});toast('API key created for '+c,'ok');$('#k_key').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
+async function delConsumerKey(c,id){if(!confirm('Delete this API key? Clients using it will stop working.'))return;try{await api('DELETE','/consumers/'+encodeURIComponent(c)+'/key-auth/'+id);toast('API key deleted','ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 async function addConsumer(){const n=$('#c_name').value.trim();if(!n)return toast('Enter a username','err');
   try{await api('PUT','/consumers/'+encodeURIComponent(n),{});toast('Created consumer '+n,'ok');$('#c_name').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 async function addConsumerAcl(){const c=$('#c_sel').value,g=$('#c_group').value.trim();if(!c)return toast('Pick a consumer','err');if(!g)return toast('Enter an ACL group','err');
