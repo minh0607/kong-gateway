@@ -109,6 +109,11 @@
   .orow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
   .orow .oinfo{flex:1;min-width:0} .orow .oinfo b{font-size:13px} .orow .oinfo span{font-size:11.5px;color:var(--sub);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .advbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .pfform{display:grid;gap:8px;margin:10px 0 12px;padding:12px 14px;background:var(--primary-l);border:1px solid var(--line);border-radius:12px}
+  .pfrow{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0;font-size:13px}
+  .pfrow span{color:var(--sub);font-weight:600;flex:0 0 auto}
+  .pfrow input,.pfrow select{width:230px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text)}
+  .pfrow input[type=checkbox]{width:auto}
   .chipbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:7px 9px;background:var(--input)}
   .chipbox input{border:0;box-shadow:none;flex:1;min-width:120px;padding:2px 4px;background:transparent}
   .chipbox input:focus{box-shadow:none}
@@ -417,14 +422,38 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
     const avail=await availablePlugins();
     const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
     h+=`<div class="psec">Add any plugin (advanced)</div>
-      <div class="advbox">
-        <select id="adv_plugin" style="min-width:210px">${opts||'<option value="">(list unavailable)</option>'}</select>
-        <input id="adv_cfg" placeholder='config JSON — optional, e.g. {&quot;minute&quot;:60}' style="flex:1;min-width:220px"/>
-        <button class="btn sm" onclick="addAnyPlugin('${svc}')">Add</button>
-      </div>
-      <p class="muted" style="margin:8px 0 0">Pick any Kong plugin; omit config to use its defaults, or paste JSON to override.</p>`;
+      <div class="fld"><label>Plugin</label><select id="adv_plugin" onchange="advPluginFields('${svc}')" style="width:100%">${opts||'<option value="">(list unavailable)</option>'}</select></div>
+      <div id="adv_form"><p class="muted">Pick a plugin above, fill the fields, click Add — no JSON needed.</p></div>`;
     body.innerHTML=h;
+    if($('#adv_plugin')&&$('#adv_plugin').value) advPluginFields(svc);
   }catch(e){body.innerHTML=`<div style="color:var(--red);padding:12px 0">Error: ${esc(e.message)}</div>`;}}
+// build a form from the plugin's real Kong schema — no JSON needed
+async function pluginSchema(name){try{const s=await api('GET','/schemas/plugins/'+encodeURIComponent(name));
+  const cfg=(s.fields||[]).find(f=>f.config);if(!cfg||!cfg.config)return [];
+  return (cfg.config.fields||[]).map(f=>{const k=Object.keys(f)[0];return Object.assign({name:k},f[k]);});
+}catch(e){return [];}}
+function fieldInput(pname,f,cur){const id='pf_'+pname+'_'+f.name;
+  const v=(cur!==undefined&&cur!==null)?cur:(f.default!==undefined&&f.default!==null?f.default:'');
+  const lab=`<span title="${esc(f.type||'')}${f.required?' · required':''}">${esc(f.name)}${f.required?' *':''}</span>`;
+  if(f.type==='boolean')return `<label class="pfrow">${lab}<input type="checkbox" id="${id}" ${v===true?'checked':''}/></label>`;
+  if(Array.isArray(f.one_of))return `<label class="pfrow">${lab}<select id="${id}">${f.one_of.map(o=>`<option ${String(o)===String(v)?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
+  if(f.type==='array'||f.type==='set')return `<label class="pfrow">${lab}<input id="${id}" value="${esc(Array.isArray(v)?v.join(','):'')}" placeholder="comma,separated"/></label>`;
+  if(f.type==='number'||f.type==='integer')return `<label class="pfrow">${lab}<input id="${id}" value="${esc(v===''?'':v)}" placeholder="number"/></label>`;
+  if(f.type==='record'||f.type==='map'||f.type==='foreign')return '';
+  return `<label class="pfrow">${lab}<input id="${id}" value="${esc(v)}"/></label>`;}
+function buildConfig(pname,fields){const c={};for(const f of fields){const el=$('#pf_'+pname+'_'+f.name);if(!el)continue;
+  if(f.type==='boolean')c[f.name]=el.checked;
+  else if(f.type==='number'||f.type==='integer'){const n=(el.value||'').trim();if(n!=='')c[f.name]=Number(n);}
+  else if(f.type==='array'||f.type==='set'){const a=el.value.split(',').map(x=>x.trim()).filter(Boolean);if(a.length)c[f.name]=a;}
+  else {const t=(el.value||'').trim();if(t!=='')c[f.name]=t;}}
+  return c;}
+async function advPluginFields(svc){const name=$('#adv_plugin').value;const box=$('#adv_form');if(!name){box.innerHTML='';return;}
+  box.innerHTML='<p class="muted">Loading fields…</p>';
+  const fields=await pluginSchema(name);
+  const form=fields.map(f=>fieldInput(name,f)).filter(Boolean).join('');
+  box.innerHTML=`<div class="pfform">${form||'<p class="muted">No config fields — just click Add.</p>'}</div><button class="btn sm" onclick="addSchemaPlugin('${svc}','${esc(name)}')">Add ${esc(name)}</button>`;}
+async function addSchemaPlugin(svc,name){const fields=await pluginSchema(name);const config=buildConfig(name,fields);
+  try{await api('POST','/services/'+svc+'/plugins',{name,config});toast('Added '+name,'ok');loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
 let AVAIL=null;
 async function availablePlugins(){if(AVAIL)return AVAIL;try{AVAIL=(await api('GET','/plugins/enabled')).enabled_plugins||[];}catch(e){AVAIL=[];}return AVAIL;}
 function cfgText(p){const c=p.config||{};const parts=[];Object.entries(c).forEach(([k,v])=>{if(v===null||v===undefined||v===''||(Array.isArray(v)&&!v.length)||(typeof v==='object'&&!Array.isArray(v)))return;parts.push(k+': '+(Array.isArray(v)?v.join(','):v));});return parts.slice(0,5).join(' · ')||'default config';}
