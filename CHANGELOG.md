@@ -4,6 +4,36 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.6] — 2026-07-28
+
+Portal management upgrades — cover the full Kong object model and make plugin
+config foolproof.
+
+### Added
+- **Consumers tab** — add any consumer (incl. non-convention / legacy names) and
+  manage ACL group membership (add/remove groups). Lists **every** consumer with
+  its groups, key count and tags, so pre-existing config (e.g. `n8n`) is visible,
+  not hidden by the `prj-` convention.
+- **Upstreams tab** — create load-balancing pools (round-robin / least-connections
+  / consistent-hashing), add backend targets (`host:port` + weight) with health
+  badges, remove targets or delete upstreams. Point a model's backend host at an
+  upstream name to spread traffic across targets.
+- **"Show all (incl. legacy)"** toggle on the Models tab — lists every Kong
+  service, tagging non-`svc-` ones as `legacy`, so pre-existing services appear.
+- **Inline edit** on Models rows — change a service's backend URL and route path
+  (works for `svc-*` and legacy services).
+
+### Changed
+- **Plugin config is now a schema-driven form, not raw JSON.** The "Add any
+  plugin" picker renders typed inputs generated from the plugin's Kong schema
+  (`GET /schemas/plugins/<name>`) — number / text / checkbox / select (one_of) /
+  comma-list (arrays), prefilled with defaults. Filling the fields builds and
+  POSTs the config automatically; the error-prone JSON textarea is gone.
+
+### Notes
+- Portal changes are UI-only over the existing authenticated `/api` Admin proxy —
+  no schema, port, or auth changes. Rebuild the PCA bundle to ship these.
+
 ## [1.0.5] — 2026-07-28
 
 Model & Project self-service portal, integrated into the console over HTTPS.
