@@ -127,6 +127,7 @@
     <div class="nav-item active" data-tab="overview"><span class="ic">🔗</span><span>Overview</span></div>
     <div class="nav-item" data-tab="models"><span class="ic">🧩</span><span>Models</span></div>
     <div class="nav-item" data-tab="projects"><span class="ic">🗂️</span><span>Projects</span></div>
+    <div class="nav-item" data-tab="consumers"><span class="ic">👤</span><span>Consumers</span></div>
     <div class="nav-item" data-tab="plugins"><span class="ic">🔌</span><span>Plugins</span></div>
     <div class="lbl" style="margin-top:auto">Switch to</div>
     <a class="nav-item" id="lnk-console" href="/" style="text-decoration:none"><span class="ic">🛠️</span><span>Kong Manager</span></a>
@@ -212,6 +213,32 @@
       </div>
     </section>
 
+    <!-- ===== CONSUMERS ===== -->
+    <section id="tab-consumers" class="hidden">
+      <div class="split">
+        <div class="card">
+          <h2>➕ Add consumer</h2>
+          <p class="hint">Any username — including non-convention / legacy ones.</p>
+          <div class="fld"><label>Username</label><input id="c_name" placeholder="e.g. n8n, dify_app, team-x"/></div>
+          <button class="btn" onclick="addConsumer()">Create consumer</button>
+          <div style="height:22px"></div>
+          <h2>👥 Add consumer to ACL group</h2>
+          <p class="hint">Grant an existing consumer access to a model's ACL group.</p>
+          <div class="fld"><label>Consumer</label><select id="c_sel"></select></div>
+          <div class="fld"><label>ACL group</label><input id="c_group" placeholder="e.g. acl-embed"/></div>
+          <button class="btn" onclick="addConsumerAcl()">Add to group</button>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">All consumers</h2><button class="btn sec sm" onclick="loadConsumers()">↻ Refresh</button></div>
+          <div style="height:14px"></div>
+          <div style="overflow:auto">
+          <table><thead><tr><th>Consumer</th><th>ACL groups</th><th>Keys</th><th>Tags</th><th></th></tr></thead>
+            <tbody id="consumers_body"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== PLUGINS ===== -->
     <section id="tab-plugins" class="hidden">
       <div class="card" style="max-width:800px">
@@ -248,7 +275,7 @@ async function api(method,path,body){const o={method,headers:{},credentials:'sam
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model']};
+const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model']};
 document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;
@@ -257,6 +284,7 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   if(tab==='overview') loadOverview();
   if(tab==='models') loadModels();
   if(tab==='projects'){loadModelChecks();loadProjects();}
+  if(tab==='consumers') loadConsumers();
   if(tab==='plugins') loadPluginModels();
 });
 async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong connected';$('#conn').style.color='#16a34a';}
@@ -326,6 +354,30 @@ async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_
   }catch(e){toast('Error: '+e.message,'err');}}
 async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL + IP)?'))return;
   try{await api('DELETE','/consumers/'+con);toast('Deleted '+con,'ok');loadProjects();}catch(e){toast('Error: '+e.message,'err');}}
+
+// ===== CONSUMERS (all, incl. legacy) =====
+async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<tr><td colspan="5" class="muted">Loading…</td></tr>';
+  try{const cons=(await api('GET','/consumers?size=1000')).data;
+    const sel=$('#c_sel');if(sel)sel.innerHTML=cons.map(c=>`<option value="${esc(c.username)}">${esc(c.username)}</option>`).join('')||'<option value="">(none)</option>';
+    const rows=[];
+    for(const c of cons){
+      const acls=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/acls')).data;
+      const nk=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/key-auth')).data.length;
+      const kind=(c.username||'').startsWith('prj-')?'<span class="pill">project</span>':'<span class="pill model">legacy</span>';
+      rows.push(`<tr><td><b>${esc(c.username)}</b> ${kind}</td>
+        <td>${acls.length?acls.map(a=>`<span class="chip">${esc(a.group)}<b onclick="removeConsumerAcl('${esc(c.username)}','${a.id}')">×</b></span>`).join(''):'<span class="muted">—</span>'}</td>
+        <td>${nk}</td>
+        <td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td>
+        <td><button class="btn red sm" onclick="delConsumer('${esc(c.username)}')">Delete</button></td></tr>`);
+    }
+    body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No consumers.</td></tr>';
+  }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+async function addConsumer(){const n=$('#c_name').value.trim();if(!n)return toast('Enter a username','err');
+  try{await api('PUT','/consumers/'+encodeURIComponent(n),{});toast('Created consumer '+n,'ok');$('#c_name').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
+async function addConsumerAcl(){const c=$('#c_sel').value,g=$('#c_group').value.trim();if(!c)return toast('Pick a consumer','err');if(!g)return toast('Enter an ACL group','err');
+  try{await api('POST','/consumers/'+encodeURIComponent(c)+'/acls',{group:g});toast(c+' added to '+g,'ok');$('#c_group').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
+async function removeConsumerAcl(c,id){try{await api('DELETE','/consumers/'+encodeURIComponent(c)+'/acls/'+id);toast('Removed from group','ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
+async function delConsumer(c){if(!confirm('Delete consumer '+c+' (keys + ACL + plugins)?'))return;try{await api('DELETE','/consumers/'+encodeURIComponent(c));toast('Deleted '+c,'ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 
 // ===== PLUGINS (simple, per-model protections) =====
 async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
