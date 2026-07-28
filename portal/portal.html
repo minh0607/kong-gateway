@@ -108,6 +108,8 @@
     <div class="nav-item active" data-tab="overview"><span class="ic">🔗</span><span>Overview</span></div>
     <div class="nav-item" data-tab="models"><span class="ic">🧩</span><span>Models</span></div>
     <div class="nav-item" data-tab="projects"><span class="ic">🗂️</span><span>Projects</span></div>
+    <div class="lbl" style="margin-top:auto">Switch to</div>
+    <a class="nav-item" id="lnk-console" href="/" style="text-decoration:none"><span class="ic">🛠️</span><span>Kong Manager</span></a>
   </nav>
   <div class="sb-foot">
     <span id="conn">connecting…</span>
@@ -216,7 +218,7 @@ const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
 const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)']};
-document.querySelectorAll('.nav-item').forEach(t=>t.onclick=()=>{
+document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;
   document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.classList.toggle('hidden', s.id!=='tab-'+tab));
@@ -363,6 +365,7 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
   }catch(e){host.innerHTML=`<div class="card" style="color:var(--red)">Error: ${esc(e.message)}</div>`;}}
 
 $('#p_taginput').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===','){e.preventDefault();addTag(e.target.value);e.target.value='';}});
+(function(){const cl=$('#lnk-console');if(cl)cl.href=location.pathname.indexOf('/aigw')===0?'/aigw/':'/';})();
 ping();loadOverview();
 </script>
 </body>
