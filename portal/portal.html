@@ -133,6 +133,7 @@
     <div class="nav-item" data-tab="models"><span class="ic">🧩</span><span>Models</span></div>
     <div class="nav-item" data-tab="projects"><span class="ic">🗂️</span><span>Projects</span></div>
     <div class="nav-item" data-tab="consumers"><span class="ic">👤</span><span>Consumers</span></div>
+    <div class="nav-item" data-tab="upstreams"><span class="ic">⚖️</span><span>Upstreams</span></div>
     <div class="nav-item" data-tab="plugins"><span class="ic">🔌</span><span>Plugins</span></div>
     <div class="lbl" style="margin-top:auto">Switch to</div>
     <a class="nav-item" id="lnk-console" href="/" style="text-decoration:none"><span class="ic">🛠️</span><span>Kong Manager</span></a>
@@ -250,6 +251,35 @@
       </div>
     </section>
 
+    <!-- ===== UPSTREAMS ===== -->
+    <section id="tab-upstreams" class="hidden">
+      <div class="split">
+        <div class="card">
+          <h2>➕ Create upstream</h2>
+          <p class="hint">A named load-balancing pool. Point a model's backend host at this name to spread traffic across its targets.</p>
+          <div class="fld"><label>Name</label><input id="u_name" placeholder="e.g. up-gemma"/></div>
+          <div class="fld"><label>Algorithm</label><select id="u_algo">
+            <option value="round-robin">round-robin</option>
+            <option value="least-connections">least-connections</option>
+            <option value="consistent-hashing">consistent-hashing</option>
+          </select></div>
+          <button class="btn" onclick="addUpstream()">Create upstream</button>
+          <div style="height:22px"></div>
+          <h2>🎯 Add target</h2>
+          <p class="hint">A backend <code>host:port</code> with a weight (share of traffic).</p>
+          <div class="fld"><label>Upstream</label><select id="u_sel"></select></div>
+          <div class="fld"><label>Target (host:port)</label><input id="u_target" placeholder="e.g. 107.118.109.31:8000"/></div>
+          <div class="fld"><label>Weight</label><input id="u_weight" value="100"/></div>
+          <button class="btn" onclick="addTarget()">Add target</button>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Upstreams</h2><button class="btn sec sm" onclick="loadUpstreams()">↻ Refresh</button></div>
+          <div style="height:14px"></div>
+          <div id="upstreams_list"><p class="muted">Loading…</p></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== PLUGINS ===== -->
     <section id="tab-plugins" class="hidden">
       <div class="card" style="max-width:800px">
@@ -286,7 +316,7 @@ async function api(method,path,body){const o={method,headers:{},credentials:'sam
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model']};
+const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model']};
 document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;
@@ -296,6 +326,7 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   if(tab==='models') loadModels();
   if(tab==='projects'){loadModelChecks();loadProjects();}
   if(tab==='consumers') loadConsumers();
+  if(tab==='upstreams') loadUpstreams();
   if(tab==='plugins') loadPluginModels();
 });
 async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong connected';$('#conn').style.color='#16a34a';}
@@ -391,6 +422,34 @@ async function addConsumerAcl(){const c=$('#c_sel').value,g=$('#c_group').value.
   try{await api('POST','/consumers/'+encodeURIComponent(c)+'/acls',{group:g});toast(c+' added to '+g,'ok');$('#c_group').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 async function removeConsumerAcl(c,id){try{await api('DELETE','/consumers/'+encodeURIComponent(c)+'/acls/'+id);toast('Removed from group','ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 async function delConsumer(c){if(!confirm('Delete consumer '+c+' (keys + ACL + plugins)?'))return;try{await api('DELETE','/consumers/'+encodeURIComponent(c));toast('Deleted '+c,'ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
+
+// ===== UPSTREAMS (load-balancing) =====
+function healthBadge(h){const m={HEALTHY:['ok','healthy'],UNHEALTHY:['err','unhealthy'],HEALTHCHECKS_OFF:['','no check'],DNS_ERROR:['err','dns error']};
+  const x=m[h]||['','?'];return `<span class="pill ${x[0]==='ok'?'':''}" style="${x[0]==='ok'?'background:#dcfce7;color:#166534;border-color:#bbf7d0':x[0]==='err'?'background:#fee2e2;color:#991b1b;border-color:#fecaca':''}">${x[1]}</span>`;}
+async function loadUpstreams(){const box=$('#upstreams_list');box.innerHTML='<p class="muted">Loading…</p>';
+  try{const ups=(await api('GET','/upstreams?size=1000')).data;
+    const sel=$('#u_sel');if(sel)sel.innerHTML=ups.map(u=>`<option value="${esc(u.name)}">${esc(u.name)}</option>`).join('')||'<option value="">(create one first)</option>';
+    if(!ups.length){box.innerHTML='<p class="muted">No upstreams yet. Create one on the left.</p>';return;}
+    const parts=[];
+    for(const u of ups){
+      const tgts=(await api('GET','/upstreams/'+encodeURIComponent(u.name)+'/targets')).data;
+      let health={};try{const h=(await api('GET','/upstreams/'+encodeURIComponent(u.name)+'/health')).data;h.forEach(t=>health[t.target]=t.health);}catch(e){}
+      const chips=tgts.length?tgts.map(t=>`<span class="chip">${esc(t.target)} · w${t.weight} ${healthBadge(health[t.target])}<b onclick="delTarget('${esc(u.name)}','${t.id}')">×</b></span>`).join(''):'<span class="muted">no targets</span>';
+      parts.push(`<div class="card" style="margin:0 0 12px;padding:14px 16px">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div><b>${esc(u.name)}</b> <span class="pill model">${esc(u.algorithm||'round-robin')}</span></div>
+          <button class="btn red sm" onclick="delUpstream('${esc(u.name)}')">Delete</button></div>
+        <div style="margin-top:10px">${chips}</div></div>`);
+    }
+    box.innerHTML=parts.join('');
+  }catch(e){box.innerHTML=`<p style="color:var(--red)">Error: ${esc(e.message)}</p>`;}}
+async function addUpstream(){const n=$('#u_name').value.trim();if(!n)return toast('Enter a name','err');
+  try{await api('POST','/upstreams',{name:n,algorithm:$('#u_algo').value});toast('Created upstream '+n,'ok');$('#u_name').value='';loadUpstreams();}catch(e){toast('Error: '+e.message,'err');}}
+async function addTarget(){const u=$('#u_sel').value,t=$('#u_target').value.trim(),w=($('#u_weight').value||'100').trim();
+  if(!u)return toast('Pick an upstream','err');if(!t)return toast('Enter a target host:port','err');
+  try{await api('POST','/upstreams/'+encodeURIComponent(u)+'/targets',{target:t,weight:Number(w)||100});toast('Added target '+t,'ok');$('#u_target').value='';loadUpstreams();}catch(e){toast('Error: '+e.message,'err');}}
+async function delTarget(u,id){try{await api('DELETE','/upstreams/'+encodeURIComponent(u)+'/targets/'+id);toast('Target removed','ok');loadUpstreams();}catch(e){toast('Error: '+e.message,'err');}}
+async function delUpstream(u){if(!confirm('Delete upstream '+u+' and its targets?'))return;try{await api('DELETE','/upstreams/'+encodeURIComponent(u));toast('Deleted '+u,'ok');loadUpstreams();}catch(e){toast('Error: '+e.message,'err');}}
 
 // ===== PLUGINS (simple, per-model protections) =====
 async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
