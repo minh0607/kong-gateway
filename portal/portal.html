@@ -106,6 +106,9 @@
   .switch input:checked+.sl{background:var(--primary)} .switch input:checked+.sl:before{transform:translateX(20px)}
   html.dark .switch .sl{background:#475569}
   @media(max-width:640px){.prow{grid-template-columns:32px 1fr 44px}.pcfg{grid-column:1/-1}}
+  .orow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+  .orow .oinfo{flex:1;min-width:0} .orow .oinfo b{font-size:13px} .orow .oinfo span{font-size:11.5px;color:var(--sub);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .advbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
   .chipbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:7px 9px;background:var(--input)}
   .chipbox input{border:0;box-shadow:none;flex:1;min-width:120px;padding:2px 4px;background:transparent}
   .chipbox input:focus{box-shadow:none}
@@ -347,8 +350,29 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
     h+=toggleRow('request-size-limiting','📦','Max request size','Reject payloads bigger than',svc,has('request-size-limiting'),'num','MB','allowed_payload_size',10);
     h+=toggleRow('bot-detection','🤖','Block bad bots','Deny known bad user-agents',svc,has('bot-detection'),'none');
     h+=toggleRow('cors','🌐','Allow browser (CORS)','Let web pages call this model',svc,has('cors'),'text','','origins','*');
+    const curated=['key-auth','acl','rate-limiting','request-size-limiting','bot-detection','cors'];
+    const others=pls.filter(p=>!curated.includes(p.name));
+    h+=`<div class="psec">Other plugins on this model</div>`;
+    h+= others.length? others.map(p=>`<div class="orow"><div class="pico">🔌</div><div class="oinfo"><b>${esc(p.name)}</b><span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
+    const avail=await availablePlugins();
+    const opts=(avail.length?avail:[]).filter(n=>!curated.includes(n)).sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    h+=`<div class="psec">Add any plugin (advanced)</div>
+      <div class="advbox">
+        <select id="adv_plugin" style="min-width:210px">${opts||'<option value="">(list unavailable)</option>'}</select>
+        <input id="adv_cfg" placeholder='config JSON — optional, e.g. {&quot;minute&quot;:60}' style="flex:1;min-width:220px"/>
+        <button class="btn sm" onclick="addAnyPlugin('${svc}')">Add</button>
+      </div>
+      <p class="muted" style="margin:8px 0 0">Pick any Kong plugin; omit config to use its defaults, or paste JSON to override.</p>`;
     body.innerHTML=h;
   }catch(e){body.innerHTML=`<div style="color:var(--red);padding:12px 0">Error: ${esc(e.message)}</div>`;}}
+let AVAIL=null;
+async function availablePlugins(){if(AVAIL)return AVAIL;try{AVAIL=(await api('GET','/plugins/enabled')).enabled_plugins||[];}catch(e){AVAIL=[];}return AVAIL;}
+function cfgText(p){const c=p.config||{};const parts=[];Object.entries(c).forEach(([k,v])=>{if(v===null||v===undefined||v===''||(Array.isArray(v)&&!v.length)||(typeof v==='object'&&!Array.isArray(v)))return;parts.push(k+': '+(Array.isArray(v)?v.join(','):v));});return parts.slice(0,5).join(' · ')||'default config';}
+async function togglePluginId(id,en){try{await api('PATCH','/plugins/'+id,{enabled:!en});loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
+async function delPluginId(id,name){if(!confirm('Remove plugin '+name+'?'))return;try{await api('DELETE','/plugins/'+id);toast('Removed '+name,'ok');loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
+async function addAnyPlugin(svc){const name=$('#adv_plugin').value;if(!name)return toast('No plugin selected','err');const raw=($('#adv_cfg').value||'').trim();let config={};
+  if(raw){try{config=JSON.parse(raw);}catch(e){return toast('Config must be valid JSON','err');}}
+  try{await api('POST','/services/'+svc+'/plugins',{name,config});toast('Added '+name,'ok');const el=$('#adv_cfg');if(el)el.value='';loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
 async function toggleProtection(svc,pname,cfgKey,kind,def,on){
   try{
     if(on){let config={};
