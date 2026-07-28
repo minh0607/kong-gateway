@@ -343,19 +343,19 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
   body.innerHTML='<div class="muted" style="padding:12px 0">Loading…</div>';
   try{const pls=(await api('GET','/services/'+svc+'/plugins')).data;const has=n=>pls.find(p=>p.name===n);
     let h=`<div class="psec">Core security · set when the model was created</div>`;
-    h+=coreRow('🔑','API key required','Callers must send a valid API key',has('key-auth'));
-    h+=coreRow('👥','Project allow-list','Only allowed projects (ACL) can call',has('acl'));
+    h+=coreRow('🔑','key-auth','requires a valid API key',has('key-auth'));
+    h+=coreRow('👥','acl','restricts access to allowed groups',has('acl'));
     h+=`<div class="psec">Optional protection · flip a switch</div>`;
-    h+=toggleRow('rate-limiting','⏱','Rate limit','Cap how many requests per minute',svc,has('rate-limiting'),'num','req / min','minute',60);
-    h+=toggleRow('request-size-limiting','📦','Max request size','Reject payloads bigger than',svc,has('request-size-limiting'),'num','MB','allowed_payload_size',10);
-    h+=toggleRow('bot-detection','🤖','Block bad bots','Deny known bad user-agents',svc,has('bot-detection'),'none');
-    h+=toggleRow('cors','🌐','Allow browser (CORS)','Let web pages call this model',svc,has('cors'),'text','','origins','*');
+    h+=toggleRow('rate-limiting','⏱','rate-limiting','cap requests per minute',svc,has('rate-limiting'),'num','req / min','minute',60);
+    h+=toggleRow('request-size-limiting','📦','request-size-limiting','reject oversized payloads',svc,has('request-size-limiting'),'num','MB','allowed_payload_size',10);
+    h+=toggleRow('bot-detection','🤖','bot-detection','deny known bad user-agents',svc,has('bot-detection'),'none');
+    h+=toggleRow('cors','🌐','cors','allow browser origins',svc,has('cors'),'text','','origins','*');
     const curated=['key-auth','acl','rate-limiting','request-size-limiting','bot-detection','cors'];
     const others=pls.filter(p=>!curated.includes(p.name));
     h+=`<div class="psec">Other plugins on this model</div>`;
     h+= others.length? others.map(p=>`<div class="orow"><div class="pico">🔌</div><div class="oinfo"><b>${esc(p.name)}</b><span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
     const avail=await availablePlugins();
-    const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}${curated.includes(n)?' — managed above':''}</option>`).join('');
+    const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
     h+=`<div class="psec">Add any plugin (advanced)</div>
       <div class="advbox">
         <select id="adv_plugin" style="min-width:210px">${opts||'<option value="">(list unavailable)</option>'}</select>
