@@ -19,6 +19,11 @@ config foolproof.
   / consistent-hashing), add backend targets (`host:port` + weight) with health
   badges, remove targets or delete upstreams. Point a model's backend host at an
   upstream name to spread traffic across targets.
+- **Usage tab** — per-consumer traffic **broken down by model**: requests, 5xx
+  errors and in/out bandwidth for each `consumer × service`, parsed live from
+  Kong's Prometheus metrics. A new admin-gated `/metrics` nginx location proxies
+  the read-only Status API (`:8100/metrics`) so the SPA can read it same-origin;
+  only key-auth-authenticated traffic is attributed to a consumer.
 - **"Show all (incl. legacy)"** toggle on the Models tab — lists every Kong
   service, tagging non-`svc-` ones as `legacy`, so pre-existing services appear.
 - **Inline edit** on Models rows — change a service's backend URL and route path
