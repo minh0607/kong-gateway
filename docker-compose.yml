@@ -91,6 +91,9 @@ services:
       - "8100:8100"  # Status API + Prometheus /metrics (for Zabbix)
     volumes:
       - ./ssl:/etc/kong/ssl:ro
+      # Shared request log — Kong file-log plugin writes JSON here; the
+      # auth-proxy reads it (ro) to serve the portal's Requests/Usage-by-IP view.
+      - ./data/reqlog:/kong-reqlog:rw
     networks:
       - kong-net
     healthcheck:
@@ -113,6 +116,7 @@ services:
       - ./portal/portal.html:/etc/nginx/model-portal.html:ro
       - ./ssl:/etc/nginx/ssl:ro
       - ./data/audit:/var/log/audit
+      - ./data/reqlog:/kong-reqlog:ro
     ports:
       - "8002:80"
       - "8452:443"

@@ -124,6 +124,43 @@ enable_prometheus_plugin() {
   fi
 }
 
+# file-log plugin (global) → JSON access log with client_ip/consumer/service for
+# the portal Requests tab. Writes to /kong-reqlog/requests.log (shared volume).
+enable_filelog_plugin() {
+  local admin="http://localhost:8001"
+  local i
+  for i in $(seq 1 30); do
+    curl -sf "$admin/" >/dev/null 2>&1 && break
+    sleep 1
+  done
+  if curl -sf "$admin/plugins" 2>/dev/null | grep -q '"name":"file-log"'; then
+    ok "file-log plugin already enabled"
+    return 0
+  fi
+  log "Enabling file-log plugin (access log for portal Requests tab) ..."
+  if curl -sf -X POST "$admin/plugins" \
+       -d name=file-log \
+       -d config.path=/kong-reqlog/requests.log \
+       -d config.reopen=true >/dev/null 2>&1; then
+    ok "file-log plugin enabled"
+  else
+    warn "Could not enable file-log plugin — enable it manually via Admin API"
+  fi
+}
+
+# Shared request-log dir (Kong writes as uid 1001; auth-proxy reads) + host
+# logrotate so the JSON access log cannot fill the disk.
+ensure_reqlog() {
+  local dir="$1/data/reqlog"
+  mkdir -p "$dir"
+  chmod 777 "$dir"
+  if [ -d /etc/logrotate.d ] && [ -f "$1/deploy/logrotate-kong-requests" ]; then
+    sed "s|__REQLOG__|$dir/requests.log|g" "$1/deploy/logrotate-kong-requests" > /etc/logrotate.d/kong-requests 2>/dev/null \
+      && ok "logrotate installed for $dir/requests.log" \
+      || warn "Could not install logrotate for the request log"
+  fi
+}
+
 usage() {
   cat <<EOF
 Usage:
@@ -348,6 +385,9 @@ EOF
   mkdir -p "$INSTALL/data/audit" "$INSTALL/backups"
   ok "data/ + backups/ directories created"
 
+  # Shared request-log dir + logrotate (portal Requests tab)
+  ensure_reqlog "$INSTALL"
+
   # Self-signed proxy TLS cert for :8443 HTTPS
   ensure_proxy_cert "$INSTALL"
 
@@ -370,6 +410,8 @@ EOF
 
   # Enable Prometheus metrics for external monitoring (Zabbix/Grafana)
   enable_prometheus_plugin
+  # Enable file-log access log for the portal Requests tab
+  enable_filelog_plugin
 
   # Save admin password to a guarded file
   PASS_FILE="$INSTALL/.first-install-admin-password.txt"
@@ -489,6 +531,9 @@ chmod +x "$INSTALL"/scripts/*.sh 2>/dev/null || true
 # Self-signed proxy TLS cert for :8443 HTTPS (no-op if already generated)
 ensure_proxy_cert "$INSTALL"
 
+# Shared request-log dir + logrotate (must exist before the compose mount)
+ensure_reqlog "$INSTALL"
+
 # Recreate affected services
 log "Recreating kong-usermgmt and kong-auth-proxy ..."
 cd "$INSTALL"
@@ -507,6 +552,8 @@ done
 
 # Ensure Prometheus metrics stay enabled (no-op if already in DB)
 enable_prometheus_plugin
+# Ensure file-log access log stays enabled (no-op if already in DB)
+enable_filelog_plugin
 
 # Quick smoke test
 if curl -sf http://localhost:8002/auth/login | grep -q "SEHC AI GATEWAY"; then

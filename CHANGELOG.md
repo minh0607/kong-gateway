@@ -24,6 +24,14 @@ config foolproof.
   Kong's Prometheus metrics. A new admin-gated `/metrics` nginx location proxies
   the read-only Status API (`:8100/metrics`) so the SPA can read it same-origin;
   only key-auth-authenticated traffic is attributed to a consumer.
+- **Requests tab** — recent requests with **source IP**: time, client IP,
+  consumer, model, status and latency (who called which model from where).
+  Backed by a global **`file-log`** plugin writing one JSON line per request to
+  a shared `data/reqlog/requests.log`; nginx serves it read-only at `/requests`
+  (admin-gated) and the SPA Range-fetches only the tail. `pca-deploy.sh` enables
+  the plugin, creates the dir, and installs a **logrotate** rule (10M ×3) so the
+  log cannot fill the disk. Note: behind an L4 proxy, set Kong `trusted_ips` +
+  `real_ip_header` to log the true client IP instead of the proxy's.
 - **"Show all (incl. legacy)"** toggle on the Models tab — lists every Kong
   service, tagging non-`svc-` ones as `legacy`, so pre-existing services appear.
 - **Inline edit** on Models rows — change a service's backend URL and route path

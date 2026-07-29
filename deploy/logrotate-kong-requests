@@ -1,0 +1,14 @@
+# Rotate the Kong request access log used by the portal Requests tab.
+# Installed to /etc/logrotate.d/kong-requests by pca-deploy.sh (__REQLOG__ is
+# replaced with the absolute path, e.g. /opt/kong/data/reqlog/requests.log).
+# The Kong file-log plugin runs with reopen=true, so it reopens the file on the
+# next write after rotation — no Kong restart or signal needed.
+__REQLOG__ {
+    size 10M
+    rotate 3
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}
