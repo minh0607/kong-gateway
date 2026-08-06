@@ -37,7 +37,24 @@ config foolproof.
 - **Inline edit** on Models rows — change a service's backend URL and route path
   (works for `svc-*` and legacy services).
 
+### Added (CRUD completeness — P0)
+- **Routes tab** — routes are first-class now: list every route (path, service,
+  methods, strip_path), add many routes per service (paths / methods / hosts /
+  strip_path), edit and delete them. Fills the "one service = many routes" gap.
+- **Delete a model** — Models rows get a Delete that removes the service, all its
+  routes and plugins (consumers/keys untouched).
+- **Edit a project** — change a project's allowed models (ACL groups), IPs and
+  tags without delete-and-recreate; the token is preserved. ACL membership is
+  diffed (adds selected, removes deselected); clearing IPs removes the
+  ip-restriction.
+- **Edit any plugin** — every attached plugin (not just the curated toggles) gets
+  an Edit that opens the schema-driven form prefilled with its current config;
+  enable/disable and delete were already there.
+
 ### Changed
+- **Legacy config is no longer hidden.** The Models list defaults to **showing
+  all** services with a `managed` / `legacy` badge (was: convention-only with an
+  opt-in "Show all"). Nothing is hidden by default.
 - **Plugin config is now a schema-driven form, not raw JSON.** The "Add any
   plugin" picker renders typed inputs generated from the plugin's Kong schema
   (`GET /schemas/plugins/<name>`) — number / text / checkbox / select (one_of) /

@@ -131,6 +131,7 @@
     <div class="lbl">AI Gateway</div>
     <div class="nav-item active" data-tab="overview"><span class="ic">🔗</span><span>Overview</span></div>
     <div class="nav-item" data-tab="models"><span class="ic">🧩</span><span>Models</span></div>
+    <div class="nav-item" data-tab="routes"><span class="ic">🛣️</span><span>Routes</span></div>
     <div class="nav-item" data-tab="projects"><span class="ic">🗂️</span><span>Projects</span></div>
     <div class="nav-item" data-tab="consumers"><span class="ic">👤</span><span>Consumers</span></div>
     <div class="nav-item" data-tab="upstreams"><span class="ic">⚖️</span><span>Upstreams</span></div>
@@ -181,7 +182,7 @@
           <div class="row" style="justify-content:space-between;align-items:center">
             <h2 style="margin:0">Existing models</h2>
             <div class="row" style="gap:14px;align-items:center;flex:0 0 auto">
-              <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;color:var(--text)"><input type="checkbox" id="m_showall" onchange="loadModels()" style="width:auto"/> Show all (incl. legacy)</label>
+              <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;color:var(--text)"><input type="checkbox" id="m_showall" checked onchange="loadModels()" style="width:auto"/> Show all (managed + legacy)</label>
               <button class="btn sec sm" onclick="loadModels()">↻ Refresh</button>
             </div>
           </div>
@@ -195,6 +196,38 @@
           <div style="overflow:auto">
           <table><thead><tr><th>Service / Path</th><th>Backend</th><th>Tags</th><th>Security</th><th></th></tr></thead>
             <tbody id="models_body"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ROUTES ===== -->
+    <section id="tab-routes" class="hidden">
+      <div class="split">
+        <div class="card">
+          <h2>➕ Add route</h2>
+          <p class="hint">A route matches incoming requests to a service. One service can have many routes.</p>
+          <div class="fld"><label>Service</label><select id="r_svc"></select></div>
+          <div class="fld"><label>Paths <span class="muted">(comma-separated)</span></label><input id="r_paths" placeholder="/chat, /v1/chat"/></div>
+          <div class="fld"><label>Methods <span class="muted">(optional, comma)</span></label><input id="r_methods" placeholder="GET, POST"/></div>
+          <div class="fld"><label>Hosts <span class="muted">(optional, comma)</span></label><input id="r_hosts" placeholder="api.internal"/></div>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin:4px 0 14px"><input type="checkbox" id="r_strip" checked style="width:auto"/> strip_path <span class="muted" style="font-weight:400">(remove the matched path before proxying — needed for OpenAI-style /v1)</span></label>
+          <button class="btn" onclick="addRoute()">Add route</button>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Routes</h2><button class="btn sec sm" onclick="loadRoutes()">↻ Refresh</button></div>
+          <div style="height:12px"></div>
+          <div id="r_editbox" class="hidden" style="margin-bottom:14px;padding:14px 16px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)">
+            <h2 style="margin:0 0 10px">✏️ Edit route — <span id="re_name"></span></h2>
+            <div class="fld"><label>Paths</label><input id="re_paths"/></div>
+            <div class="fld"><label>Methods <span class="muted">(blank = all)</span></label><input id="re_methods"/></div>
+            <div class="fld"><label>Hosts <span class="muted">(blank = any)</span></label><input id="re_hosts"/></div>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin:4px 0 12px"><input type="checkbox" id="re_strip" style="width:auto"/> strip_path</label>
+            <div class="row" style="gap:8px"><button class="btn sm" onclick="saveRoute()">Save</button><button class="btn sec sm" onclick="document.getElementById('r_editbox').classList.add('hidden')">Cancel</button></div>
+          </div>
+          <div style="overflow:auto">
+          <table><thead><tr><th>Route</th><th>Service</th><th>Paths</th><th>Methods</th><th>Strip</th><th></th></tr></thead>
+            <tbody id="routes_body"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -369,7 +402,7 @@ async function api(method,path,body){const o={method,headers:{},credentials:'sam
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model']};
+const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model']};
 document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;
@@ -377,6 +410,7 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   $('#page-title').textContent=PAGES[tab][0];$('#page-sub').textContent=PAGES[tab][1];
   if(tab==='overview') loadOverview();
   if(tab==='models') loadModels();
+  if(tab==='routes') loadRoutes();
   if(tab==='projects'){loadModelChecks();loadProjects();}
   if(tab==='consumers') loadConsumers();
   if(tab==='upstreams') loadUpstreams();
@@ -395,11 +429,44 @@ async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td
     for(const s of svcs){const rt=routes.find(r=>r.service&&r.service.id===s.id);
       const plugins=(await api('GET','/services/'+encodeURIComponent(s.name)+'/plugins')).data.map(p=>p.name);
       const back=`${s.protocol}://${s.host}:${s.port}${s.path||''}`;const path=rt?(rt.paths||[]).join(', '):'—';
-      const legacy=!(s.name||'').startsWith('svc-')?' <span class="pill model">legacy</span>':'';
+      const legacy=!(s.name||'').startsWith('svc-')?' <span class="pill model">legacy</span>':' <span class="pill">managed</span>';
       const rid=rt?rt.id:'';
-      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td><td><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button></td></tr>`);}
+      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button> <button class="btn red sm" onclick="delModel('${esc(s.name)}')">Delete</button></td></tr>`);}
     body.innerHTML=rows.join('')||`<tr><td colspan="5" class="muted">${showAll?'No services.':'No models yet (svc-*). Tick “Show all” to see legacy services.'}</td></tr>`;
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+async function delModel(name){if(!confirm('Delete model '+name+'?\n\nThis removes its service, all its routes and plugins. Consumers/keys are NOT touched.'))return;
+  try{const routes=(await api('GET','/services/'+encodeURIComponent(name)+'/routes')).data;
+    for(const r of routes){await api('DELETE','/routes/'+r.id);}
+    await api('DELETE','/services/'+encodeURIComponent(name));
+    toast('Deleted '+name,'ok');loadModels();
+  }catch(e){toast('Error: '+e.message,'err');}}
+
+// ===== ROUTES (many per service) =====
+let _routes=[],_editRouteId=null;
+function csv(s){return (s||'').split(',').map(x=>x.trim()).filter(Boolean);}
+async function loadRoutes(){const body=$('#routes_body');body.innerHTML='<tr><td colspan="6" class="muted">Loading…</td></tr>';
+  try{const svcs=(await api('GET','/services?size=1000')).data;
+    if($('#r_svc'))$('#r_svc').innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')||'<option value="">(create a model first)</option>';
+    const byId={};svcs.forEach(s=>byId[s.id]=s.name);
+    _routes=(await api('GET','/routes?size=1000')).data;
+    body.innerHTML=_routes.length?_routes.map(r=>{const svc=r.service?(byId[r.service.id]||r.service.id):'—';
+      const paths=(r.paths||[]).join(', ')||'—';const methods=(r.methods||[]).join(', ')||'<span class="muted">all</span>';
+      return `<tr><td><b>${esc(r.name||r.id.slice(0,8))}</b></td><td>${esc(svc)}</td><td><code>${esc(paths)}</code></td><td>${methods}</td><td>${r.strip_path?'✓':'—'}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editRoute('${r.id}')">Edit</button> <button class="btn red sm" onclick="delRoute('${r.id}','${esc(r.name||r.id.slice(0,8))}')">Delete</button></td></tr>`;
+    }).join(''):'<tr><td colspan="6" class="muted">No routes yet.</td></tr>';
+  }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+async function addRoute(){const svc=$('#r_svc').value,paths=csv($('#r_paths').value),methods=csv($('#r_methods').value).map(m=>m.toUpperCase()),hosts=csv($('#r_hosts').value);
+  if(!svc)return toast('Pick a service','err');if(!paths.length&&!methods.length&&!hosts.length)return toast('Enter at least a path','err');
+  const body={strip_path:$('#r_strip').checked};if(paths.length)body.paths=paths;if(methods.length)body.methods=methods;if(hosts.length)body.hosts=hosts;
+  try{await api('POST','/services/'+encodeURIComponent(svc)+'/routes',body);toast('Route added to '+svc,'ok');$('#r_paths').value=$('#r_methods').value=$('#r_hosts').value='';loadRoutes();}catch(e){toast('Error: '+e.message,'err');}}
+function editRoute(id){const r=_routes.find(x=>x.id===id);if(!r)return;_editRouteId=id;
+  $('#re_name').textContent=r.name||id.slice(0,8);
+  $('#re_paths').value=(r.paths||[]).join(', ');$('#re_methods').value=(r.methods||[]).join(', ');$('#re_hosts').value=(r.hosts||[]).join(', ');$('#re_strip').checked=!!r.strip_path;
+  $('#r_editbox').classList.remove('hidden');$('#r_editbox').scrollIntoView({behavior:'smooth',block:'center'});}
+async function saveRoute(){if(!_editRouteId)return;const paths=csv($('#re_paths').value),methods=csv($('#re_methods').value).map(m=>m.toUpperCase()),hosts=csv($('#re_hosts').value);
+  if(!paths.length&&!methods.length&&!hosts.length)return toast('A route needs at least a path, method or host','err');
+  try{await api('PATCH','/routes/'+_editRouteId,{paths:paths.length?paths:null,methods:methods.length?methods:null,hosts:hosts.length?hosts:null,strip_path:$('#re_strip').checked});
+    toast('Route saved','ok');$('#r_editbox').classList.add('hidden');loadRoutes();}catch(e){toast('Error: '+e.message,'err');}}
+async function delRoute(id,name){if(!confirm('Delete route '+name+'?'))return;try{await api('DELETE','/routes/'+id);toast('Deleted route','ok');loadRoutes();}catch(e){toast('Error: '+e.message,'err');}}
 let _editSvc=null,_editRoute=null;
 function editService(name,back,rid,path){_editSvc=name;_editRoute=rid||null;
   $('#me_name').textContent=name;$('#me_url').value=back;$('#me_path').value=(path||'').split(',')[0].trim();
@@ -440,28 +507,50 @@ async function loadProjects(){const body=$('#projects_body');body.innerHTML='<tr
       const pls=(await api('GET','/consumers/'+c.username+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
       const ips=ipr?(ipr.config.allow||[]).join(', '):'<span class="muted">unrestricted</span>';
       const tok=keys[0]||'—';const tid='t'+Math.abs(hash(c.username));
-      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')">👁</button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td><td><button class="btn red sm" onclick="delProject('${esc(c.username)}')">Delete</button></td></tr>`);}
+      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')">👁</button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editProject('${esc(c.username)}')">Edit</button> <button class="btn red sm" onclick="delProject('${esc(c.username)}')">Delete</button></td></tr>`);}
     body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No projects yet (prj-*).</td></tr>';
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
 function revToken(id,val){const el=document.getElementById(id);el.textContent=el.dataset.on?'••••••':val;el.dataset.on=el.dataset.on?'':'1';}
+let _editingProject=false;
 async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_token').value.trim(),header=$('#p_header').value;
   const ips=$('#p_ips').value.split(',').map(x=>x.trim()).filter(Boolean);
   const models=[...document.querySelectorAll('#p_models input:checked')].map(x=>x.value);
-  if(!slugOk(name))return toast('Invalid project name','err');if(!token)return toast('Token is required','err');if(!models.length)return toast('Select at least one model','err');
+  if(!slugOk(name))return toast('Invalid project name','err');if(!models.length)return toast('Select at least one model','err');
   addTag($('#p_taginput').value);$('#p_taginput').value='';
   const con='prj-'+name;const fkey=header==='Authorization'?('Bearer '+token):token;
   try{
+    const existKeys=(await api('GET','/consumers/'+con+'/key-auth').catch(()=>({data:[]}))).data;
+    if(!existKeys.length&&!token)return toast('Token is required for a new project','err');
     let curTags=[];try{curTags=(await api('GET','/consumers/'+con)).tags||[]}catch(e){}
     const tags=projectTags.length?projectTags.slice():curTags;
     await api('PUT','/consumers/'+con,{tags});
-    const nk=(await api('GET','/consumers/'+con+'/key-auth')).data.length;if(nk===0)await api('POST','/consumers/'+con+'/key-auth',{key:fkey});
-    const have=(await api('GET','/consumers/'+con+'/acls')).data.map(a=>a.group);
-    for(const m of models){const g='acl-'+m;if(!have.includes(g))await api('POST','/consumers/'+con+'/acls',{group:g});}
-    if(ips.length){const pls=(await api('GET','/consumers/'+con+'/plugins')).data;const ex=pls.find(p=>p.name==='ip-restriction');
-      if(ex)await api('PATCH','/plugins/'+ex.id,{config:{allow:ips}});else await api('POST','/consumers/'+con+'/plugins',{name:'ip-restriction',config:{allow:ips}});}
-    toast('✔ Granted '+con+' → '+models.join(', '),'ok');
-    $('#p_name').value=$('#p_token').value=$('#p_ips').value='';projectTags=[];renderChips();document.querySelectorAll('#p_models input:checked').forEach(x=>x.checked=false);loadProjects();
+    if(!existKeys.length&&token)await api('POST','/consumers/'+con+'/key-auth',{key:fkey});
+    // ACL diff: add selected, remove deselected acl-* groups
+    const haveAcls=(await api('GET','/consumers/'+con+'/acls')).data;const want=models.map(m=>'acl-'+m);
+    for(const g of want){if(!haveAcls.some(a=>a.group===g))await api('POST','/consumers/'+con+'/acls',{group:g});}
+    for(const a of haveAcls){if(a.group.startsWith('acl-')&&!want.includes(a.group))await api('DELETE','/consumers/'+con+'/acls/'+a.id);}
+    // IP restriction: set, or remove when cleared
+    const pls=(await api('GET','/consumers/'+con+'/plugins')).data;const ex=pls.find(p=>p.name==='ip-restriction');
+    if(ips.length){if(ex)await api('PATCH','/plugins/'+ex.id,{config:{allow:ips}});else await api('POST','/consumers/'+con+'/plugins',{name:'ip-restriction',config:{allow:ips}});}
+    else if(ex)await api('DELETE','/plugins/'+ex.id);
+    toast('✔ Saved '+con+' → '+models.join(', '),'ok');
+    $('#p_name').value=$('#p_token').value=$('#p_ips').value='';$('#p_name').readOnly=false;$('#p_token').placeholder='secret string, or click Generate';_editingProject=false;
+    projectTags=[];renderChips();document.querySelectorAll('#p_models input:checked').forEach(x=>x.checked=false);loadProjects();
+  }catch(e){toast('Error: '+e.message,'err');}}
+async function editProject(con){try{
+    $('#p_name').value=con.slice(4);$('#p_name').readOnly=true;_editingProject=true;
+    $('#p_token').value='';$('#p_token').placeholder='(unchanged — leave blank)';
+    await loadModelChecks();
+    const acls=(await api('GET','/consumers/'+con+'/acls')).data.map(a=>a.group);
+    document.querySelectorAll('#p_models input').forEach(cb=>{cb.checked=acls.includes('acl-'+cb.value);});
+    const pls=(await api('GET','/consumers/'+con+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
+    $('#p_ips').value=ipr?(ipr.config.allow||[]).join(', '):'';
+    const c=await api('GET','/consumers/'+con);projectTags=(c.tags||[]).slice();renderChips();
+    const keys=(await api('GET','/consumers/'+con+'/key-auth')).data;
+    $('#p_header').value=(keys.length&&/^Bearer\s/.test(keys[0].key))?'Authorization':'x-api-key';
+    document.querySelector('#tab-projects .card').scrollIntoView({behavior:'smooth',block:'start'});
+    toast('Editing '+con+' — adjust models / IPs / tags, then Grant access','ok');
   }catch(e){toast('Error: '+e.message,'err');}}
 async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL + IP)?'))return;
   try{await api('DELETE','/consumers/'+con);toast('Deleted '+con,'ok');loadProjects();}catch(e){toast('Error: '+e.message,'err');}}
@@ -599,6 +688,7 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
   if(!svc){body.innerHTML='<div class="muted" style="padding:12px 0">No model.</div>';return;}
   body.innerHTML='<div class="muted" style="padding:12px 0">Loading…</div>';
   try{const pls=(await api('GET','/services/'+svc+'/plugins')).data;const has=n=>pls.find(p=>p.name===n);
+    _modelPlugins=pls;_pluginSvc=svc;
     let h=`<div class="psec">Core security · set when the model was created</div>`;
     h+=coreRow('🔑','key-auth','requires a valid API key',has('key-auth'));
     h+=coreRow('👥','acl','restricts access to allowed groups',has('acl'));
@@ -610,7 +700,8 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
     const curated=['key-auth','acl','rate-limiting','request-size-limiting','bot-detection','cors'];
     const others=pls.filter(p=>!curated.includes(p.name));
     h+=`<div class="psec">Other plugins on this model</div>`;
-    h+= others.length? others.map(p=>`<div class="orow"><div class="pico">🔌</div><div class="oinfo"><b>${esc(p.name)}</b><span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
+    h+= others.length? others.map(p=>`<div class="orow"><div class="pico">🔌</div><div class="oinfo"><b>${esc(p.name)}</b><span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn sec sm" onclick="editPluginId('${p.id}')">Edit</button><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
+    h+=`<div id="pl_editbox" class="hidden" style="margin-top:10px;padding:12px 14px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)"><h2 style="margin:0 0 8px;font-size:14px">✏️ Edit <span id="pe_name"></span></h2><div id="pe_form"></div></div>`;
     const avail=await availablePlugins();
     const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
     h+=`<div class="psec">Add any plugin (advanced)</div>
@@ -651,6 +742,17 @@ async function availablePlugins(){if(AVAIL)return AVAIL;try{AVAIL=(await api('GE
 function cfgText(p){const c=p.config||{};const parts=[];Object.entries(c).forEach(([k,v])=>{if(v===null||v===undefined||v===''||(Array.isArray(v)&&!v.length)||(typeof v==='object'&&!Array.isArray(v)))return;parts.push(k+': '+(Array.isArray(v)?v.join(','):v));});return parts.slice(0,5).join(' · ')||'default config';}
 async function togglePluginId(id,en){try{await api('PATCH','/plugins/'+id,{enabled:!en});loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
 async function delPluginId(id,name){if(!confirm('Remove plugin '+name+'?'))return;try{await api('DELETE','/plugins/'+id);toast('Removed '+name,'ok');loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
+let _modelPlugins=[],_pluginSvc=null;
+async function editPluginId(id){const p=_modelPlugins.find(x=>x.id===id);if(!p)return;
+  const box=$('#pl_editbox');$('#pe_name').textContent=p.name;box.classList.remove('hidden');
+  $('#pe_form').innerHTML='<p class="muted">Loading fields…</p>';
+  const fields=await pluginSchema(p.name);
+  const form=fields.map(f=>fieldInput(p.name,f,p.config?p.config[f.name]:undefined)).filter(Boolean).join('');
+  $('#pe_form').innerHTML=`<div class="pfform">${form||'<p class="muted">No editable config.</p>'}</div><button class="btn sm" onclick="savePluginId('${id}','${esc(p.name)}')">Save</button> <button class="btn sec sm" onclick="document.getElementById('pl_editbox').classList.add('hidden')">Cancel</button>`;
+  box.scrollIntoView({behavior:'smooth',block:'center'});}
+async function savePluginId(id,name){const p=_modelPlugins.find(x=>x.id===id);const fields=await pluginSchema(name);
+  const merged=Object.assign({},(p&&p.config)?p.config:{},buildConfig(name,fields));
+  try{await api('PATCH','/plugins/'+id,{config:merged});toast('Updated '+name,'ok');$('#pl_editbox').classList.add('hidden');loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
 async function addAnyPlugin(svc){const name=$('#adv_plugin').value;if(!name)return toast('No plugin selected','err');const raw=($('#adv_cfg').value||'').trim();let config={};
   if(raw){try{config=JSON.parse(raw);}catch(e){return toast('Config must be valid JSON','err');}}
   try{await api('POST','/services/'+svc+'/plugins',{name,config});toast('Added '+name,'ok');const el=$('#adv_cfg');if(el)el.value='';loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
