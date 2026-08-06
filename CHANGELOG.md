@@ -37,6 +37,15 @@ config foolproof.
 - **Inline edit** on Models rows — change a service's backend URL and route path
   (works for `svc-*` and legacy services).
 
+### Added (Operations — P1)
+- **Test tab** — send a real request through Kong with a chosen project's key and
+  see the status, latency and response body. Goes through the actual key-auth /
+  ACL / routing pipeline via a new admin-gated `/modeltest/` nginx location that
+  proxies the Kong proxy port (`:8000`), so 401 (bad key), 403 (ACL) and 5xx
+  (upstream) are all reproduced exactly like a client would see them.
+- **Health strip on Overview** — Kong version, database reachability, active
+  connections and upstream target health, with a re-check link.
+
 ### Added (CRUD completeness — P0)
 - **Routes tab** — routes are first-class now: list every route (path, service,
   methods, strip_path), add many routes per service (paths / methods / hosts /
