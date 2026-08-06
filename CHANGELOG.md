@@ -73,7 +73,10 @@ config foolproof.
   proxies the Kong proxy port (`:8000`), so 401 (bad key), 403 (ACL) and 5xx
   (upstream) are all reproduced exactly like a client would see them.
 - **Health strip on Overview** — Kong version, database reachability, active
-  connections and upstream target health, with a re-check link.
+  connections and upstream target health, with a re-check link. Also **flags a
+  stray GLOBAL auth plugin** (basic-auth / key-auth / jwt / oauth2 / hmac-auth /
+  ldap-auth / mtls-auth): such a plugin applies to every route and 401s all
+  API-key traffic — a red banner warns to remove it unless intentional.
 - **Backup tab** — **Export** the whole gateway config (services, routes,
   plugins, consumers, ACLs, API keys, upstreams, targets) to a JSON file, and
   **Restore** it from a file. Restore upserts every entity by id (idempotent —

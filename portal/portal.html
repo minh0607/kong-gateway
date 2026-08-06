@@ -1153,9 +1153,15 @@ async function loadHealth(){const el=$('#ov_health');if(!el)return;
     let upTxt='';try{const ups=(await api('GET','/upstreams?size=1000')).data;let tot=0,bad=0;
       for(const u of ups){const h=(await api('GET','/upstreams/'+encodeURIComponent(u.name)+'/health')).data;h.forEach(t=>{tot++;if(t.health==='UNHEALTHY')bad++;});}
       if(tot)upTxt=dot(bad===0,`Targets ${tot-bad}/${tot} healthy`);}catch(e){}
+    // risky GLOBAL auth plugins block every route (AND-combined) → all API-key traffic 401s
+    let warn='';try{const pls=(await api('GET','/plugins?size=1000')).data;
+      const AUTH=['basic-auth','key-auth','jwt','oauth2','hmac-auth','ldap-auth','mtls-auth'];
+      const bad=pls.filter(p=>p.enabled&&!p.service&&!p.route&&!p.consumer&&AUTH.includes(p.name));
+      if(bad.length)warn=`<div style="margin-top:12px;padding:9px 13px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;font-size:12.5px">⚠ Global auth plugin: <b>${bad.map(p=>esc(p.name)).join(', ')}</b> — applies to EVERY route and will 401 all API-key traffic. Remove it in the Plugins tab unless intentional.</div>`;
+    }catch(e){}
     el.innerHTML=`<div class="row" style="gap:26px;flex-wrap:wrap;align-items:center">
       ${dot(true,ver)}${dot(dbOk,'Database '+(dbOk?'reachable':'DOWN'))}${dot(true,'Active connections: '+conn)}${upTxt}
-      <span style="margin-left:auto"><a href="#" onclick="loadHealth();return false" class="muted" style="font-size:12px">↻ recheck</a></span></div>`;
+      <span style="margin-left:auto"><a href="#" onclick="loadHealth();return false" class="muted" style="font-size:12px">↻ recheck</a></span></div>${warn}`;
   }catch(e){el.innerHTML=`<div class="row" style="gap:10px;align-items:center">${dot(false,'Gateway unreachable')}<span class="muted">${esc(e.message)}</span></div>`;}}
 
 $('#p_taginput').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===','){e.preventDefault();addTag(e.target.value);e.target.value='';}});
