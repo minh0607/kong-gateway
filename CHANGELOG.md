@@ -45,6 +45,12 @@ config foolproof.
   (upstream) are all reproduced exactly like a client would see them.
 - **Health strip on Overview** — Kong version, database reachability, active
   connections and upstream target health, with a re-check link.
+- **Backup tab** — **Export** the whole gateway config (services, routes,
+  plugins, consumers, ACLs, API keys, upstreams, targets) to a JSON file, and
+  **Restore** it from a file. Restore upserts every entity by id (idempotent —
+  updates existing, recreates missing) and never deletes. Verified via a headless
+  round-trip (export → delete a service → restore → service recreated with its
+  route). The export contains API keys in clear text — store it securely.
 
 ### Added (CRUD completeness — P0)
 - **Routes tab** — routes are first-class now: list every route (path, service,

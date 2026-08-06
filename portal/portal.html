@@ -139,6 +139,7 @@
     <div class="nav-item" data-tab="requests"><span class="ic">🧾</span><span>Requests</span></div>
     <div class="nav-item" data-tab="test"><span class="ic">🧪</span><span>Test</span></div>
     <div class="nav-item" data-tab="plugins"><span class="ic">🔌</span><span>Plugins</span></div>
+    <div class="nav-item" data-tab="backup"><span class="ic">💾</span><span>Backup</span></div>
     <div class="lbl" style="margin-top:auto">Switch to</div>
     <a class="nav-item" id="lnk-console" href="/" style="text-decoration:none"><span class="ic">🛠️</span><span>Kong Manager</span></a>
   </nav>
@@ -371,6 +372,26 @@
       </div>
     </section>
 
+    <!-- ===== BACKUP ===== -->
+    <section id="tab-backup" class="hidden">
+      <div class="split">
+        <div class="card">
+          <h2>⬇️ Export config</h2>
+          <p class="hint">Downloads a JSON snapshot of the whole gateway — services, routes, plugins, consumers, ACLs, API keys, upstreams and targets. Good for versioning, audit and disaster recovery.</p>
+          <div id="bk_counts" class="stats" style="margin:12px 0"></div>
+          <button class="btn" onclick="exportConfig()">Download config JSON</button>
+          <p class="hint" style="margin-top:10px">⚠️ The file contains <b>API keys in clear text</b> — store it securely.</p>
+        </div>
+        <div class="card">
+          <h2>⬆️ Restore config</h2>
+          <p class="hint">Applies a previously exported JSON. Entities are upserted by their id (idempotent) — existing ones are updated, missing ones recreated. It does <b>not</b> delete anything not in the file.</p>
+          <div class="fld"><label>Config file</label><input type="file" id="bk_file" accept="application/json,.json"/></div>
+          <button class="btn red" onclick="importConfig()">Restore from file</button>
+          <div id="bk_result" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== TEST ===== -->
     <section id="tab-test" class="hidden">
       <div class="split">
@@ -430,7 +451,7 @@ async function api(method,path,body){const o={method,headers:{},credentials:'sam
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],test:['Test','Send a real request through Kong with a project key — validate auth + routing'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model']};
+const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],test:['Test','Send a real request through Kong with a project key — validate auth + routing'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model'],backup:['Backup','Export the whole gateway config to JSON, or restore it from a file']};
 document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;
@@ -445,6 +466,7 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   if(tab==='usage') loadUsage();
   if(tab==='requests') loadRequests();
   if(tab==='test') loadTest();
+  if(tab==='backup') loadBackup();
   if(tab==='plugins') loadPluginModels();
 });
 async function ping(){try{await api('GET','/status');$('#conn').textContent='● Kong connected';$('#conn').style.color='#16a34a';}
@@ -735,6 +757,47 @@ async function sendTest(){const path=$('#t_path').value.trim(),proj=$('#t_proj')
       <pre style="background:var(--primary-l);border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;max-height:420px;font-size:12px;white-space:pre-wrap;margin:0">${esc(pretty.slice(0,4000))||'(empty)'}</pre>
       ${hint?`<p class="hint" style="margin-top:8px">${hint}</p>`:''}`;
   }catch(e){box.innerHTML=`<p style="color:var(--red)">Error: ${esc(e.message)}</p>`;}}
+
+// ===== BACKUP / RESTORE config =====
+let _bkCache=null;
+async function gatherConfig(){
+  const services=(await api('GET','/services?size=1000')).data;
+  const routes=(await api('GET','/routes?size=1000')).data;
+  const plugins=(await api('GET','/plugins?size=1000')).data;
+  const consumers=(await api('GET','/consumers?size=1000')).data;
+  const acls=(await api('GET','/acls?size=1000')).data;
+  const keyauth=(await api('GET','/key-auths?size=1000')).data;
+  const upstreams=(await api('GET','/upstreams?size=1000')).data;
+  let targets=[];for(const u of upstreams){const ts=(await api('GET','/upstreams/'+encodeURIComponent(u.name)+'/targets')).data;targets=targets.concat(ts);}
+  return {services,routes,plugins,consumers,acls,keyauth,upstreams,targets};}
+async function loadBackup(){const el=$('#bk_counts');if(!el)return;el.innerHTML='<span class="muted">Counting…</span>';
+  try{const c=await gatherConfig();_bkCache=c;
+    el.innerHTML=stat(c.services.length,'Services')+stat(c.routes.length,'Routes')+stat(c.plugins.length,'Plugins')+stat(c.consumers.length,'Consumers')+stat(c.keyauth.length,'API keys')+stat(c.upstreams.length,'Upstreams');
+  }catch(e){el.innerHTML=`<span style="color:var(--red)">Error: ${esc(e.message)}</span>`;}}
+async function exportConfig(){try{const c=await gatherConfig();
+    const data=Object.assign({_meta:{exported_at:new Date().toISOString(),tool:'SEHC AIGW Portal'}},c);
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='kong-config-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    toast('Config exported','ok');
+  }catch(e){toast('Error: '+e.message,'err');}}
+function _clean(o){const c=Object.assign({},o);['created_at','updated_at','ws_id'].forEach(k=>delete c[k]);return c;}
+async function importConfig(){const f=$('#bk_file').files[0];if(!f)return toast('Pick a JSON file','err');
+  if(!confirm('Restore config from '+f.name+'?\n\nEntities with the same id are OVERWRITTEN. Nothing is deleted. Continue?'))return;
+  const box=$('#bk_result');box.innerHTML='<p class="muted">Restoring…</p>';
+  let data;try{data=JSON.parse(await f.text());}catch(e){return toast('Invalid JSON file','err');}
+  const tally={ok:0,fail:0,errs:[]};
+  const put=async(path,body)=>{try{await api('PUT',path,_clean(body));tally.ok++;}catch(e){tally.fail++;if(tally.errs.length<8)tally.errs.push(path+': '+e.message);}};
+  const post=async(path,body)=>{try{await api('POST',path,body);tally.ok++;}catch(e){tally.fail++;if(tally.errs.length<8)tally.errs.push(path+': '+e.message);}};
+  for(const u of data.upstreams||[])await put('/upstreams/'+u.id,u);
+  for(const s of data.services||[])await put('/services/'+s.id,s);
+  for(const r of data.routes||[])await put('/routes/'+r.id,r);
+  for(const c of data.consumers||[])await put('/consumers/'+c.id,c);
+  for(const p of data.plugins||[])await put('/plugins/'+p.id,p);
+  for(const t of data.targets||[])if(t.upstream&&t.upstream.id)await post('/upstreams/'+t.upstream.id+'/targets',{target:t.target,weight:t.weight});
+  for(const k of data.keyauth||[])if(k.consumer&&k.consumer.id)await put('/consumers/'+k.consumer.id+'/key-auth/'+k.id,{key:k.key});
+  for(const a of data.acls||[])if(a.consumer&&a.consumer.id)await put('/consumers/'+a.consumer.id+'/acls/'+a.id,{group:a.group});
+  box.innerHTML=`<div class="card" style="margin:0;padding:12px 14px"><b style="color:${tally.fail?'#b45309':'#166534'}">Restored ${tally.ok} objects</b>${tally.fail?`, <b style="color:var(--red)">${tally.fail} failed</b>`:''}${tally.errs.length?'<pre style="font-size:11px;white-space:pre-wrap;margin-top:8px;overflow:auto">'+esc(tally.errs.join('\n'))+'</pre>':''}</div>`;
+  toast('Restore: '+tally.ok+' ok, '+tally.fail+' failed',tally.fail?'err':'ok');loadBackup();}
 
 // ===== PLUGINS (simple, per-model protections) =====
 async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
