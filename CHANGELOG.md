@@ -37,6 +37,15 @@ config foolproof.
 - **Inline edit** on Models rows — change a service's backend URL and route path
   (works for `svc-*` and legacy services).
 
+### Changed (Design — align to IT Portal)
+- Re-aligned the portal to the **IT Portal design system** (`/DATA/itportal`
+  DESIGN.md): default primary shifted to Action Blue **#3b82f6** (hover #2563eb),
+  gradient primary/danger buttons with a colored shadow and focus ring, ink text
+  **#0f172a**. Sidebar emoji icons replaced with **inline SVG (Heroicons-style)
+  outline icons** — self-hosted, air-gap safe. Stat cards gained a colored top
+  accent and a lift-on-hover, matching the IT Portal dashboard. Both light and
+  dark themes verified.
+
 ### Added (Governance & convenience — P2)
 - **Audit tab** — admin change log: who did what (actor, source IP, method →
   Create/Update/Delete, object, result), newest first, defaulting to changes
