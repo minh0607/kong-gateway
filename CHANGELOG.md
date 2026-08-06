@@ -37,6 +37,16 @@ config foolproof.
 - **Inline edit** on Models rows — change a service's backend URL and route path
   (works for `svc-*` and legacy services).
 
+### Added (Governance & convenience — P2)
+- **Audit tab** — admin change log: who did what (actor, source IP, method →
+  Create/Update/Delete, object, result), newest first, defaulting to changes
+  only (hides reads) with a text filter. Surfaces the existing nginx audit log
+  via a new admin-gated `/auditlog` location (Range-tailed like Requests).
+- **CSV export** on the Usage and Requests tabs — one-click download for
+  reporting/spreadsheets.
+- **Quick filters** on the Models, Routes, Consumers and Projects tables —
+  instant client-side row filtering.
+
 ### Added (Operations — P1)
 - **Test tab** — send a real request through Kong with a chosen project's key and
   see the status, latency and response body. Goes through the actual key-auth /

@@ -138,6 +138,7 @@
     <div class="nav-item" data-tab="usage"><span class="ic">📊</span><span>Usage</span></div>
     <div class="nav-item" data-tab="requests"><span class="ic">🧾</span><span>Requests</span></div>
     <div class="nav-item" data-tab="test"><span class="ic">🧪</span><span>Test</span></div>
+    <div class="nav-item" data-tab="audit"><span class="ic">🛡️</span><span>Audit</span></div>
     <div class="nav-item" data-tab="plugins"><span class="ic">🔌</span><span>Plugins</span></div>
     <div class="nav-item" data-tab="backup"><span class="ic">💾</span><span>Backup</span></div>
     <div class="lbl" style="margin-top:auto">Switch to</div>
@@ -183,7 +184,8 @@
         <div class="card">
           <div class="row" style="justify-content:space-between;align-items:center">
             <h2 style="margin:0">Existing models</h2>
-            <div class="row" style="gap:14px;align-items:center;flex:0 0 auto">
+            <div class="row" style="gap:12px;align-items:center;flex:0 0 auto">
+              <input placeholder="filter…" oninput="filterTable(this,'models_body')" style="width:140px;padding:6px 9px"/>
               <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;color:var(--text)"><input type="checkbox" id="m_showall" checked onchange="loadModels()" style="width:auto"/> Show all (managed + legacy)</label>
               <button class="btn sec sm" onclick="loadModels()">↻ Refresh</button>
             </div>
@@ -217,7 +219,7 @@
           <button class="btn" onclick="addRoute()">Add route</button>
         </div>
         <div class="card">
-          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Routes</h2><button class="btn sec sm" onclick="loadRoutes()">↻ Refresh</button></div>
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Routes</h2><div class="row" style="gap:8px"><input placeholder="filter…" oninput="filterTable(this,'routes_body')" style="width:150px;padding:6px 9px"/><button class="btn sec sm" onclick="loadRoutes()">↻ Refresh</button></div></div>
           <div style="height:12px"></div>
           <div id="r_editbox" class="hidden" style="margin-bottom:14px;padding:14px 16px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)">
             <h2 style="margin:0 0 10px">✏️ Edit route — <span id="re_name"></span></h2>
@@ -258,7 +260,7 @@
           <button class="btn" onclick="assignProject()">Grant access</button>
         </div>
         <div class="card">
-          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Existing projects</h2><button class="btn sec sm" onclick="loadProjects()">↻ Refresh</button></div>
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Existing projects</h2><div class="row" style="gap:8px"><input placeholder="filter…" oninput="filterTable(this,'projects_body')" style="width:150px;padding:6px 9px"/><button class="btn sec sm" onclick="loadProjects()">↻ Refresh</button></div></div>
           <div style="height:14px"></div>
           <div style="overflow:auto">
           <table><thead><tr><th>Consumer</th><th>Token</th><th>Models (ACL)</th><th>Allowed IPs</th><th>Tags</th><th></th></tr></thead>
@@ -292,7 +294,7 @@
           <button class="btn" onclick="addConsumerKey()">Create key</button>
         </div>
         <div class="card">
-          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">All consumers</h2><button class="btn sec sm" onclick="loadConsumers()">↻ Refresh</button></div>
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">All consumers</h2><div class="row" style="gap:8px"><input placeholder="filter…" oninput="filterTable(this,'consumers_body')" style="width:150px;padding:6px 9px"/><button class="btn sec sm" onclick="loadConsumers()">↻ Refresh</button></div></div>
           <div style="height:14px"></div>
           <div id="c_editbox" class="hidden" style="margin-bottom:14px;padding:14px 16px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)">
             <h2 style="margin:0 0 10px">✏️ Edit consumer</h2>
@@ -344,6 +346,7 @@
           <div><h2 style="margin:0">Traffic by consumer × model</h2><p class="hint" style="margin:4px 0 0">Cumulative counters since Kong last (re)started. Only authenticated (key-auth) traffic is attributed to a consumer.</p></div>
           <div class="row" style="gap:10px">
             <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px"><input type="checkbox" id="us_named" checked onchange="renderUsage()" style="width:auto"/> Authenticated only</label>
+            <button class="btn sec sm" onclick="usageCSV()">⬇ CSV</button>
             <button class="btn sec sm" onclick="loadUsage()">↻ Refresh</button>
           </div>
         </div>
@@ -362,6 +365,7 @@
           <div><h2 style="margin:0">Recent requests</h2><p class="hint" style="margin:4px 0 0">Latest calls through the gateway — source IP, consumer, model and status (Kong access log).</p></div>
           <div class="row" style="gap:10px">
             <input id="rq_filter" placeholder="filter IP / consumer / model…" style="width:220px;padding:7px 10px" oninput="renderRequests()"/>
+            <button class="btn sec sm" onclick="requestsCSV()">⬇ CSV</button>
             <button class="btn sec sm" onclick="loadRequests()">↻ Refresh</button>
           </div>
         </div>
@@ -388,6 +392,24 @@
           <div class="fld"><label>Config file</label><input type="file" id="bk_file" accept="application/json,.json"/></div>
           <button class="btn red" onclick="importConfig()">Restore from file</button>
           <div id="bk_result" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== AUDIT ===== -->
+    <section id="tab-audit" class="hidden">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div><h2 style="margin:0">Admin change log</h2><p class="hint" style="margin:4px 0 0">Every admin action on the gateway — actor, source IP, method, path and result.</p></div>
+          <div class="row" style="gap:10px">
+            <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px"><input type="checkbox" id="au_mut" checked onchange="renderAudit()" style="width:auto"/> Changes only</label>
+            <input id="au_filter" placeholder="filter actor / path / method…" style="width:210px;padding:7px 10px" oninput="renderAudit()"/>
+            <button class="btn sec sm" onclick="loadAudit()">↻ Refresh</button>
+          </div>
+        </div>
+        <div style="overflow:auto;margin-top:14px">
+          <table><thead><tr><th>Time</th><th>Actor</th><th>IP</th><th>Action</th><th>Object</th><th style="text-align:right">Status</th></tr></thead>
+            <tbody id="audit_body"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody></table>
         </div>
       </div>
     </section>
@@ -434,6 +456,7 @@ const API=(function(){const p=location.pathname;const base=(p.indexOf('/aigw/')=
 const METRICS=(function(){const p=location.pathname;return (p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/metrics':'/metrics';})();
 const REQLOG=(function(){const p=location.pathname;return (p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/requests':'/requests';})();
 const MTEST=(function(){const p=location.pathname;return (p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/modeltest':'/modeltest';})();
+const AUDIT=(function(){const p=location.pathname;return (p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/auditlog':'/auditlog';})();
 const $=s=>document.querySelector(s);
 const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 if(localStorage.getItem('portal_dark')==='1')document.documentElement.classList.add('dark');
@@ -451,7 +474,7 @@ async function api(method,path,body){const o={method,headers:{},credentials:'sam
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],test:['Test','Send a real request through Kong with a project key — validate auth + routing'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model'],backup:['Backup','Export the whole gateway config to JSON, or restore it from a file']};
+const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],test:['Test','Send a real request through Kong with a project key — validate auth + routing'],audit:['Audit','Admin change log — who created / edited / deleted what, from which IP'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model'],backup:['Backup','Export the whole gateway config to JSON, or restore it from a file']};
 document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;
@@ -466,6 +489,7 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   if(tab==='usage') loadUsage();
   if(tab==='requests') loadRequests();
   if(tab==='test') loadTest();
+  if(tab==='audit') loadAudit();
   if(tab==='backup') loadBackup();
   if(tab==='plugins') loadPluginModels();
 });
@@ -798,6 +822,46 @@ async function importConfig(){const f=$('#bk_file').files[0];if(!f)return toast(
   for(const a of data.acls||[])if(a.consumer&&a.consumer.id)await put('/consumers/'+a.consumer.id+'/acls/'+a.id,{group:a.group});
   box.innerHTML=`<div class="card" style="margin:0;padding:12px 14px"><b style="color:${tally.fail?'#b45309':'#166534'}">Restored ${tally.ok} objects</b>${tally.fail?`, <b style="color:var(--red)">${tally.fail} failed</b>`:''}${tally.errs.length?'<pre style="font-size:11px;white-space:pre-wrap;margin-top:8px;overflow:auto">'+esc(tally.errs.join('\n'))+'</pre>':''}</div>`;
   toast('Restore: '+tally.ok+' ok, '+tally.fail+' failed',tally.fail?'err':'ok');loadBackup();}
+
+// ===== AUDIT (admin change log) =====
+let _auditRows=[];
+function _verb(m){return {POST:'Create',PUT:'Upsert',PATCH:'Update',DELETE:'Delete',GET:'Read'}[m]||m;}
+function _obj(path){return (path||'').replace(/^\/aigw/,'').replace(/^\/api\/?/,'').split('?')[0]||'/';}
+async function loadAudit(){const body=$('#audit_body');body.innerHTML='<tr><td colspan="6" class="muted">Loading…</td></tr>';
+  try{const r=await fetch(AUDIT,{headers:{'Range':'bytes=-262144'},credentials:'same-origin'});
+    if(r.status===404){_auditRows=[];body.innerHTML='<tr><td colspan="6" class="muted">No audit entries yet.</td></tr>';return;}
+    if(!r.ok&&r.status!==206)throw new Error('HTTP '+r.status);
+    const txt=await r.text();const rows=[];
+    txt.split('\n').forEach(ln=>{const s=ln.trim();if(!s||s[0]!=='{')return;let d;try{d=JSON.parse(s);}catch(e){return;}
+      const dt=d.details||{};rows.push({ts:d.ts,actor:d.actor||'',ip:d.ip||'',method:dt.method||'',path:dt.path||'',status:dt.status||0});});
+    rows.reverse();_auditRows=rows;renderAudit();
+  }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+function renderAudit(){const body=$('#audit_body');const mut=$('#au_mut')&&$('#au_mut').checked;const f=(($('#au_filter')&&$('#au_filter').value)||'').toLowerCase().trim();
+  let rows=_auditRows;
+  if(mut)rows=rows.filter(o=>o.method!=='GET'&&o.method!=='HEAD');
+  if(f)rows=rows.filter(o=>(o.actor+' '+o.ip+' '+o.method+' '+o.path).toLowerCase().includes(f));
+  rows=rows.slice(0,400);
+  body.innerHTML=rows.length?rows.map(o=>{const col=o.status<300?'#166534':o.status<400?'var(--sub)':o.status<500?'#b45309':'var(--red)';
+    return `<tr><td class="muted" style="white-space:nowrap" title="${esc(o.ts)}">${esc((o.ts||'').replace('T',' ').slice(5,19))}</td>
+      <td><b>${esc(o.actor||'—')}</b></td><td><code>${esc(o.ip)}</code></td>
+      <td><span class="pill">${esc(_verb(o.method))}</span></td>
+      <td><code style="font-size:11px">${esc(_obj(o.path))}</code></td>
+      <td style="text-align:right"><b style="color:${col}">${o.status||'—'}</b></td></tr>`;}).join('')
+    :`<tr><td colspan="6" class="muted">${_auditRows.length?'No matching entries.':'No audit entries yet.'}</td></tr>`;}
+
+// ===== CSV export =====
+function downloadCSV(name,header,rows){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const csv=[header.map(q).join(',')].concat(rows.map(r=>r.map(q).join(','))).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
+function usageCSV(){const named=$('#us_named')&&$('#us_named').checked;let rows=_usageRows.slice();if(named)rows=rows.filter(o=>o.consumer);
+  if(!rows.length)return toast('Nothing to export','err');
+  downloadCSV('usage-'+new Date().toISOString().slice(0,10)+'.csv',['consumer','model','requests','errors_5xx','in_bytes','out_bytes'],
+    rows.map(o=>[o.consumer||'(unauthenticated)',o.service,Math.round(o.req),Math.round(o.err),Math.round(o.ingress),Math.round(o.egress)]));toast('Usage exported','ok');}
+function requestsCSV(){if(!_reqRows.length)return toast('Nothing to export','err');
+  downloadCSV('requests-'+new Date().toISOString().slice(0,10)+'.csv',['time','ip','consumer','model','status','latency_ms'],
+    _reqRows.map(o=>[new Date(o.t).toISOString(),o.ip,o.consumer||'(unauthenticated)',o.model,o.status,o.lat]));toast('Requests exported','ok');}
+// ===== table quick-filter =====
+function filterTable(inp,tbodyId){const f=(inp.value||'').toLowerCase();document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(f)?'':'none';});}
 
 // ===== PLUGINS (simple, per-model protections) =====
 async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
