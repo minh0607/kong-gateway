@@ -292,6 +292,12 @@
         <div class="card">
           <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">All consumers</h2><button class="btn sec sm" onclick="loadConsumers()">↻ Refresh</button></div>
           <div style="height:14px"></div>
+          <div id="c_editbox" class="hidden" style="margin-bottom:14px;padding:14px 16px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)">
+            <h2 style="margin:0 0 10px">✏️ Edit consumer</h2>
+            <div class="fld"><label>Username</label><input id="ce_name"/></div>
+            <div class="fld"><label>Tags <span class="muted">(comma-separated)</span></label><input id="ce_tags" placeholder="team:soc, env:prod"/></div>
+            <div class="row" style="gap:8px"><button class="btn sm" onclick="saveConsumer()">Save</button><button class="btn sec sm" onclick="document.getElementById('c_editbox').classList.add('hidden')">Cancel</button></div>
+          </div>
           <div style="overflow:auto">
           <table><thead><tr><th>Consumer</th><th>ACL groups</th><th>API keys</th><th>Tags</th><th></th></tr></thead>
             <tbody id="consumers_body"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table>
@@ -557,7 +563,7 @@ async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL 
 
 // ===== CONSUMERS (all, incl. legacy) =====
 async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<tr><td colspan="5" class="muted">Loading…</td></tr>';
-  try{const cons=(await api('GET','/consumers?size=1000')).data;
+  try{const cons=(await api('GET','/consumers?size=1000')).data;_consumers=cons;
     const opts=cons.map(c=>`<option value="${esc(c.username)}">${esc(c.username)}</option>`).join('')||'<option value="">(none)</option>';
     if($('#c_sel'))$('#c_sel').innerHTML=opts; if($('#k_sel'))$('#k_sel').innerHTML=opts;
     const rows=[];
@@ -571,7 +577,7 @@ async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<
         <td>${acls.length?acls.map(a=>`<span class="chip">${esc(a.group)}<b onclick="removeConsumerAcl('${esc(c.username)}','${a.id}')">×</b></span>`).join(''):'<span class="muted">—</span>'}</td>
         <td>${keycell}</td>
         <td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td>
-        <td><button class="btn red sm" onclick="delConsumer('${esc(c.username)}')">Delete</button></td></tr>`);
+        <td style="white-space:nowrap"><button class="btn sec sm" onclick="editConsumer('${c.id}')">Edit</button> <button class="btn red sm" onclick="delConsumer('${esc(c.username)}')">Delete</button></td></tr>`);
     }
     body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No consumers.</td></tr>';
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
@@ -585,6 +591,13 @@ async function addConsumerAcl(){const c=$('#c_sel').value,g=$('#c_group').value.
   try{await api('POST','/consumers/'+encodeURIComponent(c)+'/acls',{group:g});toast(c+' added to '+g,'ok');$('#c_group').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 async function removeConsumerAcl(c,id){try{await api('DELETE','/consumers/'+encodeURIComponent(c)+'/acls/'+id);toast('Removed from group','ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 async function delConsumer(c){if(!confirm('Delete consumer '+c+' (keys + ACL + plugins)?'))return;try{await api('DELETE','/consumers/'+encodeURIComponent(c));toast('Deleted '+c,'ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
+let _consumers=[],_editConsumerId=null;
+function editConsumer(id){const c=_consumers.find(x=>x.id===id);if(!c)return;_editConsumerId=id;
+  $('#ce_name').value=c.username||'';$('#ce_tags').value=(c.tags||[]).join(', ');
+  $('#c_editbox').classList.remove('hidden');$('#c_editbox').scrollIntoView({behavior:'smooth',block:'center'});}
+async function saveConsumer(){if(!_editConsumerId)return;const name=$('#ce_name').value.trim();if(!name)return toast('Username required','err');
+  const tags=$('#ce_tags').value.split(',').map(x=>x.trim()).filter(Boolean);
+  try{await api('PATCH','/consumers/'+_editConsumerId,{username:name,tags});toast('Saved '+name,'ok');$('#c_editbox').classList.add('hidden');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 
 // ===== UPSTREAMS (load-balancing) =====
 function healthBadge(h){const m={HEALTHY:['ok','healthy'],UNHEALTHY:['err','unhealthy'],HEALTHCHECKS_OFF:['','no check'],DNS_ERROR:['err','dns error']};

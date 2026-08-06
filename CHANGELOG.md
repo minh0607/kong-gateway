@@ -50,6 +50,8 @@ config foolproof.
 - **Edit any plugin** — every attached plugin (not just the curated toggles) gets
   an Edit that opens the schema-driven form prefilled with its current config;
   enable/disable and delete were already there.
+- **Edit a consumer** — rename (PATCH by id, so keys/ACL survive) and change tags
+  from the Consumers tab.
 
 ### Changed
 - **Legacy config is no longer hidden.** The Models list defaults to **showing
