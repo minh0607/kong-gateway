@@ -45,6 +45,9 @@ config foolproof.
   outline icons** — self-hosted, air-gap safe. Stat cards gained a colored top
   accent and a lift-on-hover, matching the IT Portal dashboard. Both light and
   dark themes verified.
+- Card headers now use **colored gradient icon tiles** (blue/violet/green/amber/
+  sky) with white Heroicons-style SVGs — matching the IT Portal Quick-Actions
+  style — replacing the remaining emoji in section titles.
 
 ### Added (Governance & convenience — P2)
 - **Audit tab** — admin change log: who did what (actor, source IP, method →

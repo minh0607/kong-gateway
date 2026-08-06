@@ -58,7 +58,13 @@
   @media(max-width:900px){aside{width:64px}.nav-item span,nav .lbl{display:none}main{margin-left:64px}.split{grid-template-columns:1fr}}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px}
-  .card h2{margin:0 0 3px;font-size:15px;font-weight:700}
+  .card h2{margin:0 0 3px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px}
+  .cico{width:30px;height:30px;flex:0 0 auto;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 10px -3px rgba(0,0,0,.25)}
+  .cico svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .cico.blue{background:linear-gradient(135deg,#3b82f6,#2563eb)} .cico.violet{background:linear-gradient(135deg,#a78bfa,#8b5cf6)}
+  .cico.green{background:linear-gradient(135deg,#34d399,#059669)} .cico.amber{background:linear-gradient(135deg,#fbbf24,#d97706)}
+  .cico.sky{background:linear-gradient(135deg,#38bdf8,#0ea5e9)} .cico.rose{background:linear-gradient(135deg,#fb7185,#e11d48)}
+  .cico.sm{width:24px;height:24px;border-radius:7px} .cico.sm svg{width:14px;height:14px}
   .card .hint{margin:0 0 16px;color:var(--sub);font-size:12.5px}
   label{display:block;font-size:12px;font-weight:600;color:var(--sub);margin:0 0 6px}
   .muted{color:var(--sub);font-size:12px}
@@ -178,7 +184,7 @@
     <section id="tab-models" class="hidden">
       <div class="split">
         <div class="card">
-          <h2>➕ Register Model</h2>
+          <h2><span class="cico blue"><svg viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg></span>Register Model</h2>
           <p class="hint">Name by capability; the server lives in a tag.</p>
           <div class="fld"><label>Capability slug <span class="muted">(a-z0-9-)</span></label><input id="m_slug" placeholder="embed"/></div>
           <div class="fld"><label>Backend URL</label><input id="m_url" placeholder="http://107.118.109.33:8001"/></div>
@@ -201,7 +207,7 @@
           </div>
           <div style="height:14px"></div>
           <div id="m_editbox" class="hidden" style="margin-bottom:14px;padding:14px 16px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)">
-            <h2 style="margin:0 0 10px">✏️ Edit — <span id="me_name"></span></h2>
+            <h2 style="margin:0 0 10px"><span class="cico sm amber"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></span>Edit — <span id="me_name"></span></h2>
             <div class="fld"><label>Backend URL</label><input id="me_url" placeholder="http://host:port/path"/></div>
             <div class="fld"><label>Route path <span class="muted">(leave blank if none)</span></label><input id="me_path" placeholder="/slug"/></div>
             <div class="row" style="gap:8px"><button class="btn sm" onclick="saveService()">Save</button><button class="btn sec sm" onclick="document.getElementById('m_editbox').classList.add('hidden')">Cancel</button></div>
@@ -218,7 +224,7 @@
     <section id="tab-routes" class="hidden">
       <div class="split">
         <div class="card">
-          <h2>➕ Add route</h2>
+          <h2><span class="cico blue"><svg viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg></span>Add route</h2>
           <p class="hint">A route matches incoming requests to a service. One service can have many routes.</p>
           <div class="fld"><label>Service</label><select id="r_svc"></select></div>
           <div class="fld"><label>Paths <span class="muted">(comma-separated)</span></label><input id="r_paths" placeholder="/chat, /v1/chat"/></div>
@@ -231,7 +237,7 @@
           <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Routes</h2><div class="row" style="gap:8px"><input placeholder="filter…" oninput="filterTable(this,'routes_body')" style="width:150px;padding:6px 9px"/><button class="btn sec sm" onclick="loadRoutes()">↻ Refresh</button></div></div>
           <div style="height:12px"></div>
           <div id="r_editbox" class="hidden" style="margin-bottom:14px;padding:14px 16px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)">
-            <h2 style="margin:0 0 10px">✏️ Edit route — <span id="re_name"></span></h2>
+            <h2 style="margin:0 0 10px"><span class="cico sm amber"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></span>Edit route — <span id="re_name"></span></h2>
             <div class="fld"><label>Paths</label><input id="re_paths"/></div>
             <div class="fld"><label>Methods <span class="muted">(blank = all)</span></label><input id="re_methods"/></div>
             <div class="fld"><label>Hosts <span class="muted">(blank = any)</span></label><input id="re_hosts"/></div>
@@ -250,7 +256,7 @@
     <section id="tab-projects" class="hidden">
       <div class="split">
         <div class="card">
-          <h2>➕ Assign Project</h2>
+          <h2><span class="cico violet"><svg viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg></span>Assign Project</h2>
           <p class="hint">A project is a consumer: its own token + its own allowed IPs.</p>
           <div class="fld"><label>Project name <span class="muted">(a-z0-9-)</span></label><input id="p_name" placeholder="sparepart"/></div>
           <div class="fld"><label>Token</label>
@@ -283,18 +289,18 @@
     <section id="tab-consumers" class="hidden">
       <div class="split">
         <div class="card">
-          <h2>➕ Add consumer</h2>
+          <h2><span class="cico blue"><svg viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg></span>Add consumer</h2>
           <p class="hint">Any username — including non-convention / legacy ones.</p>
           <div class="fld"><label>Username</label><input id="c_name" placeholder="e.g. n8n, dify_app, team-x"/></div>
           <button class="btn" onclick="addConsumer()">Create consumer</button>
           <div style="height:22px"></div>
-          <h2>👥 Add consumer to ACL group</h2>
+          <h2><span class="cico violet"><svg viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></span>Add consumer to ACL group</h2>
           <p class="hint">Grant an existing consumer access to a model's ACL group.</p>
           <div class="fld"><label>Consumer</label><select id="c_sel"></select></div>
           <div class="fld"><label>ACL group</label><input id="c_group" placeholder="e.g. acl-embed"/></div>
           <button class="btn" onclick="addConsumerAcl()">Add to group</button>
           <div style="height:22px"></div>
-          <h2>🔑 Create API key</h2>
+          <h2><span class="cico amber"><svg viewBox="0 0 24 24"><path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg></span>Create API key</h2>
           <p class="hint">Issue a <code>key-auth</code> credential. Leave the key blank to auto-generate a secure one.</p>
           <div class="fld"><label>Consumer</label><select id="k_sel"></select></div>
           <div class="fld"><label>Key <span class="muted">(blank = auto)</span></label>
@@ -306,7 +312,7 @@
           <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">All consumers</h2><div class="row" style="gap:8px"><input placeholder="filter…" oninput="filterTable(this,'consumers_body')" style="width:150px;padding:6px 9px"/><button class="btn sec sm" onclick="loadConsumers()">↻ Refresh</button></div></div>
           <div style="height:14px"></div>
           <div id="c_editbox" class="hidden" style="margin-bottom:14px;padding:14px 16px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)">
-            <h2 style="margin:0 0 10px">✏️ Edit consumer</h2>
+            <h2 style="margin:0 0 10px"><span class="cico sm amber"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></span>Edit consumer</h2>
             <div class="fld"><label>Username</label><input id="ce_name"/></div>
             <div class="fld"><label>Tags <span class="muted">(comma-separated)</span></label><input id="ce_tags" placeholder="team:soc, env:prod"/></div>
             <div class="row" style="gap:8px"><button class="btn sm" onclick="saveConsumer()">Save</button><button class="btn sec sm" onclick="document.getElementById('c_editbox').classList.add('hidden')">Cancel</button></div>
@@ -323,7 +329,7 @@
     <section id="tab-upstreams" class="hidden">
       <div class="split">
         <div class="card">
-          <h2>➕ Create upstream</h2>
+          <h2><span class="cico green"><svg viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg></span>Create upstream</h2>
           <p class="hint">A named load-balancing pool. Point a model's backend host at this name to spread traffic across its targets.</p>
           <div class="fld"><label>Name</label><input id="u_name" placeholder="e.g. up-gemma"/></div>
           <div class="fld"><label>Algorithm</label><select id="u_algo">
@@ -333,7 +339,7 @@
           </select></div>
           <button class="btn" onclick="addUpstream()">Create upstream</button>
           <div style="height:22px"></div>
-          <h2>🎯 Add target</h2>
+          <h2><span class="cico green"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg></span>Add target</h2>
           <p class="hint">A backend <code>host:port</code> with a weight (share of traffic).</p>
           <div class="fld"><label>Upstream</label><select id="u_sel"></select></div>
           <div class="fld"><label>Target (host:port)</label><input id="u_target" placeholder="e.g. 107.118.109.31:8000"/></div>
@@ -389,14 +395,14 @@
     <section id="tab-backup" class="hidden">
       <div class="split">
         <div class="card">
-          <h2>⬇️ Export config</h2>
+          <h2><span class="cico blue"><svg viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg></span>Export config</h2>
           <p class="hint">Downloads a JSON snapshot of the whole gateway — services, routes, plugins, consumers, ACLs, API keys, upstreams and targets. Good for versioning, audit and disaster recovery.</p>
           <div id="bk_counts" class="stats" style="margin:12px 0"></div>
           <button class="btn" onclick="exportConfig()">Download config JSON</button>
           <p class="hint" style="margin-top:10px">⚠️ The file contains <b>API keys in clear text</b> — store it securely.</p>
         </div>
         <div class="card">
-          <h2>⬆️ Restore config</h2>
+          <h2><span class="cico amber"><svg viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 7.5L12 3m0 0l4.5 4.5M12 3v13.5"/></svg></span>Restore config</h2>
           <p class="hint">Applies a previously exported JSON. Entities are upserted by their id (idempotent) — existing ones are updated, missing ones recreated. It does <b>not</b> delete anything not in the file.</p>
           <div class="fld"><label>Config file</label><input type="file" id="bk_file" accept="application/json,.json"/></div>
           <button class="btn red" onclick="importConfig()">Restore from file</button>
@@ -427,7 +433,7 @@
     <section id="tab-test" class="hidden">
       <div class="split">
         <div class="card">
-          <h2>🧪 Test a model</h2>
+          <h2><span class="cico green"><svg viewBox="0 0 24 24"><path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg></span>Test a model</h2>
           <p class="hint">Sends a real request through Kong — key-auth, ACL and routing all apply, exactly like a client.</p>
           <div class="fld"><label>Model</label><select id="t_model" onchange="onTestModel()"></select></div>
           <div class="fld"><label>Path <span class="muted">(append the API path, e.g. /v1/chat/completions)</span></label><input id="t_path" placeholder="/embed"/></div>
@@ -900,7 +906,7 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
     const others=pls.filter(p=>!curated.includes(p.name));
     h+=`<div class="psec">Other plugins on this model</div>`;
     h+= others.length? others.map(p=>`<div class="orow"><div class="pico">🔌</div><div class="oinfo"><b>${esc(p.name)}</b><span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn sec sm" onclick="editPluginId('${p.id}')">Edit</button><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
-    h+=`<div id="pl_editbox" class="hidden" style="margin-top:10px;padding:12px 14px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)"><h2 style="margin:0 0 8px;font-size:14px">✏️ Edit <span id="pe_name"></span></h2><div id="pe_form"></div></div>`;
+    h+=`<div id="pl_editbox" class="hidden" style="margin-top:10px;padding:12px 14px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)"><h2 style="margin:0 0 8px;font-size:14px"><span class="cico sm amber"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></span>Edit <span id="pe_name"></span></h2><div id="pe_form"></div></div>`;
     const avail=await availablePlugins();
     const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
     h+=`<div class="psec">Add any plugin (advanced)</div>
@@ -1008,7 +1014,7 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
     html+=`<div class="stats">${stat(models.length,'Models')}${stat(projects.length,'Projects')}${stat(routes.length,'Routes')}${stat(cons.length,'Consumers')}${stat(grpCount,'ACL groups')}${stat(plgCount,'Plugins')}</div>`;
 
     // ---- Models detail ----
-    html+=`<div class="card"><h2>🧩 Models</h2><p class="hint">Capability → client endpoint, backend, server tag, security plugins, and the projects allowed to call it.</p><div style="overflow:auto"><table><thead><tr><th>Model</th><th>Client endpoint</th><th>Backend</th><th>Server</th><th>Security</th><th>Used by</th></tr></thead><tbody>`;
+    html+=`<div class="card"><h2><span class="cico blue"><svg viewBox="0 0 24 24"><path d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg></span>Models</h2><p class="hint">Capability → client endpoint, backend, server tag, security plugins, and the projects allowed to call it.</p><div style="overflow:auto"><table><thead><tr><th>Model</th><th>Client endpoint</th><th>Backend</th><th>Server</th><th>Security</th><th>Used by</th></tr></thead><tbody>`;
     html+= models.length? models.map(m=>`<tr>
       <td><b>${esc(m.name)}</b>${m.mtag?`<br><span class="muted">${esc(m.mtag)}</span>`:''}</td>
       <td><code>:8000${esc(m.path)}/v1</code></td>
@@ -1020,7 +1026,7 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
     html+=`</tbody></table></div></div>`;
 
     // ---- Projects detail ----
-    html+=`<div class="card"><h2>🗂️ Projects</h2><p class="hint">Consumer → token, models it may call, and its allowed IPs.</p><div style="overflow:auto"><table><thead><tr><th>Project</th><th>Token</th><th>Models</th><th>Allowed IPs</th><th>Tags</th></tr></thead><tbody>`;
+    html+=`<div class="card"><h2><span class="cico violet"><svg viewBox="0 0 24 24"><path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></span>Projects</h2><p class="hint">Consumer → token, models it may call, and its allowed IPs.</p><div style="overflow:auto"><table><thead><tr><th>Project</th><th>Token</th><th>Models</th><th>Allowed IPs</th><th>Tags</th></tr></thead><tbody>`;
     html+= projects.length? projects.map(p=>{const tid='ov'+Math.abs(hash(p.name));return `<tr>
       <td><b>${esc(p.name)}</b></td>
       <td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(p.token)}')">👁</button></td>
@@ -1032,7 +1038,7 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
 
     // ---- Access matrix ----
     if(models.length&&projects.length){
-      html+=`<div class="card"><h2>🔗 Access matrix</h2><p class="hint">✓ = project may call the model (via a shared ACL group).</p><div style="overflow:auto"><table class="matrix"><thead><tr><th>Project \\ Model</th>`;
+      html+=`<div class="card"><h2><span class="cico sky"><svg viewBox="0 0 24 24"><path d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg></span>Access matrix</h2><p class="hint">✓ = project may call the model (via a shared ACL group).</p><div style="overflow:auto"><table class="matrix"><thead><tr><th>Project \\ Model</th>`;
       for(const m of models) html+=`<th title="${esc(m.path)} → ${esc(m.back)}">${esc(m.slug)}</th>`;
       html+=`</tr></thead><tbody>`;
       for(const p of projects){html+=`<tr><td><b>${esc(p.slug)}</b></td>`;
