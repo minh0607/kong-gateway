@@ -78,6 +78,7 @@
   .btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:none;filter:none}
   .btn.sec:hover{background:var(--hover);border-color:var(--primary);filter:none}
   .btn.sm{padding:6px 12px;font-size:12px;border-radius:9px;box-shadow:none} .btn.red{background:linear-gradient(135deg,#ef4444,#dc2626)} .btn.gray{background:#64748b;box-shadow:none}
+  svg.bico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;vertical-align:-2px;stroke-linecap:round;stroke-linejoin:round}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th{text-align:left;color:var(--sub);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:10px;border-bottom:1px solid var(--line)}
   td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -124,6 +125,12 @@
   .orow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
   .orow .oinfo{flex:1;min-width:0} .orow .oinfo b{font-size:13px} .orow .oinfo span{font-size:11.5px;color:var(--sub);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .advbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .wsteps{display:flex;gap:8px;margin-bottom:22px}
+  .wsteps .ws{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--sub);padding-bottom:9px;border-bottom:3px solid var(--line);text-transform:uppercase;letter-spacing:.03em;transition:all .2s}
+  .wsteps .ws.on{color:var(--primary);border-color:var(--primary)}
+  .wsteps .ws.done{color:var(--green);border-color:var(--green)}
+  .wstep h3{font-size:14.5px;margin:0 0 14px;font-weight:700}
+  .wrev{width:100%;font-size:13px} .wrev td{padding:7px 4px;border-bottom:1px solid var(--line)} .wrev td:first-child{color:var(--sub);font-weight:600;width:150px}
   .pfform{display:grid;gap:8px;margin:10px 0 12px;padding:12px 14px;background:var(--primary-l);border:1px solid var(--line);border-radius:12px}
   .pfrow{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0;font-size:13px}
   .pfrow span{color:var(--sub);font-weight:600;flex:0 0 auto}
@@ -145,6 +152,7 @@
   <nav>
     <div class="lbl">AI Gateway</div>
     <div class="nav-item active" data-tab="overview"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.25 12l8.954-8.955a1.5 1.5 0 012.122 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg></span><span>Overview</span></div>
+    <div class="nav-item" data-tab="wizard"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg></span><span>Wizard</span></div>
     <div class="nav-item" data-tab="models"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg></span><span>Models</span></div>
     <div class="nav-item" data-tab="routes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg></span><span>Routes</span></div>
     <div class="nav-item" data-tab="projects"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></span><span>Projects</span></div>
@@ -178,6 +186,44 @@
     <section id="tab-overview">
       <div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn sec sm" onclick="loadOverview()">↻ Refresh</button></div>
       <div id="ov"><div class="card muted">Loading…</div></div>
+    </section>
+
+    <!-- ===== WIZARD ===== -->
+    <section id="tab-wizard" class="hidden">
+      <div class="card" style="max-width:760px">
+        <div class="wsteps" id="wsteps"></div>
+        <div class="wstep" data-step="1">
+          <h3>Step 1 · Model (Service)</h3>
+          <p class="hint">The backend to expose. Creates <code>svc-&lt;slug&gt;</code> with key-auth + an <code>acl-&lt;slug&gt;</code> group.</p>
+          <div class="fld"><label>Capability slug <span class="muted">(a-z0-9-)</span></label><input id="w_slug" placeholder="chat"/></div>
+          <div class="fld"><label>Backend URL</label><input id="w_url" placeholder="http://107.118.109.31:8000"/></div>
+          <div class="row"><div class="fld"><label>Server tag <span class="muted">(optional)</span></label><input id="w_box" placeholder="vllm01"/></div><div class="fld"><label>Model tag <span class="muted">(optional)</span></label><input id="w_model" placeholder="gemma-3-27b"/></div></div>
+          <div class="fld"><label>API-key header</label><select id="w_header"><option value="x-api-key">x-api-key (n8n / generic)</option><option value="Authorization">Authorization + Bearer (OpenAI-compatible)</option></select></div>
+        </div>
+        <div class="wstep hidden" data-step="2">
+          <h3>Step 2 · Route</h3>
+          <p class="hint">How clients reach this model. Defaults to <code>/slug</code>.</p>
+          <div class="fld"><label>Path</label><input id="w_path" placeholder="/chat"/></div>
+          <div class="fld"><label>Methods <span class="muted">(optional, comma)</span></label><input id="w_methods" placeholder="GET, POST"/></div>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin:4px 0"><input type="checkbox" id="w_strip" checked style="width:auto"/> strip_path <span class="muted" style="font-weight:400">(needed for OpenAI-style /v1)</span></label>
+        </div>
+        <div class="wstep hidden" data-step="3">
+          <h3>Step 3 · Project (Consumer)</h3>
+          <p class="hint">Who may call it. Creates <code>prj-&lt;name&gt;</code> with a token, added to <code>acl-&lt;slug&gt;</code>.</p>
+          <div class="fld"><label>Project name <span class="muted">(a-z0-9-)</span></label><input id="w_pname" placeholder="zabbix"/></div>
+          <div class="fld"><label>Token</label><div style="display:flex;gap:8px"><input id="w_token" placeholder="secret string, or Generate"/><button type="button" class="btn sec" style="white-space:nowrap" onclick="wGen()"><svg class="bico" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg> Generate</button></div></div>
+          <div class="fld"><label>Allowed IPs <span class="muted">(optional, comma)</span></label><input id="w_ips" placeholder="10.1.1.10, 10.1.1.11"/></div>
+        </div>
+        <div class="wstep hidden" data-step="4">
+          <h3>Step 4 · Review &amp; create</h3>
+          <div id="w_review"></div>
+        </div>
+        <div class="row" style="justify-content:space-between;margin-top:18px">
+          <button class="btn sec" id="w_back" onclick="wStep(-1)">← Back</button>
+          <button class="btn" id="w_next" onclick="wStep(1)">Next →</button>
+        </div>
+        <div id="w_result" style="margin-top:14px"></div>
+      </div>
     </section>
 
     <!-- ===== MODELS ===== -->
@@ -262,7 +308,7 @@
           <div class="fld"><label>Token</label>
             <div style="display:flex;gap:8px">
               <input id="p_token" placeholder="secret string, or click Generate"/>
-              <button type="button" class="btn sec" style="white-space:nowrap" onclick="genToken()">🎲 Generate</button>
+              <button type="button" class="btn sec" style="white-space:nowrap" onclick="genToken()"><svg class="bico" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg> Generate</button>
             </div>
           </div>
           <div class="fld"><label>Allowed IPs <span class="muted">(comma-separated)</span></label><input id="p_ips" placeholder="10.1.1.10,10.1.1.11"/></div>
@@ -304,7 +350,7 @@
           <p class="hint">Issue a <code>key-auth</code> credential. Leave the key blank to auto-generate a secure one.</p>
           <div class="fld"><label>Consumer</label><select id="k_sel"></select></div>
           <div class="fld"><label>Key <span class="muted">(blank = auto)</span></label>
-            <div style="display:flex;gap:8px"><input id="k_key" placeholder="custom key, or Generate"/><button type="button" class="btn sec" style="white-space:nowrap" onclick="genKey()">🎲 Generate</button></div>
+            <div style="display:flex;gap:8px"><input id="k_key" placeholder="custom key, or Generate"/><button type="button" class="btn sec" style="white-space:nowrap" onclick="genKey()"><svg class="bico" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg> Generate</button></div>
           </div>
           <button class="btn" onclick="addConsumerKey()">Create key</button>
         </div>
@@ -489,13 +535,14 @@ async function api(method,path,body){const o={method,headers:{},credentials:'sam
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],test:['Test','Send a real request through Kong with a project key — validate auth + routing'],audit:['Audit','Admin change log — who created / edited / deleted what, from which IP'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model'],backup:['Backup','Export the whole gateway config to JSON, or restore it from a file']};
+const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],wizard:['Setup Wizard','Create a model, its route and a project — all in one guided flow'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],test:['Test','Send a real request through Kong with a project key — validate auth + routing'],audit:['Audit','Admin change log — who created / edited / deleted what, from which IP'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model'],backup:['Backup','Export the whole gateway config to JSON, or restore it from a file']};
 document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;
   document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.classList.toggle('hidden', s.id!=='tab-'+tab));
   $('#page-title').textContent=PAGES[tab][0];$('#page-sub').textContent=PAGES[tab][1];
   if(tab==='overview') loadOverview();
+  if(tab==='wizard') loadWizard();
   if(tab==='models') loadModels();
   if(tab==='routes') loadRoutes();
   if(tab==='projects'){loadModelChecks();loadProjects();}
@@ -597,7 +644,7 @@ async function loadProjects(){const body=$('#projects_body');body.innerHTML='<tr
       const pls=(await api('GET','/consumers/'+c.username+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
       const ips=ipr?(ipr.config.allow||[]).join(', '):'<span class="muted">unrestricted</span>';
       const tok=keys[0]||'—';const tid='t'+Math.abs(hash(c.username));
-      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')">👁</button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editProject('${esc(c.username)}')">Edit</button> <button class="btn red sm" onclick="delProject('${esc(c.username)}')">Delete</button></td></tr>`);}
+      rows.push(`<tr><td><b>${esc(c.username)}</b></td><td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(tok)}')"><svg class="bico" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button></td><td>${acls.map(a=>`<span class="pill">${esc(a.replace('acl-',''))}</span>`).join('')||'—'}</td><td>${ips}</td><td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editProject('${esc(c.username)}')">Edit</button> <button class="btn red sm" onclick="delProject('${esc(c.username)}')">Delete</button></td></tr>`);}
     body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No projects yet (prj-*).</td></tr>';
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
@@ -656,7 +703,7 @@ async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<
       const keys=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/key-auth')).data;
       const kind=(c.username||'').startsWith('prj-')?'<span class="pill">project</span>':'<span class="pill model">legacy</span>';
       const keycell=keys.length?keys.map(k=>{const id='k'+Math.abs(hash(c.username+k.id));
-        return `<span class="chip"><code id="${id}">••••••</code><b style="cursor:pointer" onclick="revToken('${id}','${esc(k.key)}')">👁</b><b onclick="delConsumerKey('${esc(c.username)}','${k.id}')">×</b></span>`;}).join(''):'<span class="muted">—</span>';
+        return `<span class="chip"><code id="${id}">••••••</code><b style="cursor:pointer" onclick="revToken('${id}','${esc(k.key)}')"><svg class="bico" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></b><b onclick="delConsumerKey('${esc(c.username)}','${k.id}')">×</b></span>`;}).join(''):'<span class="muted">—</span>';
       rows.push(`<tr><td><b>${esc(c.username)}</b> ${kind}</td>
         <td>${acls.length?acls.map(a=>`<span class="chip">${esc(a.group)}<b onclick="removeConsumerAcl('${esc(c.username)}','${a.id}')">×</b></span>`).join(''):'<span class="muted">—</span>'}</td>
         <td>${keycell}</td>
@@ -878,6 +925,54 @@ function requestsCSV(){if(!_reqRows.length)return toast('Nothing to export','err
 // ===== table quick-filter =====
 function filterTable(inp,tbodyId){const f=(inp.value||'').toLowerCase();document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(f)?'':'none';});}
 
+// ===== SETUP WIZARD (service + route + consumer in one flow) =====
+let _wiz=1;
+function loadWizard(){_wiz=1;$('#w_result').innerHTML='';wRender();}
+function wRender(){const steps=['Model','Route','Project','Review'];
+  $('#wsteps').innerHTML=steps.map((s,i)=>`<div class="ws ${i+1===_wiz?'on':(i+1<_wiz?'done':'')}">${i+1}. ${esc(s)}</div>`).join('');
+  document.querySelectorAll('#tab-wizard .wstep').forEach(el=>el.classList.toggle('hidden',(+el.dataset.step)!==_wiz));
+  $('#w_back').style.visibility=_wiz===1?'hidden':'visible';
+  $('#w_next').textContent=_wiz===4?'Create all →':'Next →';}
+function wGen(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];$('#w_token').value=s;toast('Generated a secure token','ok');}
+function wStep(dir){
+  if(dir>0){
+    if(_wiz===1){if(!slugOk($('#w_slug').value.trim()))return toast('Invalid slug (a-z0-9-)','err');if(!$('#w_url').value.trim())return toast('Backend URL required','err');if(!$('#w_path').value.trim())$('#w_path').value='/'+$('#w_slug').value.trim();}
+    if(_wiz===2){if(!$('#w_path').value.trim())return toast('Path required','err');}
+    if(_wiz===3){if(!slugOk($('#w_pname').value.trim()))return toast('Invalid project name','err');if(!$('#w_token').value.trim())return toast('Token required','err');}
+    if(_wiz===4)return wCreate();
+  }
+  _wiz=Math.max(1,Math.min(4,_wiz+dir));if(_wiz===4)wReview();wRender();}
+function wReview(){const slug=$('#w_slug').value.trim(),pname=$('#w_pname').value.trim(),header=$('#w_header').value;
+  const tok=$('#w_token').value.trim(),ips=$('#w_ips').value.trim(),methods=$('#w_methods').value.trim();
+  $('#w_review').innerHTML=`<table class="wrev"><tbody>
+    <tr><td>Model (service)</td><td><b>svc-${esc(slug)}</b> → <code>${esc($('#w_url').value.trim())}</code></td></tr>
+    <tr><td>Security</td><td>key-auth (<code>${esc(header)}</code>) + acl group <b>acl-${esc(slug)}</b></td></tr>
+    <tr><td>Route</td><td><code>${esc($('#w_path').value.trim())}</code>${methods?' · '+esc(methods.toUpperCase()):''} · strip_path=${$('#w_strip').checked}</td></tr>
+    <tr><td>Project (consumer)</td><td><b>prj-${esc(pname)}</b> · token <code>${esc(tok.slice(0,4))}…${esc(tok.slice(-2))}</code></td></tr>
+    <tr><td>Allowed IPs</td><td>${ips?esc(ips):'<span class="muted">unrestricted</span>'}</td></tr>
+    <tr><td>Result</td><td><b>prj-${esc(pname)}</b> will be able to call <b>svc-${esc(slug)}</b> at <code>:8000${esc($('#w_path').value.trim())}</code></td></tr>
+  </tbody></table>`;}
+async function wCreate(){
+  const slug=$('#w_slug').value.trim(),url=$('#w_url').value.trim(),box=$('#w_box').value.trim(),model=$('#w_model').value.trim(),header=$('#w_header').value;
+  const path=$('#w_path').value.trim(),methods=csv($('#w_methods').value).map(m=>m.toUpperCase()),strip=$('#w_strip').checked;
+  const pname=$('#w_pname').value.trim(),token=$('#w_token').value.trim(),ips=csv($('#w_ips').value);
+  const svc='svc-'+slug,acl='acl-'+slug,con='prj-'+pname;const rp=path[0]==='/'?path:'/'+path;
+  const res=$('#w_result');res.innerHTML='<p class="muted">Creating…</p>';const log=[];const ok=s=>log.push('✓ '+s);
+  try{
+    const tags=['env:pca','kind:vllm','cap:'+slug];if(box)tags.push('box:'+box);if(model)tags.push('model:'+model);
+    await api('PUT','/services/'+svc,{url,tags});ok('service '+svc);
+    await ensurePlugin(svc,'key-auth',{key_names:[header]});await ensurePlugin(svc,'acl',{allow:[acl]});ok('key-auth + acl ('+acl+')');
+    const rbody={paths:[rp],strip_path:strip};if(methods.length)rbody.methods=methods;
+    await api('POST','/services/'+svc+'/routes',rbody);ok('route '+rp);
+    await api('PUT','/consumers/'+con,{tags:[]});ok('consumer '+con);
+    const fkey=header==='Authorization'?('Bearer '+token):token;
+    await api('POST','/consumers/'+con+'/key-auth',{key:fkey});ok('API key');
+    await api('POST','/consumers/'+con+'/acls',{group:acl});ok('ACL membership '+acl);
+    if(ips.length){await api('POST','/consumers/'+con+'/plugins',{name:'ip-restriction',config:{allow:ips}});ok('ip-restriction '+ips.join(','));}
+    res.innerHTML=`<div class="card" style="margin:0;padding:14px 16px;border-color:#059669"><b style="color:#059669">✓ Done —</b> <b>${esc(con)}</b> can now call <b>${esc(svc)}</b> at <code>:8000${esc(rp)}</code>. Try it in the <b>Test</b> tab.<pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0">${esc(log.join('\n'))}</pre></div>`;
+    toast('Wizard created '+svc+' + '+con,'ok');
+  }catch(e){res.innerHTML=`<div class="card" style="margin:0;padding:14px 16px;border-color:var(--red)"><b style="color:var(--red)">Failed:</b> ${esc(e.message)}${log.length?'<pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0">'+esc(log.join('\n'))+'</pre>':''}</div>`;}}
+
 // ===== PLUGINS (simple, per-model protections) =====
 async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
   sel.innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name.slice(4))} — ${esc(s.name)}</option>`).join('')||'<option value="">(no models — create one first)</option>';
@@ -1029,7 +1124,7 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
     html+=`<div class="card"><h2><span class="cico violet"><svg viewBox="0 0 24 24"><path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></span>Projects</h2><p class="hint">Consumer → token, models it may call, and its allowed IPs.</p><div style="overflow:auto"><table><thead><tr><th>Project</th><th>Token</th><th>Models</th><th>Allowed IPs</th><th>Tags</th></tr></thead><tbody>`;
     html+= projects.length? projects.map(p=>{const tid='ov'+Math.abs(hash(p.name));return `<tr>
       <td><b>${esc(p.name)}</b></td>
-      <td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(p.token)}')">👁</button></td>
+      <td class="tokwrap"><code id="${tid}">••••••</code><button class="btn gray sm" onclick="revToken('${tid}','${esc(p.token)}')"><svg class="bico" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button></td>
       <td>${p.models.length?p.models.map(m=>`<span class="pill" title="${esc(m.path)} → ${esc(m.back)}">${esc(m.slug)}</span>`).join(''):'<span class="muted">none</span>'}</td>
       <td>${p.ips.length?p.ips.map(i=>`<code>${esc(i)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td>
       <td>${p.tags.length?p.tags.map(t=>`<span class="pill model">${esc(t)}</span>`).join(''):'<span class="muted">—</span>'}</td></tr>`;}).join('')

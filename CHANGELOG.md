@@ -49,6 +49,13 @@ config foolproof.
   sky) with white Heroicons-style SVGs — matching the IT Portal Quick-Actions
   style — replacing the remaining emoji in section titles.
 
+### Added (Setup Wizard)
+- **Wizard tab** — a 4-step guided flow (Model → Route → Project → Review) that
+  provisions a full working path in one shot: a service (`svc-<slug>` + key-auth
+  + `acl-<slug>`), its route, and a project (`prj-<name>` with token, ACL
+  membership and optional IP restriction), ending in a review summary. The last
+  emoji (Generate, reveal) are now inline SVG too.
+
 ### Added (Governance & convenience — P2)
 - **Audit tab** — admin change log: who did what (actor, source IP, method →
   Create/Update/Delete, object, result), newest first, defaulting to changes
