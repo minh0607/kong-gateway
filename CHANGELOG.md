@@ -55,6 +55,11 @@ config foolproof.
   + `acl-<slug>`), its route, and a project (`prj-<name>` with token, ACL
   membership and optional IP restriction), ending in a review summary. The last
   emoji (Generate, reveal) are now inline SVG too.
+  - **Two modes:** *Create a new model* (greenfield) or *Use an existing model*
+    — the latter skips service/route creation, auto-detects the model's ACL
+    group / key-header / route, and just adds a new project to it. New mode
+    **guards against an existing slug** (won't overwrite a model) — telling you
+    to switch to existing mode instead.
 
 ### Added (Governance & convenience — P2)
 - **Audit tab** — admin change log: who did what (actor, source IP, method →

@@ -194,18 +194,31 @@
         <div class="wsteps" id="wsteps"></div>
         <div class="wstep" data-step="1">
           <h3>Step 1 · Model (Service)</h3>
-          <p class="hint">The backend to expose. Creates <code>svc-&lt;slug&gt;</code> with key-auth + an <code>acl-&lt;slug&gt;</code> group.</p>
-          <div class="fld"><label>Capability slug <span class="muted">(a-z0-9-)</span></label><input id="w_slug" placeholder="chat"/></div>
-          <div class="fld"><label>Backend URL</label><input id="w_url" placeholder="http://107.118.109.31:8000"/></div>
-          <div class="row"><div class="fld"><label>Server tag <span class="muted">(optional)</span></label><input id="w_box" placeholder="vllm01"/></div><div class="fld"><label>Model tag <span class="muted">(optional)</span></label><input id="w_model" placeholder="gemma-3-27b"/></div></div>
-          <div class="fld"><label>API-key header</label><select id="w_header"><option value="x-api-key">x-api-key (n8n / generic)</option><option value="Authorization">Authorization + Bearer (OpenAI-compatible)</option></select></div>
+          <div class="fld"><label>Mode</label><select id="w_mode" onchange="wModeChange()">
+            <option value="new">Create a new model</option>
+            <option value="existing">Use an existing model — just add a project</option>
+          </select></div>
+          <div id="w_newbox">
+            <p class="hint">Creates <code>svc-&lt;slug&gt;</code> with key-auth + an <code>acl-&lt;slug&gt;</code> group.</p>
+            <div class="fld"><label>Capability slug <span class="muted">(a-z0-9-)</span></label><input id="w_slug" placeholder="chat"/></div>
+            <div class="fld"><label>Backend URL</label><input id="w_url" placeholder="http://107.118.109.31:8000"/></div>
+            <div class="row"><div class="fld"><label>Server tag <span class="muted">(optional)</span></label><input id="w_box" placeholder="vllm01"/></div><div class="fld"><label>Model tag <span class="muted">(optional)</span></label><input id="w_model" placeholder="gemma-3-27b"/></div></div>
+            <div class="fld"><label>API-key header</label><select id="w_header"><option value="x-api-key">x-api-key (n8n / generic)</option><option value="Authorization">Authorization + Bearer (OpenAI-compatible)</option></select></div>
+          </div>
+          <div id="w_existbox" class="hidden">
+            <p class="hint">The service, route and security already exist — the wizard just adds a project to this model's ACL group.</p>
+            <div class="fld"><label>Existing model</label><select id="w_exist"></select></div>
+          </div>
         </div>
         <div class="wstep hidden" data-step="2">
           <h3>Step 2 · Route</h3>
-          <p class="hint">How clients reach this model. Defaults to <code>/slug</code>.</p>
-          <div class="fld"><label>Path</label><input id="w_path" placeholder="/chat"/></div>
-          <div class="fld"><label>Methods <span class="muted">(optional, comma)</span></label><input id="w_methods" placeholder="GET, POST"/></div>
-          <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin:4px 0"><input type="checkbox" id="w_strip" checked style="width:auto"/> strip_path <span class="muted" style="font-weight:400">(needed for OpenAI-style /v1)</span></label>
+          <div id="w_routebox">
+            <p class="hint">How clients reach this model. Defaults to <code>/slug</code>.</p>
+            <div class="fld"><label>Path</label><input id="w_path" placeholder="/chat"/></div>
+            <div class="fld"><label>Methods <span class="muted">(optional, comma)</span></label><input id="w_methods" placeholder="GET, POST"/></div>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin:4px 0"><input type="checkbox" id="w_strip" checked style="width:auto"/> strip_path <span class="muted" style="font-weight:400">(needed for OpenAI-style /v1)</span></label>
+          </div>
+          <div id="w_routeskip" class="hidden"><p class="hint">This model already has its route — skipping. Click Next.</p></div>
         </div>
         <div class="wstep hidden" data-step="3">
           <h3>Step 3 · Project (Consumer)</h3>
@@ -926,51 +939,80 @@ function requestsCSV(){if(!_reqRows.length)return toast('Nothing to export','err
 function filterTable(inp,tbodyId){const f=(inp.value||'').toLowerCase();document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(f)?'':'none';});}
 
 // ===== SETUP WIZARD (service + route + consumer in one flow) =====
-let _wiz=1;
-function loadWizard(){_wiz=1;$('#w_result').innerHTML='';wRender();}
+let _wiz=1,_wizTarget={};
+function wMode(){return $('#w_mode')?$('#w_mode').value:'new';}
+async function loadWizard(){_wiz=1;$('#w_result').innerHTML='';
+  try{const svcs=(await api('GET','/services?size=1000')).data;
+    $('#w_exist').innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')||'<option value="">(no models yet)</option>';
+  }catch(e){}
+  if($('#w_mode'))$('#w_mode').value='new';wModeChange();wRender();}
+function wModeChange(){const ex=wMode()==='existing';
+  $('#w_newbox').classList.toggle('hidden',ex);$('#w_existbox').classList.toggle('hidden',!ex);
+  if($('#w_routebox')){$('#w_routebox').classList.toggle('hidden',ex);$('#w_routeskip').classList.toggle('hidden',!ex);}}
 function wRender(){const steps=['Model','Route','Project','Review'];
   $('#wsteps').innerHTML=steps.map((s,i)=>`<div class="ws ${i+1===_wiz?'on':(i+1<_wiz?'done':'')}">${i+1}. ${esc(s)}</div>`).join('');
   document.querySelectorAll('#tab-wizard .wstep').forEach(el=>el.classList.toggle('hidden',(+el.dataset.step)!==_wiz));
   $('#w_back').style.visibility=_wiz===1?'hidden':'visible';
-  $('#w_next').textContent=_wiz===4?'Create all →':'Next →';}
+  $('#w_next').textContent=_wiz===4?'Create →':'Next →';}
 function wGen(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];$('#w_token').value=s;toast('Generated a secure token','ok');}
-function wStep(dir){
+async function _wizExisting(svc){const pls=(await api('GET','/services/'+encodeURIComponent(svc)+'/plugins')).data;
+  const aclp=pls.find(p=>p.name==='acl'),kap=pls.find(p=>p.name==='key-auth');
+  const acl=(aclp&&aclp.config.allow&&aclp.config.allow[0])||('acl-'+svc.replace(/^svc-/,''));
+  const header=(kap&&kap.config.key_names&&kap.config.key_names[0])||'x-api-key';
+  let rp='';try{const rs=(await api('GET','/services/'+encodeURIComponent(svc)+'/routes')).data;rp=(rs[0]&&rs[0].paths&&rs[0].paths[0])||'';}catch(e){}
+  return {acl,header,rp,noAcl:!aclp};}
+async function wStep(dir){
   if(dir>0){
-    if(_wiz===1){if(!slugOk($('#w_slug').value.trim()))return toast('Invalid slug (a-z0-9-)','err');if(!$('#w_url').value.trim())return toast('Backend URL required','err');if(!$('#w_path').value.trim())$('#w_path').value='/'+$('#w_slug').value.trim();}
-    if(_wiz===2){if(!$('#w_path').value.trim())return toast('Path required','err');}
+    if(_wiz===1){
+      if(wMode()==='new'){const slug=$('#w_slug').value.trim();
+        if(!slugOk(slug))return toast('Invalid slug (a-z0-9-)','err');
+        if(!/^https?:\/\/[^/\s]+/.test($('#w_url').value.trim()))return toast('Invalid backend URL','err');
+        try{const ex=await api('GET','/services/svc-'+slug);if(ex&&ex.id)return toast('svc-'+slug+' already exists — switch to "Use an existing model".','err');}catch(e){}
+        if(!$('#w_path').value.trim())$('#w_path').value='/'+slug;
+      }else{if(!$('#w_exist').value)return toast('Pick an existing model','err');}
+    }
+    if(_wiz===2&&wMode()==='new'){if(!$('#w_path').value.trim())return toast('Path required','err');}
     if(_wiz===3){if(!slugOk($('#w_pname').value.trim()))return toast('Invalid project name','err');if(!$('#w_token').value.trim())return toast('Token required','err');}
     if(_wiz===4)return wCreate();
   }
-  _wiz=Math.max(1,Math.min(4,_wiz+dir));if(_wiz===4)wReview();wRender();}
-function wReview(){const slug=$('#w_slug').value.trim(),pname=$('#w_pname').value.trim(),header=$('#w_header').value;
-  const tok=$('#w_token').value.trim(),ips=$('#w_ips').value.trim(),methods=$('#w_methods').value.trim();
-  $('#w_review').innerHTML=`<table class="wrev"><tbody>
-    <tr><td>Model (service)</td><td><b>svc-${esc(slug)}</b> → <code>${esc($('#w_url').value.trim())}</code></td></tr>
+  _wiz=Math.max(1,Math.min(4,_wiz+dir));if(_wiz===4)await wReview();wRender();}
+async function wReview(){const pname=$('#w_pname').value.trim(),tok=$('#w_token').value.trim(),ips=$('#w_ips').value.trim();let rows='';
+  if(wMode()==='new'){const slug=$('#w_slug').value.trim(),header=$('#w_header').value,methods=$('#w_methods').value.trim();
+    _wizTarget={svc:'svc-'+slug,acl:'acl-'+slug,rp:$('#w_path').value.trim(),header};
+    rows=`<tr><td>Model (service)</td><td><b>svc-${esc(slug)}</b> <span class="pill">new</span> → <code>${esc($('#w_url').value.trim())}</code></td></tr>
     <tr><td>Security</td><td>key-auth (<code>${esc(header)}</code>) + acl group <b>acl-${esc(slug)}</b></td></tr>
-    <tr><td>Route</td><td><code>${esc($('#w_path').value.trim())}</code>${methods?' · '+esc(methods.toUpperCase()):''} · strip_path=${$('#w_strip').checked}</td></tr>
+    <tr><td>Route</td><td><code>${esc($('#w_path').value.trim())}</code>${methods?' · '+esc(methods.toUpperCase()):''} · strip_path=${$('#w_strip').checked}</td></tr>`;
+  }else{const svc=$('#w_exist').value,d=await _wizExisting(svc);_wizTarget=Object.assign({svc},d);
+    rows=`<tr><td>Model (service)</td><td><b>${esc(svc)}</b> <span class="pill model">existing</span></td></tr>
+    <tr><td>Security</td><td>key-auth (<code>${esc(d.header)}</code>) · adds to acl group <b>${esc(d.acl)}</b></td></tr>
+    <tr><td>Route</td><td><code>${esc(d.rp||'—')}</code></td></tr>`;}
+  $('#w_review').innerHTML=`<table class="wrev"><tbody>${rows}
     <tr><td>Project (consumer)</td><td><b>prj-${esc(pname)}</b> · token <code>${esc(tok.slice(0,4))}…${esc(tok.slice(-2))}</code></td></tr>
     <tr><td>Allowed IPs</td><td>${ips?esc(ips):'<span class="muted">unrestricted</span>'}</td></tr>
-    <tr><td>Result</td><td><b>prj-${esc(pname)}</b> will be able to call <b>svc-${esc(slug)}</b> at <code>:8000${esc($('#w_path').value.trim())}</code></td></tr>
+    <tr><td>Result</td><td><b>prj-${esc(pname)}</b> will be able to call <b>${esc(_wizTarget.svc)}</b> at <code>:8000${esc(_wizTarget.rp||'')}</code></td></tr>
   </tbody></table>`;}
-async function wCreate(){
-  const slug=$('#w_slug').value.trim(),url=$('#w_url').value.trim(),box=$('#w_box').value.trim(),model=$('#w_model').value.trim(),header=$('#w_header').value;
-  const path=$('#w_path').value.trim(),methods=csv($('#w_methods').value).map(m=>m.toUpperCase()),strip=$('#w_strip').checked;
-  const pname=$('#w_pname').value.trim(),token=$('#w_token').value.trim(),ips=csv($('#w_ips').value);
-  const svc='svc-'+slug,acl='acl-'+slug,con='prj-'+pname;const rp=path[0]==='/'?path:'/'+path;
-  const res=$('#w_result');res.innerHTML='<p class="muted">Creating…</p>';const log=[];const ok=s=>log.push('✓ '+s);
+async function wCreate(){const pname=$('#w_pname').value.trim(),token=$('#w_token').value.trim(),ips=csv($('#w_ips').value);
+  const con='prj-'+pname;const res=$('#w_result');res.innerHTML='<p class="muted">Creating…</p>';const log=[];const ok=s=>log.push('✓ '+s);
   try{
-    const tags=['env:pca','kind:vllm','cap:'+slug];if(box)tags.push('box:'+box);if(model)tags.push('model:'+model);
-    await api('PUT','/services/'+svc,{url,tags});ok('service '+svc);
-    await ensurePlugin(svc,'key-auth',{key_names:[header]});await ensurePlugin(svc,'acl',{allow:[acl]});ok('key-auth + acl ('+acl+')');
-    const rbody={paths:[rp],strip_path:strip};if(methods.length)rbody.methods=methods;
-    await api('POST','/services/'+svc+'/routes',rbody);ok('route '+rp);
+    let svc,acl,rp,header;
+    if(wMode()==='new'){const slug=$('#w_slug').value.trim(),url=$('#w_url').value.trim(),box=$('#w_box').value.trim(),model=$('#w_model').value.trim();
+      header=$('#w_header').value;svc='svc-'+slug;acl='acl-'+slug;const pth=$('#w_path').value.trim();rp=pth[0]==='/'?pth:'/'+pth;
+      const methods=csv($('#w_methods').value).map(m=>m.toUpperCase()),strip=$('#w_strip').checked;
+      const tags=['env:pca','kind:vllm','cap:'+slug];if(box)tags.push('box:'+box);if(model)tags.push('model:'+model);
+      await api('PUT','/services/'+svc,{url,tags});ok('service '+svc);
+      await ensurePlugin(svc,'key-auth',{key_names:[header]});await ensurePlugin(svc,'acl',{allow:[acl]});ok('key-auth + acl ('+acl+')');
+      const rbody={paths:[rp],strip_path:strip};if(methods.length)rbody.methods=methods;
+      await api('POST','/services/'+svc+'/routes',rbody);ok('route '+rp);
+    }else{svc=$('#w_exist').value;const d=await _wizExisting(svc);acl=d.acl;rp=d.rp;header=d.header;
+      if(d.noAcl){await ensurePlugin(svc,'acl',{allow:[acl]});ok('added acl group '+acl+' to '+svc);}
+      ok('using existing '+svc+' (acl '+acl+')');}
     await api('PUT','/consumers/'+con,{tags:[]});ok('consumer '+con);
     const fkey=header==='Authorization'?('Bearer '+token):token;
     await api('POST','/consumers/'+con+'/key-auth',{key:fkey});ok('API key');
     await api('POST','/consumers/'+con+'/acls',{group:acl});ok('ACL membership '+acl);
     if(ips.length){await api('POST','/consumers/'+con+'/plugins',{name:'ip-restriction',config:{allow:ips}});ok('ip-restriction '+ips.join(','));}
-    res.innerHTML=`<div class="card" style="margin:0;padding:14px 16px;border-color:#059669"><b style="color:#059669">✓ Done —</b> <b>${esc(con)}</b> can now call <b>${esc(svc)}</b> at <code>:8000${esc(rp)}</code>. Try it in the <b>Test</b> tab.<pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0">${esc(log.join('\n'))}</pre></div>`;
-    toast('Wizard created '+svc+' + '+con,'ok');
+    res.innerHTML=`<div class="card" style="margin:0;padding:14px 16px;border-color:#059669"><b style="color:#059669">✓ Done —</b> <b>${esc(con)}</b> can now call <b>${esc(svc)}</b> at <code>:8000${esc(rp||'')}</code>. Try it in the <b>Test</b> tab.<pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0">${esc(log.join('\n'))}</pre></div>`;
+    toast('Wizard: '+con+' → '+svc,'ok');
   }catch(e){res.innerHTML=`<div class="card" style="margin:0;padding:14px 16px;border-color:var(--red)"><b style="color:var(--red)">Failed:</b> ${esc(e.message)}${log.length?'<pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0">'+esc(log.join('\n'))+'</pre>':''}</div>`;}}
 
 // ===== PLUGINS (simple, per-model protections) =====
