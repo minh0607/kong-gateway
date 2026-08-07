@@ -4,10 +4,22 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
-## [1.0.6] — 2026-07-28
+## [1.0.6] — 2026-08-07
 
-Portal management upgrades — cover the full Kong object model and make plugin
-config foolproof.
+Portal management upgrades — cover the full Kong object model, make plugin config
+foolproof, add a Setup Wizard, and align the UI to the IT Portal design system.
+The portal is now a full web console (13 tabs) beside `kong-manage.sh`; see
+`docs/confluence/09-model-portal.md`.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.6.sha256.txt
+tar xzf kong-pca-bundle-v1.0.6.tar.gz && cd v1.0.6
+sudo ./pca-deploy.sh kong-deploy-v1.0.6.tar.gz --cert-ip <PCA_IP>
+```
+Upgrade-safe: no `down -v`, a `pg_dump` backup is taken first, and only changed
+containers restart. After deploy, open `https://<PCA_IP>:8452/kongportal` and
+check the Overview health strip has **no** stray global-auth warning.
 
 ### Added
 - **Consumers tab** — add any consumer (incl. non-convention / legacy names),
