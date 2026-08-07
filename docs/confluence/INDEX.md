@@ -16,7 +16,8 @@ SEHC AI Gateway (space / parent page)
 ├── 05 · Backup & Restore    ← 05-backup-restore.md
 ├── 06 · Monitoring          ← 06-monitoring.md         [img: diagram-monitoring.svg]
 ├── 07 · Client Integration  ← 07-client-integration.md
-└── 08 · Reference           ← 08-reference.md
+├── 08 · Reference           ← 08-reference.md
+└── 09 · Model Portal (GUI)  ← 09-model-portal.md
 ```
 
 ## Images

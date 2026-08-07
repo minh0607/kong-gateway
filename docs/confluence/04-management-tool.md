@@ -4,6 +4,10 @@
 > It centralizes the day-to-day operations: creating services/routes/consumers,
 > applying the 3-layer security, and maintaining the gateway. Requires `python3`
 > and `curl` on the host running it.
+>
+> **Prefer a GUI?** The same operations (and more — usage, requests, audit,
+> backup) are available in the **Model Portal** web UI — see page
+> *09 · Model Portal*.
 
 ---
 
