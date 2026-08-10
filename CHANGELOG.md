@@ -4,6 +4,37 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.8] — 2026-08-07
+
+UX polish + a portal-serving reliability fix, from a parallel UX-review + QA-agent
+cross-check of all 13 tabs (all functions verified PASS, 0 JS errors).
+
+### Fixed
+- **Portal survives a file swap.** The auth-proxy bind-mounted the *single file*
+  `portal/portal.html`; replacing it on the host (new inode) made nginx **404
+  `/kongportal`** until a container restart. Now the **directory** is mounted
+  (`./portal → /etc/nginx/model-portal`, `alias …/portal.html`), so updating the
+  file is served immediately — verified by rewriting the file live (stays 200).
+- **Plugins tab used emoji** for the built-in protections (🔑 key-auth, 👥 acl,
+  ⏱ rate-limiting, 📦 request-size-limiting, 🤖 bot-detection, 🌐 cors, 🔌) — now
+  inline **SVG (Heroicons-style)**, so they're consistent and render correctly in
+  dark mode.
+- **No horizontal overflow on mobile (≤640px).** Grid `.split` children now carry
+  `min-width:0` so wide tables scroll inside their own container instead of
+  pushing the page; card-header toolbars wrap; schema-form (`.pfrow`) inputs go
+  full-width. Verified 0 overflow across all 13 tabs at 375px.
+- **Requests** status codes render as **semantic badges** (not bare colored text).
+- **Test** body textarea is monospace and taller; **Backup** file input + all
+  textareas are styled for dark mode (no white flash) and the export counts sit in
+  a 2-column grid.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.8.sha256.txt
+tar xzf kong-pca-bundle-v1.0.8.tar.gz && cd v1.0.8
+sudo ./pca-deploy.sh kong-deploy-v1.0.8.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.7] — 2026-08-07
 
 Portal layout fix — fill wide screens.

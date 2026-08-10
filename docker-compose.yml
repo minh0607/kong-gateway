@@ -113,7 +113,9 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
       - ./nginx/portal.html:/etc/nginx/portal.html:ro
-      - ./portal/portal.html:/etc/nginx/model-portal.html:ro
+      # Mount the DIRECTORY (not the single file) so replacing portal.html on the
+      # host (new inode) does not make nginx 404 the portal until a restart.
+      - ./portal:/etc/nginx/model-portal:ro
       - ./ssl:/etc/nginx/ssl:ro
       - ./data/audit:/var/log/audit
       - ./data/reqlog:/kong-reqlog:ro
