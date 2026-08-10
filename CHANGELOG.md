@@ -4,6 +4,30 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.7] — 2026-08-07
+
+Portal layout fix — fill wide screens.
+
+### Fixed
+- **The portal now fills wide monitors.** The content container was hard-capped
+  at `max-width:1180px`, leaving a ~500px empty band on the right of a 1920px
+  screen (the topbar filled, the body did not — looking "squished"). Raised the
+  cap to a full-width workbench (`max-width:2100px`, centered) so it fills up to
+  ~2340px windows and only centers on ultra-wide (2560/3440) for readable line
+  lengths. Verified from 320→2560px with no horizontal overflow.
+- **Wizard and Plugins tabs** (each a single fixed-width card) are now centered
+  instead of left-dumped, so their whitespace is balanced.
+- **Collapsed sidebar (<900px)** hardened: the wide logo no longer overflows the
+  64px rail (it was overlapping the page title), the connection-status text is
+  hidden, and the footer toggle is centered.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.7.sha256.txt
+tar xzf kong-pca-bundle-v1.0.7.tar.gz && cd v1.0.7
+sudo ./pca-deploy.sh kong-deploy-v1.0.7.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.6] — 2026-08-07
 
 Portal management upgrades — cover the full Kong object model, make plugin config

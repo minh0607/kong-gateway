@@ -53,9 +53,9 @@
   .topbar{height:64px;display:flex;align-items:center;gap:14px;padding:0 26px;border-bottom:1px solid var(--line);background:var(--card)}
   .topbar h1{font-size:17px;font-weight:800;margin:0}
   .topbar .sub{font-size:12px;color:var(--sub)}
-  .content{padding:24px 26px;max-width:1180px}
+  .content{padding:24px 28px;max-width:2100px;margin:0 auto}
   .split{display:grid;grid-template-columns:350px 1fr;gap:20px}
-  @media(max-width:900px){aside{width:64px}.nav-item span,nav .lbl{display:none}main{margin-left:64px}.split{grid-template-columns:1fr}}
+  @media(max-width:900px){aside{width:64px}.nav-item span,nav .lbl{display:none}main{margin-left:64px}.split{grid-template-columns:1fr}.sb-head{padding:0 10px;overflow:hidden}.sb-head img{max-width:100%}.sb-foot{justify-content:center}.sb-foot #conn{display:none}}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px}
   .card h2{margin:0 0 3px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px}
@@ -190,7 +190,7 @@
 
     <!-- ===== WIZARD ===== -->
     <section id="tab-wizard" class="hidden">
-      <div class="card" style="max-width:760px">
+      <div class="card" style="max-width:760px;margin:0 auto">
         <div class="wsteps" id="wsteps"></div>
         <div class="wstep" data-step="1">
           <h3>Step 1 · Model (Service)</h3>
@@ -510,7 +510,7 @@
 
     <!-- ===== PLUGINS ===== -->
     <section id="tab-plugins" class="hidden">
-      <div class="card" style="max-width:800px">
+      <div class="card" style="max-width:800px;margin:0 auto">
         <div class="row" style="justify-content:space-between;align-items:flex-end">
           <div style="flex:0 0 auto"><label>Choose a model</label><select id="pl_svc" onchange="loadModelProtections()" style="min-width:250px"></select></div>
           <button class="btn sec sm" onclick="loadModelProtections()">↻ Refresh</button>
