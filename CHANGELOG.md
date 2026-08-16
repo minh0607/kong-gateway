@@ -4,6 +4,23 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.14] — 2026-08-10
+
+### Added
+- **"Make managed" button.** Any service missing key-auth or acl (typically a
+  legacy / open service) shows a one-click **Make managed** action in the Models
+  tab: it adds **key-auth** (choose the header) and an **acl** group (`acl-<name>`),
+  turning an open service into an access-controlled one — after which you can grant
+  projects to it (Projects/Wizard), see its consumers in Topology, etc. Fully-
+  secured services don't show the button.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.14.sha256.txt
+tar xzf kong-pca-bundle-v1.0.14.tar.gz && cd v1.0.14
+sudo ./pca-deploy.sh kong-deploy-v1.0.14.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.13] — 2026-08-10
 
 ### Fixed

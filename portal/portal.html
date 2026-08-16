@@ -616,7 +616,9 @@ async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td
       const back=`${s.protocol}://${s.host}:${s.port}${s.path||''}`;const path=rt?(rt.paths||[]).join(', '):'—';
       const legacy=!(s.name||'').startsWith('svc-')?' <span class="pill model">legacy</span>':' <span class="pill">managed</span>';
       const rid=rt?rt.id:'';
-      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button> <button class="btn red sm" onclick="delModel('${esc(s.name)}')">Delete</button></td></tr>`);}
+      const secured=plugins.includes('key-auth')&&plugins.includes('acl');
+      const conv=secured?'':` <button class="btn sm" style="background:linear-gradient(135deg,#34d399,#059669)" title="Add key-auth + acl so it can be access-controlled" onclick="makeManaged('${esc(s.name)}')">Make managed</button>`;
+      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button>${conv} <button class="btn red sm" onclick="delModel('${esc(s.name)}')">Delete</button></td></tr>`);}
     body.innerHTML=rows.join('')||`<tr><td colspan="5" class="muted">${showAll?'No services.':'No models yet (svc-*). Tick “Show all” to see legacy services.'}</td></tr>`;
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 async function delModel(name){if(!confirm('Delete model '+name+'?\n\nThis removes its service, all its routes and plugins. Consumers/keys are NOT touched.'))return;
@@ -624,6 +626,13 @@ async function delModel(name){if(!confirm('Delete model '+name+'?\n\nThis remove
     for(const r of routes){await api('DELETE','/routes/'+r.id);}
     await api('DELETE','/services/'+encodeURIComponent(name));
     toast('Deleted '+name,'ok');loadModels();
+  }catch(e){toast('Error: '+e.message,'err');}}
+async function makeManaged(name){
+  const grp=name.startsWith('svc-')?'acl-'+name.slice(4):'acl-'+name.replace(/[^a-zA-Z0-9_-]/g,'-').toLowerCase();
+  const header=prompt('Add key-auth + acl to "'+name+'" so it can be access-controlled.\n\nKey header (x-api-key or Authorization):\nACL group will be: '+grp,'x-api-key');
+  if(header===null)return;const h=header.trim()||'x-api-key';
+  try{await ensurePlugin(name,'key-auth',{key_names:[h]});await ensurePlugin(name,'acl',{allow:[grp]});
+    toast('✔ '+name+' now managed — key-auth ('+h+') + acl group '+grp,'ok');loadModels();
   }catch(e){toast('Error: '+e.message,'err');}}
 
 // ===== ROUTES (many per service) =====
