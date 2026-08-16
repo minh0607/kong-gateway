@@ -693,9 +693,16 @@ function pendRm(ctx,i,listId){(_pend[ctx]||[]).splice(i,1);pendRender(ctx,listId
 async function pendCreate(ctx,svc){for(const p of (_pend[ctx]||[])){try{const body={name:p.name};if(p.instance_name)body.instance_name=p.instance_name;await api('POST','/services/'+encodeURIComponent(svc)+'/plugins',body);}catch(e){toast('Plugin '+(p.instance_name||p.name)+': '+e.message,'err');}}_pend[ctx]=[];pendRender(ctx,ctx==='m'?'#m_pluglist':'#w_pluglist');}
 
 // ===== PROJECTS =====
+let _modelAcl={};
 async function loadModelChecks(){const box=$('#p_models');box.innerHTML='<span class="muted">Loading…</span>';
-  try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
-    box.innerHTML=svcs.map(s=>{const slug=s.name.slice(4);return `<label><input type="checkbox" value="${esc(slug)}"> ${esc(slug)}</label>`;}).join('')||'<span class="muted">No models. Create one first.</span>';
+  try{const svcs=(await api('GET','/services?size=1000')).data;_modelAcl={};const parts=[];
+    for(const s of svcs){const legacy=!(s.name||'').startsWith('svc-');let grp='';
+      try{const aclp=(await api('GET','/services/'+encodeURIComponent(s.name)+'/plugins')).data.find(p=>p.name==='acl');grp=(aclp&&aclp.config.allow&&aclp.config.allow[0])||'';}catch(e){}
+      if(!grp&&!legacy)grp='acl-'+s.name.slice(4);
+      _modelAcl[s.name]=grp;
+      const label=legacy?esc(s.name)+' <span class="pill model">legacy</span>':esc(s.name.slice(4));
+      parts.push(`<label${grp?'':' style="opacity:.55"'}><input type="checkbox" value="${esc(s.name)}"${grp?'':' disabled'}> ${label}${grp?'':' <span class="muted">— no ACL, add one in Plugins</span>'}</label>`);}
+    box.innerHTML=parts.join('')||'<span class="muted">No services. Create one first.</span>';
   }catch(e){box.innerHTML=`<span style="color:var(--red)">Error: ${esc(e.message)}</span>`;}}
 async function loadProjects(){const body=$('#projects_body');body.innerHTML='<tr><td colspan="5" class="muted">Loading…</td></tr>';
   try{const cons=(await api('GET','/consumers?size=1000')).data.filter(c=>(c.username||'').startsWith('prj-'));const rows=[];
@@ -723,10 +730,12 @@ async function assignProject(){const name=$('#p_name').value.trim(),token=$('#p_
     const tags=projectTags.length?projectTags.slice():curTags;
     await api('PUT','/consumers/'+con,{tags});
     if(!existKeys.length&&token)await api('POST','/consumers/'+con+'/key-auth',{key:fkey});
-    // ACL diff: add selected, remove deselected acl-* groups
-    const haveAcls=(await api('GET','/consumers/'+con+'/acls')).data;const want=models.map(m=>'acl-'+m);
+    // ACL diff: map selected services → their real acl group; add selected, remove deselected model groups
+    const haveAcls=(await api('GET','/consumers/'+con+'/acls')).data;
+    const want=[...new Set(models.map(m=>_modelAcl[m]).filter(Boolean))];
+    const modelGroups=new Set(Object.values(_modelAcl).filter(Boolean));
     for(const g of want){if(!haveAcls.some(a=>a.group===g))await api('POST','/consumers/'+con+'/acls',{group:g});}
-    for(const a of haveAcls){if(a.group.startsWith('acl-')&&!want.includes(a.group))await api('DELETE','/consumers/'+con+'/acls/'+a.id);}
+    for(const a of haveAcls){if(modelGroups.has(a.group)&&!want.includes(a.group))await api('DELETE','/consumers/'+con+'/acls/'+a.id);}
     // IP restriction: set, or remove when cleared
     const pls=(await api('GET','/consumers/'+con+'/plugins')).data;const ex=pls.find(p=>p.name==='ip-restriction');
     if(ips.length){if(ex)await api('PATCH','/plugins/'+ex.id,{config:{allow:ips}});else await api('POST','/consumers/'+con+'/plugins',{name:'ip-restriction',config:{allow:ips}});}
@@ -740,7 +749,7 @@ async function editProject(con){try{
     $('#p_token').value='';$('#p_token').placeholder='(unchanged — leave blank)';
     await loadModelChecks();
     const acls=(await api('GET','/consumers/'+con+'/acls')).data.map(a=>a.group);
-    document.querySelectorAll('#p_models input').forEach(cb=>{cb.checked=acls.includes('acl-'+cb.value);});
+    document.querySelectorAll('#p_models input').forEach(cb=>{cb.checked=acls.includes(_modelAcl[cb.value]);});
     const pls=(await api('GET','/consumers/'+con+'/plugins')).data;const ipr=pls.find(p=>p.name==='ip-restriction');
     $('#p_ips').value=ipr?(ipr.config.allow||[]).join(', '):'';
     const c=await api('GET','/consumers/'+con);projectTags=(c.tags||[]).slice();renderChips();

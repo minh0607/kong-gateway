@@ -4,6 +4,29 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.13] — 2026-08-10
+
+### Fixed
+- **Assign a project to any service (incl. legacy).** The Projects "assign" model
+  list only offered `svc-*` models and hard-coded the group as `acl-<slug>`. It now
+  lists **all** services, resolves each service's **real ACL group** from its acl
+  plugin, and can grant a project to legacy services too. Services with **no ACL**
+  are shown but disabled with a hint to add one in Plugins (you can't ACL-scope an
+  open service). Project edit and the add/remove diff now use the resolved groups.
+
+### Notes
+- Full audit: every management function now works on **all configured objects**,
+  not just convention (`svc-`/`prj-`) ones — Models (show-all), Routes, Consumers,
+  Plugins, Upstreams, Projects, Topology, Test, Backup. The **Topology** tab is the
+  all-objects map; Overview remains the convention summary.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.13.sha256.txt
+tar xzf kong-pca-bundle-v1.0.13.tar.gz && cd v1.0.13
+sudo ./pca-deploy.sh kong-deploy-v1.0.13.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.12] — 2026-08-10
 
 ### Fixed
