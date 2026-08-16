@@ -239,6 +239,10 @@
             <div class="fld"><label>Path</label><input id="w_path" placeholder="/chat"/></div>
             <div class="fld"><label>Methods <span class="muted">(optional, comma)</span></label><input id="w_methods" placeholder="GET, POST"/></div>
             <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin:4px 0"><input type="checkbox" id="w_strip" checked style="width:auto"/> strip_path <span class="muted" style="font-weight:400">(needed for OpenAI-style /v1)</span></label>
+            <div class="fld" style="margin-top:12px"><label>Init plugins <span class="muted">(optional — key-auth + acl are always added)</span></label>
+              <div class="row" style="gap:8px"><select id="w_plugsel" style="flex:2"></select><input id="w_pluginst" placeholder="instance name (optional)" style="flex:1.4"/><button type="button" class="btn sec sm" onclick="pendAdd('w','#w_plugsel','#w_pluginst','#w_pluglist')">+ Add</button></div>
+              <div id="w_pluglist" style="margin-top:8px"></div>
+            </div>
           </div>
           <div id="w_routeskip" class="hidden"><p class="hint">This model already has its route — skipping. Click Next.</p></div>
         </div>
@@ -275,6 +279,10 @@
           </div>
           <div class="fld"><label>API-key header</label>
             <select id="m_header"><option value="x-api-key">x-api-key (n8n)</option><option value="Authorization">Authorization + Bearer (Dify)</option></select></div>
+          <div class="fld"><label>Init plugins <span class="muted">(optional — key-auth + acl are always added)</span></label>
+            <div class="row" style="gap:8px"><select id="m_plugsel" style="flex:2"></select><input id="m_pluginst" placeholder="instance name (optional)" style="flex:1.4"/><button type="button" class="btn sec sm" onclick="pendAdd('m','#m_plugsel','#m_pluginst','#m_pluglist')">+ Add</button></div>
+            <div id="m_pluglist" style="margin-top:8px"></div>
+          </div>
           <button class="btn" onclick="registerModel()">Register</button>
         </div>
         <div class="card">
@@ -583,7 +591,7 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   if(tab==='overview') loadOverview();
   if(tab==='topology') loadTopology();
   if(tab==='wizard') loadWizard();
-  if(tab==='models') loadModels();
+  if(tab==='models'){loadModels();pendFill('#m_plugsel');}
   if(tab==='routes') loadRoutes();
   if(tab==='projects'){loadModelChecks();loadProjects();}
   if(tab==='consumers') loadConsumers();
@@ -666,11 +674,23 @@ async function registerModel(){const slug=$('#m_slug').value.trim(),url=$('#m_ur
   try{await api('PUT','/services/'+svc,{url,connect_timeout:60000,read_timeout:600000,write_timeout:600000,tags});
     await api('PUT','/services/'+svc+'/routes/'+rt,{paths:[path],strip_path:true,tags});
     await ensurePlugin(svc,'key-auth',{key_names:[header]});await ensurePlugin(svc,'acl',{allow:[acl]});
+    await pendCreate('m',svc);
     toast('✔ Registered '+svc+'  ('+path+')','ok');
     $('#m_slug').value=$('#m_url').value=$('#m_box').value=$('#m_model').value='';loadModels();
   }catch(e){toast('Error: '+e.message,'err');}}
 async function ensurePlugin(svc,name,config){const pls=(await api('GET','/services/'+svc+'/plugins')).data;const ex=pls.find(p=>p.name===name);
   if(ex)return api('PATCH','/plugins/'+ex.id,{config});return api('POST','/services/'+svc+'/plugins',{name,config});}
+// ---- pending-plugins picker (init plugins with instance names at service creation) ----
+let _pend={};
+async function pendFill(selId){const el=$(selId);if(!el||el.dataset.filled)return;const av=await availablePlugins();
+  const list=(av.length?av:[]).slice().sort().filter(n=>!['key-auth','acl','prometheus','file-log'].includes(n));
+  el.innerHTML='<option value="">— pick a plugin —</option>'+list.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');el.dataset.filled='1';}
+function pendAdd(ctx,selId,instId,listId){const name=$(selId).value;if(!name)return toast('Pick a plugin','err');
+  const inst=($(instId).value||'').trim();(_pend[ctx]=_pend[ctx]||[]).push({name,instance_name:inst});
+  $(selId).value='';$(instId).value='';pendRender(ctx,listId);}
+function pendRender(ctx,listId){const a=_pend[ctx]||[];$(listId).innerHTML=a.map((p,i)=>`<span class="chip">${p.instance_name?'<b>'+esc(p.instance_name)+'</b> ':''}<span class="muted">${esc(p.name)}</span><b style="cursor:pointer" onclick="pendRm('${ctx}',${i},'${listId}')">×</b></span>`).join('')||'<span class="muted">none — key-auth + acl still added automatically</span>';}
+function pendRm(ctx,i,listId){(_pend[ctx]||[]).splice(i,1);pendRender(ctx,listId);}
+async function pendCreate(ctx,svc){for(const p of (_pend[ctx]||[])){try{const body={name:p.name};if(p.instance_name)body.instance_name=p.instance_name;await api('POST','/services/'+encodeURIComponent(svc)+'/plugins',body);}catch(e){toast('Plugin '+(p.instance_name||p.name)+': '+e.message,'err');}}_pend[ctx]=[];pendRender(ctx,ctx==='m'?'#m_pluglist':'#w_pluglist');}
 
 // ===== PROJECTS =====
 async function loadModelChecks(){const box=$('#p_models');box.innerHTML='<span class="muted">Loading…</span>';
@@ -973,6 +993,7 @@ async function loadWizard(){_wiz=1;$('#w_result').innerHTML='';
   try{const svcs=(await api('GET','/services?size=1000')).data;
     $('#w_exist').innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')||'<option value="">(no models yet)</option>';
   }catch(e){}
+  _pend.w=[];pendRender('w','#w_pluglist');pendFill('#w_plugsel');
   if($('#w_mode'))$('#w_mode').value='new';wModeChange();wRender();}
 function wModeChange(){const ex=wMode()==='existing';
   $('#w_newbox').classList.toggle('hidden',ex);$('#w_existbox').classList.toggle('hidden',!ex);
@@ -1031,6 +1052,7 @@ async function wCreate(){const pname=$('#w_pname').value.trim(),token=$('#w_toke
       await ensurePlugin(svc,'key-auth',{key_names:[header]});await ensurePlugin(svc,'acl',{allow:[acl]});ok('key-auth + acl ('+acl+')');
       const rbody={paths:[rp],strip_path:strip};if(methods.length)rbody.methods=methods;
       await api('POST','/services/'+svc+'/routes',rbody);ok('route '+rp);
+      const np=(_pend.w||[]).length;await pendCreate('w',svc);if(np)ok(np+' extra plugin(s)');
     }else{svc=$('#w_exist').value;const d=await _wizExisting(svc);acl=d.acl;rp=d.rp;header=d.header;
       if(d.noAcl){await ensurePlugin(svc,'acl',{allow:[acl]});ok('added acl group '+acl+' to '+svc);}
       ok('using existing '+svc+' (acl '+acl+')');}
@@ -1255,10 +1277,10 @@ async function loadTopology(){const host=$('#topo');if(!host)return;host.innerHT
     const conInfo={};
     for(const c of cons){
       const acls=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/acls')).data.map(a=>a.group);
-      const keys=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/key-auth')).data.length;
+      const kd=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/key-auth')).data;
       const pls=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/plugins')).data;
       const ipr=pls.find(p=>p.name==='ip-restriction');
-      conInfo[c.username]={groups:acls,keys,ips:ipr?(ipr.config.allow||[]):[]};}
+      conInfo[c.username]={groups:acls,keys:kd.length,keyval:(kd[0]&&kd[0].key)||'',ips:ipr?(ipr.config.allow||[]):[]};}
     const groupCons={};Object.entries(conInfo).forEach(([u,i])=>i.groups.forEach(g=>{(groupCons[g]=groupCons[g]||[]).push(u);}));
     _topo={svcs,routes,plugins,conInfo,groupCons};
     renderTopo();
@@ -1288,7 +1310,7 @@ function renderTopo(){if(!_topo)return;const host=$('#topo');const f=(($('#topo_
       <div class="tl" style="margin-top:14px">Client access <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— the URL a project calls (click to copy)</span></div>
       ${svcRoutes.length?svcRoutes.flatMap(r=>(r.paths&&r.paths.length?r.paths:['/'])).map(pth=>`<div class="accrow"><code class="cp" onclick="copyText(this.textContent)">${esc(accessURL('http',pth))}</code><code class="cp" onclick="copyText(this.textContent)">${esc(accessURL('https',pth))}</code></div>`).join(''):'<span class="muted">no route — not reachable</span>'}
       <div class="tl" style="margin-top:14px">Consumers that can call this ${reachable.length?'('+reachable.length+')':''}</div>
-      ${reachable.length?`<div style="overflow:auto"><table><thead><tr><th>Consumer</th><th>via group</th><th>Keys</th><th>Allowed IPs</th></tr></thead><tbody>${reachable.map(u=>`<tr><td><b>${esc(u)}</b></td><td>${conInfo[u].groups.filter(g=>allow.includes(g)).map(g=>`<span class="pill">${esc(g)}</span>`).join('')}</td><td>${conInfo[u].keys}</td><td>${conInfo[u].ips.length?conInfo[u].ips.map(x=>`<code>${esc(x)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td></tr>`).join('')}</tbody></table></div>`:(allow.length?'<span class="muted">No consumer is in these ACL groups yet.</span>':'<span class="muted">No ACL — any consumer with a valid key can call it.</span>')}
+      ${reachable.length?`<div style="overflow:auto"><table><thead><tr><th>Consumer</th><th>via group</th><th>API key</th><th>Allowed IPs</th></tr></thead><tbody>${reachable.map(u=>{const ki=conInfo[u];const kid='tk'+Math.abs(hash(s.name+'|'+u));const kc=ki.keyval?`<code id="${kid}" class="cp" title="click to copy" onclick="copyText('${esc(ki.keyval)}')">••••••</code> <b style="cursor:pointer" title="reveal" onclick="revToken('${kid}','${esc(ki.keyval)}')"><svg class="bico" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></b>${ki.keys>1?` <span class="muted">(+${ki.keys-1})</span>`:''}`:'<span class="muted">no key</span>';return `<tr><td><b>${esc(u)}</b></td><td>${ki.groups.filter(g=>allow.includes(g)).map(g=>`<span class="pill">${esc(g)}</span>`).join('')}</td><td>${kc}</td><td>${ki.ips.length?ki.ips.map(x=>`<code>${esc(x)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td></tr>`;}).join('')}</tbody></table></div>`:(allow.length?'<span class="muted">No consumer is in these ACL groups yet.</span>':'<span class="muted">No ACL — any consumer with a valid key can call it.</span>')}
     </div>`;}
   host.innerHTML=html||'<div class="card muted">No services match.</div>';}
 

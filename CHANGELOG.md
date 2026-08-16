@@ -4,6 +4,24 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.11] — 2026-08-10
+
+### Added
+- **Init plugins at service creation.** The Register Model form and the Setup
+  Wizard now have an optional "Init plugins" picker — add one or more plugins to
+  the new service (each with an optional **instance name**) right when it's
+  created, on top of the automatic key-auth + acl.
+- **Topology shows the API key.** The "Consumers that can call this" table now has
+  an **API key** column — masked by default, with a reveal (eye) toggle and
+  click-to-copy — so you can see the exact key each project uses per service.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.11.sha256.txt
+tar xzf kong-pca-bundle-v1.0.11.tar.gz && cd v1.0.11
+sudo ./pca-deploy.sh kong-deploy-v1.0.11.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.10] — 2026-08-10
 
 ### Added
