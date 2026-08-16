@@ -4,6 +4,28 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.9] — 2026-08-10
+
+Tell plugins apart and see the whole gateway at a glance.
+
+### Added
+- **Topology tab** — one holistic map of the gateway: each service shown with its
+  routes, its plugins (by name **and instance name**, with a config summary), its
+  ACL groups, and the consumers that can call it (via which group, key count,
+  allowed IPs). Answers "which service uses which route / plugin / ACL / consumer"
+  in a single screen, with a live filter across service / plugin / consumer.
+- **Plugin instance names.** Plugins can now be given an `instance_name` when
+  added or edited, and the Plugins tab shows it as the primary label (with the
+  plugin type as a sub-tag) — so multiple plugins are easy to tell apart instead
+  of a wall of same-typed rows.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.9.sha256.txt
+tar xzf kong-pca-bundle-v1.0.9.tar.gz && cd v1.0.9
+sudo ./pca-deploy.sh kong-deploy-v1.0.9.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.8] — 2026-08-07
 
 UX polish + a portal-serving reliability fix, from a parallel UX-review + QA-agent
