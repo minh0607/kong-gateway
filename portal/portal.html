@@ -135,6 +135,8 @@
   .topgrid{display:grid;grid-template-columns:1.1fr 1.6fr 1fr;gap:18px;margin-top:14px}
   .tl{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--sub);margin-bottom:7px}
   @media(max-width:760px){.topgrid{grid-template-columns:1fr}}
+  .accrow{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0;align-items:center}
+  .cp{cursor:pointer} .cp:hover{color:var(--primary);outline:1px dashed var(--line);outline-offset:2px}
   .wsteps{display:flex;gap:8px;margin-bottom:22px}
   .wsteps .ws{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--sub);padding-bottom:9px;border-bottom:3px solid var(--line);text-transform:uppercase;letter-spacing:.03em;transition:all .2s}
   .wsteps .ws.on{color:var(--primary);border-color:var(--primary)}
@@ -556,6 +558,10 @@ const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;
 if(localStorage.getItem('portal_dark')==='1')document.documentElement.classList.add('dark');
 function toggleDark(){const d=document.documentElement.classList.toggle('dark');localStorage.setItem('portal_dark',d?'1':'0');}
 function toast(m,k='ok'){const e=document.createElement('div');e.className=k;e.textContent=m;$('#toast').appendChild(e);setTimeout(()=>e.remove(),k==='err'?6000:3500);}
+// Client-facing gateway host: the host the portal was opened on (proxy is same box, ports 8000/8443).
+const GWHOST=(location.hostname||'GATEWAY');
+function accessURL(scheme,path){return scheme+'://'+GWHOST+':'+(scheme==='https'?'8443':'8000')+(path||'');}
+function copyText(t){const done=()=>toast('Copied '+t,'ok');if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,done);}else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();done();}}
 function genToken(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];const el=$('#p_token');el.value=s;el.focus();el.select();toast('Generated a 36-char secure token','ok');}
 // ----- project tag chips (add many) -----
 let projectTags=[];
@@ -1178,7 +1184,7 @@ async function loadOverview(){const host=$('#ov');if(!host)return;host.innerHTML
     html+=`<div class="card"><h2><span class="cico blue"><svg viewBox="0 0 24 24"><path d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg></span>Models</h2><p class="hint">Capability → client endpoint, backend, server tag, security plugins, and the projects allowed to call it.</p><div style="overflow:auto"><table><thead><tr><th>Model</th><th>Client endpoint</th><th>Backend</th><th>Server</th><th>Security</th><th>Used by</th></tr></thead><tbody>`;
     html+= models.length? models.map(m=>`<tr>
       <td><b>${esc(m.name)}</b>${m.mtag?`<br><span class="muted">${esc(m.mtag)}</span>`:''}</td>
-      <td><code>:8000${esc(m.path)}/v1</code></td>
+      <td style="line-height:1.9"><code class="cp" title="copy" onclick="copyText(this.textContent)">${esc(accessURL('http',m.path))}</code><br><code class="cp" title="copy" onclick="copyText(this.textContent)">${esc(accessURL('https',m.path))}</code></td>
       <td>${esc(m.back)}</td>
       <td>${m.box?`<span class="pill box">${esc(m.box)}</span>`:'—'}</td>
       <td>${plSummary(m.pls)}</td>
@@ -1279,6 +1285,8 @@ function renderTopo(){if(!_topo)return;const host=$('#topo');const f=(($('#topo_
         <div><div class="tl">Plugins</div>${allPl.length?allPl.map(_pchip).join(''):'<span class="muted">none</span>'}</div>
         <div><div class="tl">ACL groups</div>${allow.length?allow.map(g=>`<span class="pill">${esc(g)}</span>`).join(''):'<span class="muted">open (no acl)</span>'}</div>
       </div>
+      <div class="tl" style="margin-top:14px">Client access <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— the URL a project calls (click to copy)</span></div>
+      ${svcRoutes.length?svcRoutes.flatMap(r=>(r.paths&&r.paths.length?r.paths:['/'])).map(pth=>`<div class="accrow"><code class="cp" onclick="copyText(this.textContent)">${esc(accessURL('http',pth))}</code><code class="cp" onclick="copyText(this.textContent)">${esc(accessURL('https',pth))}</code></div>`).join(''):'<span class="muted">no route — not reachable</span>'}
       <div class="tl" style="margin-top:14px">Consumers that can call this ${reachable.length?'('+reachable.length+')':''}</div>
       ${reachable.length?`<div style="overflow:auto"><table><thead><tr><th>Consumer</th><th>via group</th><th>Keys</th><th>Allowed IPs</th></tr></thead><tbody>${reachable.map(u=>`<tr><td><b>${esc(u)}</b></td><td>${conInfo[u].groups.filter(g=>allow.includes(g)).map(g=>`<span class="pill">${esc(g)}</span>`).join('')}</td><td>${conInfo[u].keys}</td><td>${conInfo[u].ips.length?conInfo[u].ips.map(x=>`<code>${esc(x)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td></tr>`).join('')}</tbody></table></div>`:(allow.length?'<span class="muted">No consumer is in these ACL groups yet.</span>':'<span class="muted">No ACL — any consumer with a valid key can call it.</span>')}
     </div>`;}

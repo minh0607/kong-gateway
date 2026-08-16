@@ -4,6 +4,22 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.10] — 2026-08-10
+
+### Added
+- **Client access URLs.** The Topology tab and the Overview "Models" table now
+  show the exact URL a client calls for each route — both **`http://<gateway>:8000<path>`**
+  and **`https://<gateway>:8443<path>`** — using the host the portal is opened on
+  (so on PCA it reads e.g. `http://107.118.99.200:8000/abc`). Click a URL to copy
+  it. Services with no route are flagged "not reachable".
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.10.sha256.txt
+tar xzf kong-pca-bundle-v1.0.10.tar.gz && cd v1.0.10
+sudo ./pca-deploy.sh kong-deploy-v1.0.10.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.9] — 2026-08-10
 
 Tell plugins apart and see the whole gateway at a glance.
