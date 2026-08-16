@@ -1066,8 +1066,10 @@ async function wCreate(){const pname=$('#w_pname').value.trim(),token=$('#w_toke
   }catch(e){res.innerHTML=`<div class="card" style="margin:0;padding:14px 16px;border-color:var(--red)"><b style="color:var(--red)">Failed:</b> ${esc(e.message)}${log.length?'<pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0">'+esc(log.join('\n'))+'</pre>':''}</div>`;}}
 
 // ===== PLUGINS (simple, per-model protections) =====
-async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data.filter(s=>(s.name||'').startsWith('svc-'));
-  sel.innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name.slice(4))} — ${esc(s.name)}</option>`).join('')||'<option value="">(no models — create one first)</option>';
+async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('GET','/services?size=1000')).data;
+  const managed=svcs.filter(s=>(s.name||'').startsWith('svc-')),legacy=svcs.filter(s=>!(s.name||'').startsWith('svc-'));
+  const opt=s=>(s.name||'').startsWith('svc-')?`<option value="${esc(s.name)}">${esc(s.name.slice(4))} — ${esc(s.name)}</option>`:`<option value="${esc(s.name)}">${esc(s.name)} (legacy)</option>`;
+  sel.innerHTML=(managed.map(opt).join('')+legacy.map(opt).join(''))||'<option value="">(no services)</option>';
   loadModelProtections();}
 function coreRow(ic,name,desc,on){return `<div class="prow"><div class="pico">${ic}</div><div class="pinfo"><b>${name}</b><span>${desc}</span></div><div>${on?'<span class="badge on">✓ Active</span>':'<span class="badge off">Not set</span>'}</div><div></div></div>`;}
 function toggleRow(pname,ic,name,desc,svc,plugin,kind,unit,cfgKey,def){

@@ -4,6 +4,23 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.12] — 2026-08-10
+
+### Fixed
+- **Manage plugins on legacy services.** The Plugins tab model picker only listed
+  convention (`svc-*`) services, so legacy services (e.g. `1`) couldn't have their
+  plugins viewed, added (with instance names) or edited. It now lists **all**
+  services — convention ones first, legacy ones labelled `(legacy)`. (Topology,
+  Models show-all/edit, and the Wizard's "existing model" mode already covered
+  legacy; the Plugins tab was the remaining gap.)
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.12.sha256.txt
+tar xzf kong-pca-bundle-v1.0.12.tar.gz && cd v1.0.12
+sudo ./pca-deploy.sh kong-deploy-v1.0.12.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.11] — 2026-08-10
 
 ### Added
