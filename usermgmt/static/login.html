@@ -119,6 +119,51 @@
         </div>
       </div>
       <button type="submit" class="btn" id="loginBtn"><span class="spin" id="s1"></span><span id="t1">Sign in</span></button>
+      <p class="meta"><button type="button" class="link" onclick="goForgot()">Forgot password?</button></p>
+    </form>
+
+    <!-- Step: forgot (request reset code) -->
+    <form id="forgot-form" style="display:none" onsubmit="doForgot(event)">
+      <div class="head">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg></div>
+        <div><h2>Reset password</h2><p>We'll email a code to reset it</p></div>
+      </div>
+      <div class="fg">
+        <label>Username</label>
+        <div class="field">
+          <svg viewBox="0 0 24 24"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0"/></svg>
+          <input type="text" id="fg-username" required autocomplete="username" placeholder="admin">
+        </div>
+      </div>
+      <button type="submit" class="btn" id="forgotBtn"><span class="spin" id="s3"></span><span id="t3">Send reset code</span></button>
+      <p class="meta"><button type="button" class="link" onclick="backToPassword()">Back to sign in</button></p>
+    </form>
+
+    <!-- Step: reset (code + new password) -->
+    <form id="reset-form" style="display:none" onsubmit="doReset(event)">
+      <div class="head">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></div>
+        <div><h2>Set a new password</h2><p>Enter the emailed code + a new password</p></div>
+      </div>
+      <div class="mfa-note">
+        <svg viewBox="0 0 24 24"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+        <p>A 6-digit code was sent to <b id="rs-email"></b>.</p>
+      </div>
+      <div class="fg code-input">
+        <label>Reset code</label>
+        <div class="field"><input type="text" id="rs-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" placeholder="——————"></div>
+      </div>
+      <div class="fg">
+        <label>New password</label>
+        <div class="field">
+          <svg viewBox="0 0 24 24"><path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 0h10.5a2.25 2.25 0 012.25 2.25v6a2.25 2.25 0 01-2.25 2.25H6.75a2.25 2.25 0 01-2.25-2.25v-6a2.25 2.25 0 012.25-2.25z"/></svg>
+          <input type="password" id="rs-password" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters">
+          <button type="button" class="eye" onclick="togglePw2()" title="Show / hide"><svg viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button>
+        </div>
+      </div>
+      <button type="submit" class="btn" id="resetBtn"><span class="spin" id="s4"></span><span id="t4">Reset password</span></button>
+      <p class="meta" id="rs-countdown"></p>
+      <p class="meta"><button type="button" class="link" onclick="backToPassword()">Back to sign in</button></p>
     </form>
 
     <!-- Step 2: MFA -->
@@ -150,11 +195,32 @@
 let challengeId=null,countdownTimer=null,expiresAt=0;
 
 function showError(msg,ok){const el=document.getElementById('alert');el.textContent=msg;el.className='alert'+(ok?' ok':'');el.style.display='block';setTimeout(()=>el.style.display='none',ok?3000:4500);}
-function showStep(name){document.getElementById('password-form').style.display=name==='password'?'':'none';document.getElementById('mfa-form').style.display=name==='mfa'?'':'none';}
-function busy(which,on){const b=document.getElementById(which===1?'loginBtn':'verifyBtn');const s=document.getElementById(which===1?'s1':'s2');const t=document.getElementById(which===1?'t1':'t2');b.disabled=on;s.style.display=on?'inline-block':'none';t.textContent=on?(which===1?'Signing in…':'Verifying…'):(which===1?'Sign in':'Verify');}
+function showStep(name){['password','mfa','forgot','reset'].forEach(n=>{const el=document.getElementById(n+'-form');if(el)el.style.display=n===name?'':'none';});}
+const _busyMap={1:['loginBtn','s1','t1','Signing in…','Sign in'],2:['verifyBtn','s2','t2','Verifying…','Verify'],3:['forgotBtn','s3','t3','Sending…','Send reset code'],4:['resetBtn','s4','t4','Resetting…','Reset password']};
+function busy(which,on){const [bid,sid,tid,lb,li]=_busyMap[which];const b=document.getElementById(bid),s=document.getElementById(sid),t=document.getElementById(tid);b.disabled=on;s.style.display=on?'inline-block':'none';t.textContent=on?lb:li;}
 function togglePw(){const i=document.getElementById('password');i.type=i.type==='password'?'text':'password';document.getElementById('eye').style.color=i.type==='text'?'var(--primary)':'';}
+function togglePw2(){const i=document.getElementById('rs-password');i.type=i.type==='password'?'text':'password';}
+function goForgot(){document.getElementById('fg-username').value=document.getElementById('username').value.trim();showStep('forgot');document.getElementById('fg-username').focus();}
 
-function startCountdown(sec){expiresAt=Date.now()+sec*1000;if(countdownTimer)clearInterval(countdownTimer);const el=document.getElementById('countdown');
+async function doForgot(e){e.preventDefault();busy(3,true);
+  const username=document.getElementById('fg-username').value.trim();
+  try{const r=await fetch('/auth/forgot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
+    const data=await r.json();
+    if(!r.ok){showError(data.error||'Could not start reset');return;}
+    challengeId=data.challenge_id;document.getElementById('rs-email').textContent=data.masked_email;
+    showStep('reset');startCountdown(data.expires_in,'rs-countdown');document.getElementById('rs-code').focus();
+  }catch(err){showError('Connection error.');}finally{busy(3,false);}}
+
+async function doReset(e){e.preventDefault();busy(4,true);
+  const code=document.getElementById('rs-code').value.trim();const password=document.getElementById('rs-password').value;
+  try{const r=await fetch('/auth/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge_id:challengeId,code,password})});
+    const data=await r.json();
+    if(!r.ok){showError(data.error||'Reset failed');if(r.status===410)backToPassword();return;}
+    document.getElementById('rs-code').value='';document.getElementById('rs-password').value='';document.getElementById('password').value='';
+    backToPassword();showError('Password reset — please sign in.',true);
+  }catch(err){showError('Connection error.');}finally{busy(4,false);}}
+
+function startCountdown(sec,elId){expiresAt=Date.now()+sec*1000;if(countdownTimer)clearInterval(countdownTimer);const el=document.getElementById(elId||'countdown');
   function tick(){const left=Math.max(0,Math.floor((expiresAt-Date.now())/1000));el.textContent=`Code expires in ${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(left===0)clearInterval(countdownTimer);}
   tick();countdownTimer=setInterval(tick,1000);}
 
@@ -181,7 +247,7 @@ async function doResend(){try{const r=await fetch('/auth/mfa/resend',{method:'PO
     showError('A new code has been sent.',true);startCountdown(300);
   }catch(err){showError('Connection error.');}}
 
-function backToPassword(){challengeId=null;if(countdownTimer)clearInterval(countdownTimer);document.getElementById('code').value='';showStep('password');document.getElementById('username').focus();}
+function backToPassword(){challengeId=null;if(countdownTimer)clearInterval(countdownTimer);document.getElementById('code').value='';const rc=document.getElementById('rs-code');if(rc)rc.value='';const rp=document.getElementById('rs-password');if(rp)rp.value='';showStep('password');document.getElementById('username').focus();}
 function goNext(){const params=new URLSearchParams(window.location.search);const next=params.get('next')||'/';window.location.href=next;}
 </script>
 </body>

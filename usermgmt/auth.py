@@ -317,6 +317,83 @@ def mfa_resend():
     return jsonify({"message": "Code resent"})
 
 
+@bp.route("/auth/forgot", methods=["POST"])
+def forgot_submit():
+    """Self-service password reset — step 1: email a 6-digit reset code."""
+    import audit
+    import lockouts
+    import mailer
+    import mfa
+    from users import get_email
+
+    cfg = _config()
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    ip = _client_ip()
+    if not username:
+        return jsonify({"error": "Username required"}), 400
+    if lockouts.is_ip_locked(ip):
+        audit.write("reset.locked.ip", actor=username, ip=ip)
+        return jsonify({"error": "Too many attempts. Try again later."}), 423
+
+    email = get_email(username)
+    if not email:
+        audit.write("reset.no_email", actor=username, ip=ip)
+        return jsonify({"error": "No email on file for that account. Contact your administrator."}), 404
+
+    challenge_id, code = mfa.issue_challenge(username, ip)
+    try:
+        mailer.send_mfa_code(email, username, code)
+    except mailer.MailerError as e:
+        mfa.consume_challenge(challenge_id)
+        audit.write("reset.send_fail", actor=username, ip=ip, details={"reason": str(e)[:120]})
+        return jsonify({"error": "Could not send the reset email. Try again shortly."}), 503
+
+    audit.write("reset.code.sent", actor=username, ip=ip, details={"challenge_id": challenge_id})
+    return jsonify({"step": "code_sent", "challenge_id": challenge_id,
+                    "masked_email": _mask_email(email), "expires_in": cfg.mfa_code_ttl_sec})
+
+
+@bp.route("/auth/reset", methods=["POST"])
+def reset_submit():
+    """Self-service password reset — step 2: verify code and set the new password."""
+    import audit
+    import lockouts
+    import mfa
+    from users import apr1_hash, read_entries, save_entries
+
+    data = request.get_json(silent=True) or {}
+    challenge_id = (data.get("challenge_id") or "").strip()
+    code = (data.get("code") or "").strip()
+    password = (data.get("password") or "").strip()
+    ip = _client_ip()
+    if not challenge_id or not code or not password:
+        return jsonify({"error": "Code and new password are required"}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+    rec = mfa.get_challenge(challenge_id)
+    if not rec:
+        return jsonify({"error": "This reset request expired. Start again."}), 410
+    if not mfa.verify_code(challenge_id, code):
+        remaining = mfa.fail_challenge(challenge_id)
+        audit.write("reset.code.fail", actor=rec.get("username"), ip=ip)
+        if remaining <= 0:
+            return jsonify({"error": "Too many wrong codes. Start again."}), 410
+        return jsonify({"error": "Invalid code"}), 401
+
+    username = rec.get("username")
+    entries = read_entries()
+    if not any(u == username for u, _ in entries):
+        mfa.consume_challenge(challenge_id)
+        return jsonify({"error": "Account not found."}), 404
+    save_entries([(u, apr1_hash(password) if u == username else h) for u, h in entries])
+    mfa.consume_challenge(challenge_id)
+    lockouts.clear_user(username)
+    audit.write("reset.password.ok", actor=username, ip=ip)
+    return jsonify({"step": "ok", "message": "Password reset. You can sign in now."})
+
+
 @bp.route("/auth/logout", methods=["GET", "POST"])
 def logout():
     cookie = request.cookies.get("kong_session")

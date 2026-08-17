@@ -4,6 +4,29 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.16] — 2026-08-17
+
+Added self-service **forgot password** to the login page.
+
+### Added
+- **Forgot password flow** — a "Forgot password?" link on the login page opens a
+  reset form: enter your username, a 6-digit code is emailed (reusing the same
+  email-MFA infrastructure), then set a new password. Two new endpoints:
+  `POST /auth/forgot` (issues + emails the code, masks the address, returns the
+  challenge id) and `POST /auth/reset` (verifies the code, sets the new password
+  with an APR1 hash, clears any lockout). IP lockout, code TTL, attempt limits
+  (410 on exhaustion/expiry) and error handling mirror the existing MFA path.
+- Login page gains **forgot** and **reset** steps with matching ITPortal-blue
+  styling — leading-icon inputs, a segmented 6-digit code field, show/hide
+  password toggle, resend countdown, and a "Back to sign in" link.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.16.sha256.txt
+tar xzf kong-pca-bundle-v1.0.16.tar.gz && cd v1.0.16
+sudo ./pca-deploy.sh kong-deploy-v1.0.16.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.15] — 2026-08-17
 
 Redesigned the login / user-management module to match the Model Portal.
