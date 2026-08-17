@@ -3,182 +3,186 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEHC AI Gateway — Login</title>
+<title>SEHC AI Gateway — Sign in</title>
+<link rel="icon" href="data:,">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#0a1628; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-  .bg-grid { position: fixed; inset:0; background-image:linear-gradient(rgba(0,212,156,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,156,0.04) 1px, transparent 1px); background-size:60px 60px; pointer-events:none; }
-  .login-card { position:relative; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:48px 40px 40px; width:400px; max-width:92%; backdrop-filter:blur(20px); box-shadow:0 24px 80px rgba(0,0,0,0.4); }
-  .logo-row { display:flex; align-items:center; gap:14px; margin-bottom:32px; }
-  .logo-icon { width:44px; height:44px; background:linear-gradient(135deg, #00d09c, #003459); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; color:white; box-shadow:0 4px 20px rgba(0,208,156,0.3); }
-  .logo-text h1 { font-size:18px; font-weight:800; color:#fff; letter-spacing:0.5px; }
-  .logo-text p { font-size:13px; color:rgba(255,255,255,0.4); margin-top:2px; }
-  .form-group { margin-bottom:20px; }
-  .form-group label { display:block; margin-bottom:7px; font-size:13px; font-weight:600; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:0.5px; }
-  .form-group input { width:100%; padding:12px 16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff; font-size:15px; }
-  .form-group input:focus { outline:none; border-color:#00d09c; box-shadow:0 0 0 3px rgba(0,208,156,0.15); }
-  .btn { width:100%; padding:13px; background:linear-gradient(135deg,#00d09c,#00b386); border:none; border-radius:10px; color:#003459; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(0,208,156,0.25); }
-  .btn:disabled { opacity:0.6; cursor:not-allowed; }
-  .alert { padding:11px 16px; border-radius:8px; margin-bottom:20px; font-size:14px; display:none; background:rgba(244,67,54,0.15); color:#ff6b6b; border:1px solid rgba(244,67,54,0.2); }
-  .info { font-size:13px; color:rgba(255,255,255,0.6); margin-bottom:16px; }
-  .link { background:none; border:none; color:#00d09c; cursor:pointer; padding:0; font-size:13px; text-decoration:underline; }
-  .countdown { color:rgba(255,255,255,0.4); font-size:12px; margin-top:8px; text-align:center; }
+  :root{
+    --bg:#f9fafb; --card:#ffffff; --text:#0f172a; --sub:#6b7280; --line:#e5e7eb; --input:#f9fafb;
+    --primary:#3b82f6; --primary-h:#2563eb; --primary-l:#eff6ff; --primary-t:#1d4ed8;
+    --grad:linear-gradient(135deg,#3b82f6,#2563eb);
+    --shadow:0 24px 60px -15px rgba(15,23,42,.18),0 8px 20px -12px rgba(15,23,42,.12);
+    --danger:#dc2626; --danger-bg:#fef2f2; --danger-line:#fecaca;
+    --ok:#059669; --ok-bg:#ecfdf5; --ok-line:#a7f3d0;
+    --blob1:rgba(59,130,246,.16); --blob2:rgba(139,92,246,.14); --dot:rgba(15,23,42,.05);
+  }
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --bg:#030712; --card:#1e293b; --text:#f1f5f9; --sub:#94a3b8; --line:#334155; --input:#0f172a;
+    --primary-l:#1e293b; --primary-t:#93c5fd;
+    --shadow:0 24px 60px -15px rgba(0,0,0,.6),0 8px 20px -12px rgba(0,0,0,.5);
+    --danger-bg:#2a1416; --danger-line:#7f1d1d; --ok-bg:#052e23; --ok-line:#065f46;
+    --blob1:rgba(59,130,246,.18); --blob2:rgba(139,92,246,.16); --dot:rgba(255,255,255,.045);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#030712; --card:#1e293b; --text:#f1f5f9; --sub:#94a3b8; --line:#334155; --input:#0f172a;
+    --primary-l:#1e293b; --primary-t:#93c5fd;
+    --shadow:0 24px 60px -15px rgba(0,0,0,.6),0 8px 20px -12px rgba(0,0,0,.5);
+    --danger-bg:#2a1416; --danger-line:#7f1d1d; --ok-bg:#052e23; --ok-line:#065f46;
+    --blob1:rgba(59,130,246,.18); --blob2:rgba(139,92,246,.16); --dot:rgba(255,255,255,.045);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
+  /* animated backdrop */
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(120px)}
+  .blob.a{top:-8%;left:8%;width:560px;height:560px;background:var(--blob1);animation:float 16s ease-in-out infinite}
+  .blob.b{bottom:-10%;right:6%;width:480px;height:480px;background:var(--blob2);animation:float 20s ease-in-out infinite reverse}
+  .grid{position:absolute;inset:0;background-image:radial-gradient(circle,var(--dot) 1px,transparent 1px);background-size:46px 46px}
+  @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-30px)}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .wrap{width:100%;max-width:410px;animation:rise .5s cubic-bezier(.16,1,.3,1)}
+  .brand{text-align:center;margin-bottom:26px}
+  .brand img{height:34px;object-fit:contain;margin-bottom:14px}
+  .brand .ll{display:inline-block} .brand .dl{display:none}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .brand .ll{display:none} :root:not([data-theme="light"]) .brand .dl{display:inline-block}}
+  :root[data-theme="dark"] .brand .ll{display:none} :root[data-theme="dark"] .brand .dl{display:inline-block}
+  .brand h1{font-size:20px;font-weight:800;letter-spacing:-.01em}
+  .brand p{font-size:13px;color:var(--sub);margin-top:4px}
+  .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:28px;overflow:hidden}
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary),transparent)}
+  .head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .head .ico{width:42px;height:42px;flex:0 0 auto;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px -6px rgba(37,99,235,.5)}
+  .head .ico svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.7}
+  .head h2{font-size:17px;font-weight:700}
+  .head p{font-size:12.5px;color:var(--sub);margin-top:2px}
+  .fg{margin-bottom:16px}
+  .fg label{display:block;font-size:12px;font-weight:700;color:var(--sub);margin-bottom:7px;letter-spacing:.02em}
+  .field{position:relative}
+  .field>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;stroke:var(--sub);fill:none;stroke-width:1.7;pointer-events:none}
+  .field input{width:100%;padding:12px 14px 12px 42px;background:var(--input);border:1px solid var(--line);border-radius:12px;color:var(--text);font-size:14.5px;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+  .field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(59,130,246,.15)}
+  .field .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;padding:8px;cursor:pointer;color:var(--sub);display:flex}
+  .field .eye svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .field .eye:hover{color:var(--primary)}
+  .code-input input{text-align:center;letter-spacing:.5em;font-size:20px;font-weight:700;padding-left:14px;font-family:ui-monospace,monospace}
+  .btn{width:100%;padding:13px;background:var(--grad);border:0;border-radius:12px;color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -8px rgba(37,99,235,.55);transition:filter .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:9px}
+  .btn:hover:not(:disabled){filter:brightness(1.06)} .btn:active:not(:disabled){transform:scale(.985)}
+  .btn:disabled{opacity:.65;cursor:not-allowed}
+  .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;display:none}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .alert{display:none;padding:11px 14px;border-radius:11px;margin-bottom:18px;font-size:13.5px;font-weight:500;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line)}
+  .alert.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-line)}
+  .mfa-note{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--primary-l);border:1px solid var(--line);margin-bottom:18px}
+  .mfa-note svg{width:20px;height:20px;flex:0 0 auto;stroke:var(--primary);fill:none;stroke-width:1.6;margin-top:1px}
+  .mfa-note p{font-size:12.5px;color:var(--text);line-height:1.5}
+  .mfa-note b{color:var(--primary-t)}
+  .meta{text-align:center;font-size:12px;color:var(--sub);margin-top:12px}
+  .link{background:none;border:0;color:var(--primary);cursor:pointer;font-size:12.5px;font-weight:600;padding:0;font-family:inherit}
+  .link:hover{text-decoration:underline}
+  .foot{text-align:center;font-size:11.5px;color:var(--sub);margin-top:22px;opacity:.85}
 </style>
 </head>
 <body>
+<div class="bg"><div class="blob a"></div><div class="blob b"></div><div class="grid"></div></div>
 
-<div class="bg-grid"></div>
-
-<div class="login-card">
-  <div class="logo-row">
-    <div class="logo-icon">S</div>
-    <div class="logo-text">
-      <h1>SEHC AI GATEWAY</h1>
-      <p>Admin Authentication</p>
-    </div>
+<div class="wrap">
+  <div class="brand">
+    <img class="ll" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANMAAAA0CAYAAAAQRg3jAAAPB0lEQVR4nO1dX0wcxxn/HfXFNhh6HFCbFC82tlCXGiMLC4LWDo5EVEOkPkTClRy7zUNlHlLUBFscTSsndaoUkONEonmAhypKrErFUipFimljpJiYVWwLF2FiNkUGzBoHI/BBOYNNDpU+7Mzx3XL/9u7M/fH+pJNmd2dmZ4fvm/m+b34zACZMmDBhwkQ8wRLooSBKOwGcAVAKIB9AKnm8CMAJ4DKA06oijz2hNiYMBFGqBPBraP21FYBdl4X32SCAFlWRe9a3hSaeJHwqE1OivwF4zkBdCoCX9EoliNJK+M1bA6eqyFk+6nWoitwaScWCKDUCaOHXqiIHHGh8lK0HkGfwtRMA2ny2/WSn5/uKc/Mdg6fKW309A4DCnNyu4aaDNQbf7RsG3hsJPHUbqDM7LX3RmvKDx+mbNl+zpmz49lZjRUOk7djbNrBTmRgdcS+7LQCwO3vr1du/q6wIp64U/Q1BlI4BGMFaRVqBNqrynx4igBEmWE8FBFGqFETpLjQlNKpIYGVaBFG6ywawsDA2O3N437nrleGWTxTMLLhSJ11z9uHpyepbU3ffsDr+8T+xVf4kkjrdjx6e4YoEAONzzvK9bQNh/S020AumSB/De8ZSALyrKvJ5fWFBlM4B+BVWzRkLNOH4zlf+ZAL79texdnafgGb6/kvfB6x/jwIoh7cJmAfgG0GU6sLpN/ey23J/fu5TAFlGy8YT+Mzj7/mka87LbHYvuy3K1L1j2ae7Xn4259k9N+tLDLsaE3MPfqGv0/3o4RkAx43WtUF33Y5V4VgB0BTIfFIVuQFAgyBKnwA4xm47Ach+ikRsjsUDdN/LMQHgWCA/iCnKeVZHI4C3sOqHpgL4qyBKcjj+56Rrzl7YfOVi1My9IFhjAhrEoI97uRn2Pwarc9+565UL3y85Judnq1xLj62ANmNZU6b6YHAwKT57rXFwctwKANYN1hU+QzEFM6xMHjOPCQgNMHwQquCrinwcmpAoqiJnJXMwwocirQB4X1Xk7UYCCqxv90Cb+TncACQj7UnfuMnN08PTk9Ul713XK3lSob+hrGe46WCN692fP7PDnuPpu0nXnN2oyTf3yFXP04VZ2z7gfelaemwtPnvNsLtCfaZDJD3BZp2QoSrycVWRi4w2IJHAzLRXyK0VAL802lccqiKPsT6bgKZUe4yaeYIt5y9Uoe7990F7OG1JRNz5/QtF2Wnpi/x6+uH8y6GW3XfueuXdOWceoA1ItxorGnIzMrv5c6pooYIq01aSvmy0oqcE1AwGNEWKhm/4vKrIReHM6CkpKfd32Lf+gV/PLLhSd/+55+sotCkhkLMl41OenllwpQbKS+FaetTM01yJ0p7Z6Inm3p1z5hkN6lBlspK0L5P2qYYPM7grWkGWSM3iwVPlrbuzt17l17dnpp4Lx0xJRCiNkpdvE8p3720b2Dk+5yzn11yJ+hvKerbb7BP8PlW4ULAmNG7CL2jUx60q8ro4+qEidYvtKDX37jin/hRuiDfZQcPh2232if6GMo+vm7Ex7QJPGw2TU2VaJOlDEbQ16cDC4HTm/nus2uIPN+tLxqi551p6bJ2fd34eyzbFK2g4nCoPANxqrGjggxIJk4cEqkzjJF0VySJiEuIwSbtZ9DLuMHiqvLUwJ7eLX99xTos/bf36XCzb9KShj+AFC60Xn73WyEPqPPCgz0MDEfp1qECgyvQRSVsBfG4qlAc/IenbMWtFCBhuOlhDI1zDD+6/nszmHo3gUX/HH2iUjioNBQ1EGAmTe5SJrXvQxojQVuWfCkfWHxh5lUbw/hmrtoSKH/8wq46n3ctuy+zc9FexbM+TwN62gZ3b3+m+SyN4ts3pbYHK0HA44K00FPpARKhhcn0A4nl4+06p0OhBC4IoXWSC9bShXHf975i0wgAGTpadp+be3TlnXmHzlYuxbFO0sO/c9crC5isXlYnREaoYu7O3Xg1m4nmFw9NtThp40IP6UqGGyb3oRKoijwmitAfAV/AmbqYCqAZQLYgS556Fs+2iRRAln6NBCPAwxqNcbzAcoheJwjkcbjpYk326a4GP3JwMG0iAjGBwcrwFJzvD6/P3jvhk5E/OO9/KffsLh79ik645e/+9O2vuh8L0Zuxwz8BoS027OBkg/63Giob0Nz/7DfevmCIGfMea0Dhbld8OwAHf7PA8aHSaUcZ2fqrNwHjGdltWjXWDdQXwIsPGLTgr3N9Pnz87LX2xODffEcqWCRoOt26wrujXp3yB+lR0Xcof/K4zqYrcymaC4wCuQuON6cG3EDxgVBsTcYT+hrKenZnZHh+Pk2Fj2aZIkZtucxbm5HaVPLvj+MyZ6rRQybY0Kpdvs18LpQz1qdzLbksw7p+eNb4GOqbzMQCvQdtJStdd7AA+EUTpZ0HCxk+KNR71zYHJguGmgzW5b3/xgI/snAw7cLIsInM1UtZ4qHXuO3e98pupe1/yWSVt48Zho8x4yg4HgPSNm5tCKdffUNaz/Z3uCe6bscihX/k2xIBQFfm8qsgVqiI/A+B9rDUDjzHaTTLhMr1IxBl4W4btZW7uAYlFhtXPrrdnpp4zyoz3CocHCTzoQQMRMwuu1EBh8rDpRKoiNzAzsEv36JUkW5/6Tnf9s5i0IgL0N5T1FGZt+4BfJxoZdrjpYE24zHh9ONyWmmbIzKWMCABwLS2+6i9vxNw8xlGjJoMFwIeR1hsvYGYuPaegNFZtiQS3Gisa6NpJopFh9cz4UH0/Gg4PNfCgBw1E3HFOi/7C5EF9plCgKvJxQZRqsLoVO2jkI8HwLbRFbADYHcuGRIJMW87z9x+6PIeHMDLshXC2e683Bk+Vt+a+/YWD+35jszOH97YN7AzUdn043L3stoRzKMzwtHcQfeH7JQeANaZiNFnjdKTIjGK98QDKerAmql94s75kjJp7iUaG3ZZh81CH3MtuS7C26w9LiRbGZmcO+7ofTWWie6Ci/gGxBNtJS5cGQiY/xhtuNVY00O3eiUSG7W8o69ETeQOZqkZIqkbgL0weFTPvKUE3NBYIoM1OF+NtT1OoyMiwv5S+4PoPX91nZNi2RDD3NqVlvJY+P+tp++S88y0Aa0L0+nB4NEL56W9+9j1/r68weTRnpkMkvegvU6KCKQ79rupohsnXk/uo3/uUSGTYm/UlY3m2LM9+Mn/BCBoOT9+4yR2NNTH9e/WzopcysT9ouBEeKgjjfnMlNup01x9HQ6GYD1YN4EtBlNaFoaDf6p5IZFilUTqem27zrHHqD+HUh8OpEkQC6+Ytp+l6nT5MngJoxyGzk0mrATQbFRAmAPR8hI/CbXA8g7JBGCzQFCpsn0N3dJgFQHH4LTSG1C22o3Tvkz/HOh7xo3Tbb3navey2zCzMe/4u+nC4dfOW09F45836kjFKRdKHyfnM9CFWWeJcQEKaoZgiVZNbzmQ4aNIfyBmBHBYAbzDSb8hmGjlamQ5ci9C2wawLbtaXjOn3Pq3XuyPFwMmy8/qZtfjstUb9YSn5Nvu1aPqCeioSC5MDYAEIVZFrBFEawupaCj/m+FUAH/lSDjai0rUlQFvc3B+gLdHYKhHzU2HZuhqgnaHHBTAPwGWyRcXX8cj0v2SI8MYitHPz1jUIMHCy7Hxh85Wjw9OT1cFzxxdSt9iOWuecXutmebasYjoohMrDCxV6vt7k/GwVf0Z32hZBY4dTiNAUYIUxwx+wjYIr0EZUqkiL0M6Ri/uIUDTAZqgXsJafyLeofML6zfODpmTHsFaRulRFTotV3+m3uicKbtaXjFHenmvpsVWZuueZ6fUnD0ULdEeva+mxlYfJvQIQqiJXwP8+Jjv76Q/6W4HGzzN8GmmiQ1XkHsZP9NdnwaAAOBQPIXZq7iUSAg0Ewbaxh4vBU+Wt9J1ziws1QIDFVWaSOKA5xFSJVgDMAhgGcDteT+qJBUif7YD/f3Y2DuAGzH8QZ8KECRMmTJgwYSIyCKJ0SRClkVi340liZWUlUxAlpyBKtfyeIEpVLPhzYj3aYJ41nuRgglQF4EKwvImM/KIDJwBgfKiXHizZDs2/93nYpAkTJnxAEKURQZT8HhO2HjBnJhMJD0GUqgAUIMazr6lMSQxBlE4IouRz/UsQpVp/z/zk7zMy8jN/pY/5LLXBS/iso0AQpU6y8O3P9zkB4IKqyKOsXGmwmUoQJQfzsZyCKBXonhnqGw5zP1Nyoxk+RmtBlErpMyZ0nBy6iwslyX8CGgXqCBO8TnbdoSrymsVelt8B4Mj4UO9oftGBEUGUSlVFbmLPa1kd+1VFvsHu8TpfVBV5lM02lwC0jA/12vOLDjhBdnALotQOTYk4Ztk9kPu+vr0dmg85Oz7Uuyu/6EAVgE5BlC6oisypbp0kf8C+oTCVKUnBBDYTOuebCWkzNLOohQlLFYBdAEZYuoPkL4DmyPN6LkHbilLL8urfy4WPK0om+9WSmWIUAIgiVbG6bgAYYbxHAKhTFbkjv+hALTTh77BYNJ6Bqsh1gijx+h3jQ727LBbLLKuvlOXRDwqX+HvGh3pftFgss+xdBQAcgijR/xS4P8S+6QRwRFXkUdPMS15w0+UGv0EEfZTddwCoUhX5RVJuluTnswOgKVMfNAHv1udl+S+x+o9wRWGKgPGh3v2qIltURbZAE0gq6O0Amlg7drF6m1RF5oLrANDNlYW9qx2aQp8A0EGfsW+n310giFIf+4ZZAEdI/ioAo6oi21nbWljZEyH2TRNXWlOZkhf8D5/J/RdowrEfmrCVAijlwjI+1OvJz9ZsOsGEnN1vxlpFygQ8vhlfx+pWFZmbj6W8Dp2wjwIoYO9xQBNmqjiz3ORiSlOqe1cfq6OFfUsHvEHb1gxtEGhhdbcQ38oBTWkos7zKQN/Q/tC4eYzRbCLBwUZWANoiZn7RgT6sjtIdXGCZcz3KTR1ehglJLTRh7FAVuYnMZnVE4Lmi9LHLbmjCeomVqyPl/PlVTqwK+H4i4CPQlOMGVmfRbmjCy9/VpCryDdbeAjZA0Lqpn9MxPtTblF90oJS1r05V5A7yrfrvCrlv9N+UMJvBTMQ/dEGBbmgRNv2swfNy/6WJOP60jm5os4jfBVcm+D4FWw82uFzC6iGiHazsjQDFTJiIfwii1M4UKpI6nJHWYcKECRMmTCQv/g+USEyQTBPmHQAAAABJRU5ErkJggg==" alt="SEHC INFRA">
+    <img class="dl" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANMAAAA0CAYAAAAQRg3jAAANi0lEQVR4nO2df0wcxxXHv0N9sQ0+evxwbVqoY2Sh2o2NLCoIihwcyVIMkfpHJLdSAlX/cv5IUZuzBTStnDSJWowcJxLNH/xTRbFVqY7USpEKVbCUkCiKsVAREEKKTLAFLkbAmXI+bHIor3/szPFubu/YvTt8t7Af6aTd2d3Zd3vz9r1582YOcHFxcXFxcQxEtJ+ILhHRl0QUomhCRDQlj+/PtKzZABHVsee1QLGoZ9ZNRHWZltclvQizQqkcfwXwuI26xgA8I4SY1Oqi5MWLISCEKDKpt1UI0ZFKxUTUAuC82hdCmD6bBNc2Ayi1edtpAJ2msp+5Evl+h0v2tY6crekwOwYAFbtLesbbjjXYvLc5Nu6bCpG6bdRZnOdd9uR854F3x85+T862r0Zbav2pynGkc2j/2PTXE+HVsACAA8V7rt34bV1tMnXl6AVE1AhgArGKRAAC7KNzEMCEbFhbAmmJpmAooV1FgrzmvLRWSVv3ybvzJ49evL7pLd18KJg7E1wsHJ+bqR+dnXrJ0/qPbw92fHYplTrD9++9phQJAG4tBmqOdA4l9VtEKZNUpPcQbbHGADQJIXKEEEXsIwC8hWjFEjAaR2MywjgJIroI4CPEKtE0gMswnlkUAJoA9CD2ZVQK4Itkn1t4NSzuLC3+PZlrs4niPO9yidcXiPfRzw+vhsXY7O3G4nM9oWQVYHpx4ed6neH7915Lpq5t2n4X1hSJALQlcp+EEH4AfiK6BEA1hACAz+JckrI7lg1o31cxDaBRCNEX7zohxGUYiqZcw1cA5MrDuQD+QkSf6a6yFWaCi4UV7Z92p83dW4cYF9AmIyZlJfmFf1ivzqMXr9eFvllpnVm6eyK48sADGBbLkzM7AKDIjgyHL/S3jMzc8gCAZ5uHlIWSCtZkpy6AWSbZQHLZsbetNnwhRBOMRjImrZbtxuAUTBSJALwlhChLpEg68tk+BsPyK8IAnrAjj3f7jrDaHp+bqa988/qm9goG/dV9423HGoJ//Okjjxbujjy7meBioV2Xb/F+sFltVxTtfVs9y+DKA8/hC/22uyvczTvOtqel1bGMEKJJCHHIrgBOQrphz/MiAL+w+6wUQohJ+cymYSjVY9J6WeaHvt1/5gp1+38LXcnI4kRu/u6pQ8V53mW1P3dv6Vmr1x69eL1uajFQChgvpNGWWn9JfsFVdZwrmlW4Mu1h2x/brWiLwN1gwFAkW40/Dk8KIQ4lY9FzcnLuPFq45/dqfz4UzD3wp77P0yCTI9i9Kz/SV5wPBXMTncsJrtxvV9tKifIe2R6J5k4tBkrtBnW4MnnYtplLu6UxcYN70qRISNUtHjlb03GgeM81tX9jfvbxZNwUJzLW8kRU38bK9z7SObT/1mKgRu0rJRr0V/eV+QqnVTlXOCvEhMZd4sKjPmEhxEPp6Fsld5fvOe7u3QzMvpFshGuzw8PhZb7C6UF/daSvm7897321bTdMzpVpmW0fT0HWTYcMg3PL/bdMyRKP4ebKSe7uBVceeJaWAv/MpEzZCg+Hc+UBgNGWWr96KdkNk3NlusW2T7gpQlGcZNthGb3MOkbO1nRU7C7pUfs3A3MHf9zx+cVMyrTR6BG89ULrhy/0t6iQugo86OfwQIQ+DpUIrkzvsm0PgH+6ChXhR2z7RsaksMB427EGHuEaX7jzm83s7vEIHu/vxINH6bjScHggwk6YPKJMctyDC3MQxqj8lujIxkMmpPII3r8yJYtVfvDdohfUdng1LO4uzn2SSXk2giOdQ/vLXr86xSN4vp3ezkTX8HA4EK00HD0QYTVMrgcgnkR03ykXRnpQaAtnOtdo+//OiBQ2GDpTfZm7e1OLgdKK9k+7MylTujh68XpdRfun3WPTX09wxThQvOfaei5eVDjc6wvwwIMO70tZDZNHpRMJISaJ6DEAnyA65ywXQD2AeiKahjEOdS6JkO55IjJ9G1ggkjGe5nrX4zjfSVc4fKMZbzvWUHyuJ6Te3CoZNlEDssPIzK3zOHMluWf+5s9MM/JnlgKvlLz6YWu8y2aCi4WDt2/GlFvJ9JbZ4ZEXoy83r3smwfmjLbV+78sf/Er1r6QiJrxHTGhcjsqXAWiFeXZ4KYx0mq9ltvOWdgOzmTJfUYNnm4cAZyTDqqzweB/9/OI87/Lhkn2tVqZM8HC4Z5uH9PEpM3ifio9LxSPuOJMQokNagiYA12DkjemoKQQLWyFT3GkM+qv79hcUR/p4Khk2kzKlSonXF6jYXdJT+f1Hm+Zfq8+zmmzLo3L7fIX9Vq7hfarwalisl/unZ43HoGU6NwJ4EUAVosddCgFcIqKn1wkbb1TWeNonB24WxtuONZS8+uGCerOrZNihM9UpuaupZo1brfPoxet1X8ze/khZlbzt28ftZsbz7HAA8G7f2WblukF/dV/Z61enVd9MRg7jtm9bGRBCiMtCiFohxCOIncsEAI0y7WYz8THfcaIF3pvve1a5e4CzkmF163pjfvZxu5nxUeHwdQIPOjwQMR8K5iYKkyedTiSE8Es3sEc79PwmG5/6r7b/dEakSIFBf3VfRdHet9W+05Jhx9uONSSbGa+Hw325ebbcXJ4RAQDBleVfxjs35dw8maPGXQYB4J1U680WpJvL1ymoypQsqTDaUuvnYydOS4bVM+Ot9v14ONxq4EGHByJuBuYOxguTr9tnsoIQoomIGmD0nYDYsRmn8xWMQWwAOJBJQVKhwLf7yTv3gpHFQ2Qy7PvDzZVZP5lz5GxNR8mrH7aqvt/k3fmTRzqH9ieSXQ+Hh1fDIplFYcbnooPooW9WWgHEuIrpzBrnb4qCNNabDfCsB49T+4XDzZWT3N1zWjLs3nxfJHUovBoW68muL5aSLibvzp80K0+nMvE5UGn/AplEzqTlQwOWkx+zjdGWWj+f7u2kZNhBf3WfnsibyFW1k6Rqh3hh8rS4eVuEqzCyQADDOnVn25wmq+TnFz7jDQX/o0b3ZTJspxPcvR15+S96l+5GZJ9ZCrwCICZEr4fD0xHK9778wTfqvmZh8nRapuNsezneSU5FKg7/XvXpDJM/zNxHfe6Tk5Jhh5srJ0t9RZH5ZPGCETwc7t2+I5yOMTH9vrpV1NfN604hPYg3hFtxz3I2L2j776VDoWQfrB7AR0T0UDIU9KnuTkqGHWt5oomvo6cvwqmHw7kSpIJn565zfLxOD5PnAJE1xadg/KDtdhuIbAB8fYR3kxU4m+HZIKoIhkIl3efQlg4TAA4nL6E9cnf5nuNzn+J1rLOR73l9v1bb4dWwmA8tRX4XPRzu2bnrXDruOdxcOclTkfQwubJM72AtS1w1EEsWSipSPSsKbIaFJuPB1giMFAF4SSb9WnbT2NLK/MW1DGMazENhuLlyUp/79LDunSpDZ6ov65b18IX+Fn2xlH2+wv509gX1VCQZJgcglUn2B/hiiGqZ4y/jKZX8t4cFRCsSAfhJAlnOm/wzhF0yPtDIFIqPWZQC+JjW/hkkxroT+5cMGGlKfJrLMox18x5qEECf++Qkcnf5nuNu183A7Bt6ONxqHp5V9ImDM0t3T6htPtP2EIzscM5BrCnAgvyEiIhgvFF5WvwyjHXksj4ilA6kQj0F83XDG2Ek/kYBQ4EasTYArOgRQuRl6tnpU92dwnBz5STP2wuuPPCMzd6OvMT0lYfSBZ/RG1x54FFh8qgAhBCiFvHnMRXKj77QH8HIz7O9GqnTEUL0yfzEeM9sPcYAHM+GEDt395xEohfBetPYk2XkbE0Hv+ficijx7yddkm7ptvA/OvtWWqjPyaGZABsFe2aJ/uzsS3L/IM7FxcXFxcXFxSV1iKiXiCYyLcdGQkQFRBQgolOs7IR0r09nUjaXTQIRnZYNytYi9E6DiFqlMhWwsglZVp5J2VxcHIVUnLjLhLm4uFiAuXOuBXLZGKSLZzr+RUSn4h2Lc/6AnTe/bOADspGfWv8K0zrKiegKG1ow7fvIc66w/ar1LBVzC2PcQLvPxmULIBtKzOIjrLF1yf1W1mBj3u6s31UuP0pJTBc2kedPyPuowEA7O35KXl/Fyq7Ia8rlvrI27bIO4spBRF0UTUCW8XKz79Il7zMg6z2lvyjUxVaejcsWgDXYU1o5txjlsrH0ym0i7e3PytU5E7KOLjKJELLGVyX3lSJMsEY5oRorkykg78E5zb5LVHBBlp8m88DDABENmMim6h9Q57O6A9q9qyw+mwFXyTY5rFGXa2UDZFiBAakQvfKYajB6aFkpgWq0J+SxLr3BssbK61BWrUCTY4LtTzDFKZf34ZZigJgbx+7fK69t145FWWTW6NV3KNfqGWD77TafTSTR1WWTwhpxFa1ZI9U4lGXijUhZkNNyW7ldysLpjaldKQStuXW96h6yvEopoiabqrNANnB+TZTFozW3rZfdSymGaeBBynKFyRmgNQvElVS9cE6wMjvPJlaRyGVToP2mBbRmVQaIuShkNKqIq8PKVWc/0sehtQanuzhVtEYvrTVsvR8Wr18VIHNLMUFriqKs6GntXsqFvELm7hzv53TJZxE1gMu+q/69LD8bF5cNg6I7/716Q9XOVS6hbrW62PUJXSg7DVsq1ACTr4tYAMTFxbEQ65OkUEcg1TpcXFxcXFw2L/8HZQx4kUFtnoQAAAAASUVORK5CYII=" alt="SEHC INFRA">
+    <h1>SEHC AI Gateway</h1>
+    <p>Admin access to the API gateway</p>
   </div>
 
-  <div id="alert" class="alert"></div>
+  <div class="card">
+    <div id="alert" class="alert"></div>
 
-  <form id="password-form" onsubmit="doPassword(event)">
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="username" required autocomplete="username" autofocus>
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="password" required autocomplete="current-password">
-    </div>
-    <button type="submit" class="btn" id="loginBtn">Sign In</button>
-  </form>
+    <!-- Step 1: password -->
+    <form id="password-form" onsubmit="doPassword(event)">
+      <div class="head">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 0h10.5a2.25 2.25 0 012.25 2.25v6a2.25 2.25 0 01-2.25 2.25H6.75a2.25 2.25 0 01-2.25-2.25v-6a2.25 2.25 0 012.25-2.25z"/></svg></div>
+        <div><h2>Sign in</h2><p>Enter your admin credentials</p></div>
+      </div>
+      <div class="fg">
+        <label>Username</label>
+        <div class="field">
+          <svg viewBox="0 0 24 24"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0"/></svg>
+          <input type="text" id="username" required autocomplete="username" autofocus placeholder="admin">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Password</label>
+        <div class="field">
+          <svg viewBox="0 0 24 24"><path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 0h10.5a2.25 2.25 0 012.25 2.25v6a2.25 2.25 0 01-2.25 2.25H6.75a2.25 2.25 0 01-2.25-2.25v-6a2.25 2.25 0 012.25-2.25z"/></svg>
+          <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="eye" id="eye" onclick="togglePw()" title="Show / hide" aria-label="Show password">
+            <svg viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn" id="loginBtn"><span class="spin" id="s1"></span><span id="t1">Sign in</span></button>
+    </form>
 
-  <form id="mfa-form" style="display:none" onsubmit="doCode(event)">
-    <p class="info">A 6-digit code was sent to <span id="masked-email"></span>.</p>
-    <div class="form-group">
-      <label>Verification code</label>
-      <input type="text" id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" autofocus>
-    </div>
-    <button type="submit" class="btn" id="verifyBtn">Verify</button>
-    <p class="countdown" id="countdown"></p>
-    <p class="countdown">
-      <button type="button" class="link" onclick="doResend()">Resend code</button>
-      &nbsp;·&nbsp;
-      <button type="button" class="link" onclick="backToPassword()">Back to login</button>
-    </p>
-  </form>
+    <!-- Step 2: MFA -->
+    <form id="mfa-form" style="display:none" onsubmit="doCode(event)">
+      <div class="head">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></div>
+        <div><h2>Two-factor</h2><p>Confirm the code we emailed you</p></div>
+      </div>
+      <div class="mfa-note">
+        <svg viewBox="0 0 24 24"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+        <p>A 6-digit code was sent to <b id="masked-email"></b>. It expires shortly.</p>
+      </div>
+      <div class="fg code-input">
+        <label>Verification code</label>
+        <div class="field">
+          <input type="text" id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" placeholder="——————">
+        </div>
+      </div>
+      <button type="submit" class="btn" id="verifyBtn"><span class="spin" id="s2"></span><span id="t2">Verify</span></button>
+      <p class="meta" id="countdown"></p>
+      <p class="meta"><button type="button" class="link" onclick="doResend()">Resend code</button> &nbsp;·&nbsp; <button type="button" class="link" onclick="backToPassword()">Back to login</button></p>
+    </form>
+  </div>
+
+  <p class="foot">Protected area · air-gapped · SEHC Infrastructure</p>
 </div>
 
 <script>
-let challengeId = null;
-let countdownTimer = null;
-let expiresAt = 0;
+let challengeId=null,countdownTimer=null,expiresAt=0;
 
-function showError(msg) {
-  const el = document.getElementById('alert');
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 4500);
-}
+function showError(msg,ok){const el=document.getElementById('alert');el.textContent=msg;el.className='alert'+(ok?' ok':'');el.style.display='block';setTimeout(()=>el.style.display='none',ok?3000:4500);}
+function showStep(name){document.getElementById('password-form').style.display=name==='password'?'':'none';document.getElementById('mfa-form').style.display=name==='mfa'?'':'none';}
+function busy(which,on){const b=document.getElementById(which===1?'loginBtn':'verifyBtn');const s=document.getElementById(which===1?'s1':'s2');const t=document.getElementById(which===1?'t1':'t2');b.disabled=on;s.style.display=on?'inline-block':'none';t.textContent=on?(which===1?'Signing in…':'Verifying…'):(which===1?'Sign in':'Verify');}
+function togglePw(){const i=document.getElementById('password');i.type=i.type==='password'?'text':'password';document.getElementById('eye').style.color=i.type==='text'?'var(--primary)':'';}
 
-function showStep(name) {
-  document.getElementById('password-form').style.display = name === 'password' ? '' : 'none';
-  document.getElementById('mfa-form').style.display = name === 'mfa' ? '' : 'none';
-}
+function startCountdown(sec){expiresAt=Date.now()+sec*1000;if(countdownTimer)clearInterval(countdownTimer);const el=document.getElementById('countdown');
+  function tick(){const left=Math.max(0,Math.floor((expiresAt-Date.now())/1000));el.textContent=`Code expires in ${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(left===0)clearInterval(countdownTimer);}
+  tick();countdownTimer=setInterval(tick,1000);}
 
-function startCountdown(expiresInSec) {
-  expiresAt = Date.now() + expiresInSec * 1000;
-  if (countdownTimer) clearInterval(countdownTimer);
-  const el = document.getElementById('countdown');
-  function tick() {
-    const left = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-    el.textContent = `Code expires in ${Math.floor(left / 60)}:${String(left % 60).padStart(2,'0')}`;
-    if (left === 0) clearInterval(countdownTimer);
-  }
-  tick();
-  countdownTimer = setInterval(tick, 1000);
-}
+async function doPassword(e){e.preventDefault();busy(1,true);
+  const username=document.getElementById('username').value.trim();const password=document.getElementById('password').value;
+  try{const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const data=await r.json();
+    if(!r.ok){showError(data.error||'Login failed');return;}
+    if(data.step==='mfa_required'){challengeId=data.challenge_id;document.getElementById('masked-email').textContent=data.masked_email;showStep('mfa');startCountdown(data.expires_in);document.getElementById('code').focus();}
+    else if(data.step==='ok'){goNext();}
+  }catch(err){showError('Connection error.');}finally{busy(1,false);}}
 
-async function doPassword(e) {
-  e.preventDefault();
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true; btn.textContent = 'Signing in...';
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  try {
-    const r = await fetch('/auth/login', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username, password}),
-    });
-    const data = await r.json();
-    if (!r.ok) { showError(data.error || 'Login failed'); return; }
-    if (data.step === 'mfa_required') {
-      challengeId = data.challenge_id;
-      document.getElementById('masked-email').textContent = data.masked_email;
-      showStep('mfa');
-      startCountdown(data.expires_in);
-      document.getElementById('code').focus();
-    } else if (data.step === 'ok') {
-      goNext();
-    }
-  } catch (err) {
-    showError('Connection error.');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Sign In';
-  }
-}
-
-async function doCode(e) {
-  e.preventDefault();
-  const btn = document.getElementById('verifyBtn');
-  btn.disabled = true; btn.textContent = 'Verifying...';
-  const code = document.getElementById('code').value.trim();
-  try {
-    const r = await fetch('/auth/mfa', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({challenge_id: challengeId, code}),
-    });
-    const data = await r.json();
-    if (!r.ok) {
-      showError(data.error || 'Invalid code');
-      if (r.status === 410) backToPassword();
-      return;
-    }
+async function doCode(e){e.preventDefault();busy(2,true);
+  const code=document.getElementById('code').value.trim();
+  try{const r=await fetch('/auth/mfa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge_id:challengeId,code})});
+    const data=await r.json();
+    if(!r.ok){showError(data.error||'Invalid code');if(r.status===410)backToPassword();return;}
     goNext();
-  } catch (err) {
-    showError('Connection error.');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Verify';
-  }
-}
+  }catch(err){showError('Connection error.');}finally{busy(2,false);}}
 
-async function doResend() {
-  try {
-    const r = await fetch('/auth/mfa/resend', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({challenge_id: challengeId}),
-    });
-    const data = await r.json();
-    if (!r.ok) { showError(data.error || 'Could not resend'); return; }
-    showError('A new code has been sent.');
-    startCountdown(300);
-  } catch (err) {
-    showError('Connection error.');
-  }
-}
+async function doResend(){try{const r=await fetch('/auth/mfa/resend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge_id:challengeId})});
+    const data=await r.json();
+    if(!r.ok){showError(data.error||'Could not resend');return;}
+    showError('A new code has been sent.',true);startCountdown(300);
+  }catch(err){showError('Connection error.');}}
 
-function backToPassword() {
-  challengeId = null;
-  if (countdownTimer) clearInterval(countdownTimer);
-  document.getElementById('code').value = '';
-  showStep('password');
-  document.getElementById('username').focus();
-}
-
-function goNext() {
-  const params = new URLSearchParams(window.location.search);
-  const next = params.get('next') || '/';
-  window.location.href = next;
-}
+function backToPassword(){challengeId=null;if(countdownTimer)clearInterval(countdownTimer);document.getElementById('code').value='';showStep('password');document.getElementById('username').focus();}
+function goNext(){const params=new URLSearchParams(window.location.search);const next=params.get('next')||'/';window.location.href=next;}
 </script>
 </body>
 </html>

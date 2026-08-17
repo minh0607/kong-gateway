@@ -3,176 +3,159 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kong - User Management</title>
+<title>SEHC AI Gateway — User Management</title>
+<link rel="icon" href="data:,">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; }
-
-  .header { background: #003459; color: white; padding: 20px 30px; display: flex; align-items: center; gap: 15px; }
-  .header h1 { font-size: 22px; font-weight: 600; }
-  .header .logo { width: 36px; height: 36px; background: #00d09c; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
-  .header-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
-  .header-right a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 13px; font-weight: 500; }
-  .header-right a:hover { color: #fff; }
-
-  .container { max-width: 700px; margin: 30px auto; padding: 0 20px; }
-
-  .card { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; }
-  .card-header { padding: 16px 20px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
-  .card-body { padding: 20px; }
-
-  .user-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-  .user-row:last-child { border-bottom: none; }
-  .user-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 12px; font-size: 14px; }
-  .user-icon.admin { background: #fff3e0; color: #e65100; }
-  .user-icon.user { background: #e8f4f8; color: #003459; }
-  .user-info { display: flex; align-items: center; flex: 1; }
-  .user-name { font-weight: 500; }
-  .user-role { margin-left: 8px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-  .role-admin { background: #fff3e0; color: #e65100; }
-  .role-user { background: #e8f4f8; color: #003459; }
-  .user-actions { display: flex; gap: 6px; }
-
-  .btn { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
-  .btn-primary { background: #003459; color: white; }
-  .btn-primary:hover { background: #004a7c; }
-  .btn-warning { background: #ff9800; color: white; }
-  .btn-warning:hover { background: #e68900; }
-  .btn-danger { background: #f44336; color: white; }
-  .btn-danger:hover { background: #d32f2f; }
-  .btn-role { background: #e8f4f8; color: #003459; }
-  .btn-role:hover { background: #d0e8f0; }
-  .btn-sm { padding: 5px 10px; font-size: 12px; }
-
-  .form-group { margin-bottom: 14px; }
-  .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
-  .form-group input, .form-group select { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-  .form-group input:focus, .form-group select:focus { outline: none; border-color: #003459; box-shadow: 0 0 0 2px rgba(0,52,89,0.15); }
-  .form-row { display: flex; gap: 12px; }
-  .form-row .form-group { flex: 1; }
-
-  .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; display: none; }
-  .alert-success { background: #e8f5e9; color: #2e7d32; }
-  .alert-error { background: #fce4ec; color: #c62828; }
-
-  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
-  .modal-overlay.active { display: flex; }
-  .modal { background: white; border-radius: 10px; padding: 24px; width: 400px; max-width: 90%; }
-  .modal h3 { margin-bottom: 16px; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-
-  .empty { text-align: center; padding: 30px; color: #999; }
-  .count-badge { background: #e8f4f8; color: #003459; padding: 2px 10px; border-radius: 12px; font-size: 13px; }
-  .access-denied { text-align: center; padding: 60px 20px; }
-  .access-denied h2 { color: #c62828; margin-bottom: 10px; }
-  .access-denied p { color: #666; }
+  :root{
+    --bg:#f9fafb; --card:#ffffff; --text:#0f172a; --sub:#6b7280; --line:#e5e7eb; --input:#f9fafb; --hover:#f3f4f6;
+    --primary:#3b82f6; --primary-h:#2563eb; --primary-l:#eff6ff; --primary-t:#1d4ed8; --grad:linear-gradient(135deg,#3b82f6,#2563eb);
+    --sidebar:#0f172a;
+    --shadow:0 10px 15px -3px rgba(15,23,42,.06),0 4px 6px -4px rgba(15,23,42,.05);
+    --amber:#b45309; --amber-bg:#fffbeb; --amber-line:#fde68a;
+    --danger:#dc2626; --danger-bg:#fef2f2; --danger-line:#fecaca;
+    --ok:#059669; --ok-bg:#ecfdf5; --ok-line:#a7f3d0;
+  }
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --bg:#030712; --card:#1e293b; --text:#f1f5f9; --sub:#94a3b8; --line:#334155; --input:#0f172a; --hover:#334155;
+    --primary-l:#0f213f; --primary-t:#93c5fd;
+    --shadow:0 10px 15px -3px rgba(0,0,0,.4);
+    --amber-bg:#2a2010; --amber-line:#78581a; --danger-bg:#2a1416; --danger-line:#7f1d1d; --ok-bg:#052e23; --ok-line:#065f46;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#030712; --card:#1e293b; --text:#f1f5f9; --sub:#94a3b8; --line:#334155; --input:#0f172a; --hover:#334155;
+    --primary-l:#0f213f; --primary-t:#93c5fd; --shadow:0 10px 15px -3px rgba(0,0,0,.4);
+    --amber-bg:#2a2010; --amber-line:#78581a; --danger-bg:#2a1416; --danger-line:#7f1d1d; --ok-bg:#052e23; --ok-line:#065f46;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  a{color:inherit;text-decoration:none}
+  .topbar{background:var(--sidebar);color:#fff;height:60px;display:flex;align-items:center;gap:13px;padding:0 24px;position:sticky;top:0;z-index:20}
+  .topbar .lg{height:26px;object-fit:contain}
+  .topbar h1{font-size:15.5px;font-weight:700;letter-spacing:.2px}
+  .topbar .sep{width:1px;height:24px;background:rgba(255,255,255,.15);margin:0 4px}
+  .topbar .rt{margin-left:auto;display:flex;gap:18px;align-items:center;font-size:13px;font-weight:600}
+  .topbar .rt a{color:rgba(255,255,255,.65)} .topbar .rt a:hover{color:#fff}
+  .container{max-width:760px;margin:26px auto;padding:0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+  .chead{display:flex;align-items:center;gap:11px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .chead .cico{width:32px;height:32px;flex:0 0 auto;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff}
+  .chead .cico svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.7}
+  .cico.blue{background:var(--grad)} .cico.slate{background:linear-gradient(135deg,#64748b,#475569)} .cico.amber{background:linear-gradient(135deg,#fbbf24,#d97706)}
+  .chead h2{font-size:15px;font-weight:700;flex:1}
+  .cbody{padding:20px}
+  .fg{margin-bottom:14px}
+  .fg label{display:block;margin-bottom:6px;font-weight:600;font-size:12.5px;color:var(--sub)}
+  .fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:var(--input);color:var(--text);font-family:inherit}
+  .fg input:focus,.fg select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(59,130,246,.15)}
+  .frow{display:flex;gap:12px} .frow .fg{flex:1}
+  .btn{padding:9px 16px;border:1px solid transparent;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;transition:filter .15s,background .15s,transform .1s;color:#fff;background:var(--grad);box-shadow:0 8px 16px -8px rgba(37,99,235,.5)}
+  .btn:hover{filter:brightness(1.06)} .btn:active{transform:scale(.97)}
+  .btn.sm{padding:6px 11px;font-size:12px;border-radius:8px;box-shadow:none}
+  .btn.ghost{background:var(--card);color:var(--text);border-color:var(--line);box-shadow:none} .btn.ghost:hover{background:var(--hover);filter:none;border-color:var(--primary)}
+  .btn.role{background:var(--primary-l);color:var(--primary-t);box-shadow:none} .btn.role:hover{filter:brightness(.97)}
+  .btn.warn{background:linear-gradient(135deg,#fbbf24,#d97706);box-shadow:none}
+  .btn.danger{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:none}
+  .btn.mfaon{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-line);box-shadow:none}
+  .btn.mfaoff{background:var(--hover);color:var(--sub);box-shadow:none}
+  .urow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .urow:last-child{border-bottom:none}
+  .uinfo{display:flex;align-items:center;gap:11px;min-width:0}
+  .uav{width:38px;height:38px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .uav.admin{background:var(--amber-bg);color:var(--amber)} .uav.user{background:var(--primary-l);color:var(--primary-t)}
+  .uname{font-weight:700}
+  .ubadge{padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+  .ubadge.admin{background:var(--amber-bg);color:var(--amber)} .ubadge.user{background:var(--primary-l);color:var(--primary-t)}
+  .uemail{font-size:12.5px;color:var(--sub)}
+  .uactions{display:flex;gap:6px;flex-wrap:wrap}
+  .alert{padding:11px 15px;border-radius:11px;margin-bottom:16px;font-size:13.5px;font-weight:500;display:none;border:1px solid transparent}
+  .alert-success{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-line)}
+  .alert-error{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-line)}
+  .count{background:var(--primary-l);color:var(--primary-t);padding:2px 11px;border-radius:20px;font-size:12.5px;font-weight:700}
+  .empty{text-align:center;padding:26px;color:var(--sub)}
+  .access-denied{text-align:center;padding:64px 20px}
+  .access-denied .cico{width:52px;height:52px;border-radius:14px;margin:0 auto 16px;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center}
+  .access-denied .cico svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:1.6}
+  .access-denied h2{margin-bottom:8px;font-size:19px}
+  .access-denied p{color:var(--sub)}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(2,6,23,.55);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+  .modal-overlay.active{display:flex}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;width:420px;max-width:100%;box-shadow:0 24px 60px -15px rgba(0,0,0,.4)}
+  .modal h3{margin-bottom:16px;font-size:16px;font-weight:700}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+  small.hint{color:var(--sub);font-size:12px;display:none;margin-top:4px}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">K</div>
-  <h1>Kong - User Management</h1>
-  <div class="header-right">
-    <a href="/">&#9664; Back to Kong Manager</a>
+<div class="topbar">
+  <img class="lg ll" src="data:image/png;base64,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" alt="SEHC INFRA">
+  <span class="sep"></span>
+  <h1>User Management</h1>
+  <div class="rt">
+    <a href="/kongportal">Model Portal</a>
+    <a href="/">Kong Manager</a>
   </div>
 </div>
 
 <div class="container">
   <div id="alert" class="alert"></div>
   <div id="accessDenied" class="access-denied" style="display:none;">
-    <h2>Access Denied</h2>
+    <div class="cico"><svg viewBox="0 0 24 24"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg></div>
+    <h2>Access denied</h2>
     <p>Only admin users can manage accounts.</p>
-    <p style="margin-top:16px;"><a href="/" style="color:#003459;">Back to Kong Manager</a></p>
+    <p style="margin-top:16px;"><a href="/" style="color:var(--primary);font-weight:600">Back to Kong Manager</a></p>
   </div>
 
   <div id="mainContent">
     <!-- Add User -->
     <div class="card">
-      <div class="card-header">Add New User</div>
-      <div class="card-body">
+      <div class="chead"><span class="cico blue"><svg viewBox="0 0 24 24"><path d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z"/></svg></span><h2>Add new user</h2></div>
+      <div class="cbody">
         <form id="addForm" onsubmit="addUser(event)">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Username</label>
-              <input type="text" id="newUsername" placeholder="Enter username" required minlength="3">
-            </div>
-            <div class="form-group">
-              <label>Password</label>
-              <input type="password" id="newPassword" placeholder="Enter password" required minlength="6">
-            </div>
+          <div class="frow">
+            <div class="fg"><label>Username</label><input type="text" id="newUsername" placeholder="Enter username" required minlength="3"></div>
+            <div class="fg"><label>Password</label><input type="password" id="newPassword" placeholder="Enter password" required minlength="6"></div>
           </div>
-          <div class="form-group">
-            <label>Email (optional)</label>
-            <input type="email" id="newEmail" placeholder="user@example.com">
-          </div>
-          <div class="form-group">
-            <label>Role</label>
+          <div class="fg"><label>Email <span style="font-weight:400">(optional)</span></label><input type="email" id="newEmail" placeholder="user@example.com"></div>
+          <div class="fg"><label>Role</label>
             <select id="newRole">
               <option value="user">User — Kong Manager access only</option>
               <option value="admin">Admin — Kong Manager + User Management</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-primary">Add User</button>
+          <button type="submit" class="btn">Add user</button>
         </form>
       </div>
     </div>
 
     <!-- User List -->
     <div class="card">
-      <div class="card-header">
-        <span>Users</span>
-        <span class="count-badge" id="userCount">0</span>
-      </div>
-      <div class="card-body" id="userList">
-        <div class="empty">Loading...</div>
-      </div>
+      <div class="chead"><span class="cico slate"><svg viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></span><h2>Users</h2><span class="count" id="userCount">0</span></div>
+      <div class="cbody" id="userList"><div class="empty">Loading…</div></div>
     </div>
 
     <!-- SMTP Settings -->
     <div class="card">
-      <div class="card-header">SMTP Settings</div>
-      <div class="card-body">
+      <div class="chead"><span class="cico amber"><svg viewBox="0 0 24 24"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg></span><h2>SMTP settings <span class="uemail" style="font-weight:400">— for MFA emails</span></h2></div>
+      <div class="cbody">
         <div id="smtpAlert" class="alert"></div>
         <form id="smtpForm" onsubmit="saveSmtp(event)">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Host</label>
-              <input type="text" id="smtpHost" placeholder="mail.example.com">
-            </div>
-            <div class="form-group" style="max-width:100px;">
-              <label>Port</label>
-              <input type="number" id="smtpPort" placeholder="587" min="1" max="65535">
-            </div>
+          <div class="frow">
+            <div class="fg"><label>Host</label><input type="text" id="smtpHost" placeholder="mail.example.com"></div>
+            <div class="fg" style="max-width:110px;"><label>Port</label><input type="number" id="smtpPort" placeholder="587" min="1" max="65535"></div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Username</label>
-              <input type="text" id="smtpUser" placeholder="relay@example.com">
-            </div>
-            <div class="form-group">
-              <label>Password</label>
-              <input type="password" id="smtpPassword" placeholder="(unchanged)" autocomplete="new-password">
-              <small id="smtpPassHint" style="color:#666;font-size:12px;display:none;">(currently set)</small>
-            </div>
+          <div class="frow">
+            <div class="fg"><label>Username</label><input type="text" id="smtpUser" placeholder="relay@example.com"></div>
+            <div class="fg"><label>Password</label><input type="password" id="smtpPassword" placeholder="(unchanged)" autocomplete="new-password"><small id="smtpPassHint" class="hint">currently set</small></div>
           </div>
-          <div class="form-group">
-            <label>From Address</label>
-            <input type="text" id="smtpFrom" placeholder="SEHC AI Gateway &lt;no-reply@example.com&gt;">
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:0;white-space:nowrap;">
-              <label>Use TLS</label>
-              <input type="checkbox" id="smtpTls" style="width:auto;margin-top:9px;">
-            </div>
-            <div class="form-group" style="max-width:140px;">
-              <label>Timeout (sec)</label>
-              <input type="number" id="smtpTimeout" placeholder="10" min="1" max="120">
-            </div>
+          <div class="fg"><label>From address</label><input type="text" id="smtpFrom" placeholder="SEHC AI Gateway &lt;no-reply@example.com&gt;"></div>
+          <div class="frow">
+            <div class="fg" style="flex:0;white-space:nowrap;"><label>Use TLS</label><input type="checkbox" id="smtpTls" style="width:auto;margin-top:9px;"></div>
+            <div class="fg" style="max-width:150px;"><label>Timeout (sec)</label><input type="number" id="smtpTimeout" placeholder="10" min="1" max="120"></div>
           </div>
           <div style="display:flex;gap:8px;margin-top:4px;">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <button type="button" class="btn btn-role" onclick="testSmtp()">Send test email</button>
+            <button type="submit" class="btn">Save</button>
+            <button type="button" class="btn ghost" onclick="testSmtp()">Send test email</button>
           </div>
         </form>
       </div>
@@ -183,14 +166,11 @@
 <!-- Change Password Modal -->
 <div class="modal-overlay" id="passwordModal">
   <div class="modal">
-    <h3>Change Password</h3>
-    <div class="form-group">
-      <label>New password for <strong id="modalUser"></strong></label>
-      <input type="password" id="modalPassword" placeholder="Enter new password" minlength="6">
-    </div>
+    <h3>Change password</h3>
+    <div class="fg"><label>New password for <strong id="modalUser"></strong></label><input type="password" id="modalPassword" placeholder="Enter new password" minlength="6"></div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal()" style="background:#eee">Cancel</button>
-      <button class="btn btn-warning" onclick="savePassword()">Save</button>
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn warn" onclick="savePassword()">Save</button>
     </div>
   </div>
 </div>
@@ -206,20 +186,14 @@ function showAlert(msg, type) {
 
 async function api(method, url, body) {
   const opts = { method, headers: {} };
-  if (body) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
-  }
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
   const res = await fetch(url, opts);
   if (res.status === 403) {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('accessDenied').style.display = 'block';
     throw new Error('Access denied');
   }
-  if (res.status === 401) {
-    window.location.href = '/auth/login';
-    throw new Error('Not authenticated');
-  }
+  if (res.status === 401) { window.location.href = '/auth/login'; throw new Error('Not authenticated'); }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
@@ -229,34 +203,28 @@ async function loadUsers() {
   try {
     const data = await api('GET', 'api/users');
     const list = document.getElementById('userList');
-    const count = document.getElementById('userCount');
-    count.textContent = data.users.length;
-
-    if (data.users.length === 0) {
-      list.innerHTML = '<div class="empty">No users found</div>';
-      return;
-    }
-
+    document.getElementById('userCount').textContent = data.users.length;
+    if (data.users.length === 0) { list.innerHTML = '<div class="empty">No users found</div>'; return; }
     list.innerHTML = data.users.map(u => `
-      <div class="user-row">
-        <div class="user-info">
-          <div class="user-icon ${u.role}">${u.username[0].toUpperCase()}</div>
-          <span class="user-name">${u.username}</span>
-          <span class="user-role role-${u.role}">${u.role}</span>
-          <span style="margin-left:10px;font-size:12px;color:#666;">${u.email || ''}</span>
+      <div class="urow">
+        <div class="uinfo">
+          <div class="uav ${u.role}">${u.username[0].toUpperCase()}</div>
+          <div>
+            <span class="uname">${u.username}</span>
+            <span class="ubadge ${u.role}">${u.role}</span>
+            ${u.email ? `<div class="uemail">${u.email}</div>` : ''}
+          </div>
         </div>
-        <div class="user-actions">
-          <button class="btn btn-role btn-sm" onclick="toggleRole('${u.username}','${u.role}')">${u.role === 'admin' ? 'Demote' : 'Promote'}</button>
-          <button class="btn btn-warning btn-sm" onclick="openPasswordModal('${u.username}')">Password</button>
-          <button class="btn btn-sm" style="background:#e8f4f8;color:#003459;" onclick="editEmail('${u.username}','${u.email || ''}')">Email</button>
-          <button class="btn btn-sm" style="background:${u.mfa_enabled ? '#e8f5e9' : '#f5f5f5'};color:${u.mfa_enabled ? '#2e7d32' : '#666'};" onclick="toggleMfa('${u.username}',${u.mfa_enabled})">MFA: ${u.mfa_enabled ? 'on' : 'off'}</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.username}')">Delete</button>
+        <div class="uactions">
+          <button class="btn role sm" onclick="toggleRole('${u.username}','${u.role}')">${u.role === 'admin' ? 'Demote' : 'Promote'}</button>
+          <button class="btn warn sm" onclick="openPasswordModal('${u.username}')">Password</button>
+          <button class="btn ghost sm" onclick="editEmail('${u.username}','${u.email || ''}')">Email</button>
+          <button class="btn ${u.mfa_enabled ? 'mfaon' : 'mfaoff'} sm" onclick="toggleMfa('${u.username}',${u.mfa_enabled})">MFA: ${u.mfa_enabled ? 'on' : 'off'}</button>
+          <button class="btn danger sm" onclick="deleteUser('${u.username}')">Delete</button>
         </div>
-      </div>
-    `).join('');
+      </div>`).join('');
   } catch (e) {
-    if (e.message !== 'Access denied' && e.message !== 'Not authenticated')
-      showAlert(e.message, 'error');
+    if (e.message !== 'Access denied' && e.message !== 'Not authenticated') showAlert(e.message, 'error');
   }
 }
 
@@ -266,40 +234,24 @@ async function addUser(e) {
   const password = document.getElementById('newPassword').value.trim();
   const role = document.getElementById('newRole').value;
   const email = document.getElementById('newEmail').value.trim();
-  const body = { username, password, role }
-  if (email) body.email = email
-  try {
-    const data = await api('POST', 'api/users', body);
-    showAlert(data.message, 'success');
-    document.getElementById('addForm').reset();
-    loadUsers();
-  } catch (e) {
-    showAlert(e.message, 'error');
-  }
+  const body = { username, password, role };
+  if (email) body.email = email;
+  try { const data = await api('POST', 'api/users', body); showAlert(data.message, 'success'); document.getElementById('addForm').reset(); loadUsers(); }
+  catch (e) { showAlert(e.message, 'error'); }
 }
 
 async function deleteUser(username) {
   if (!confirm(`Delete user "${username}"?`)) return;
-  try {
-    const data = await api('DELETE', `api/users/${username}`);
-    showAlert(data.message, 'success');
-    loadUsers();
-  } catch (e) {
-    showAlert(e.message, 'error');
-  }
+  try { const data = await api('DELETE', `api/users/${username}`); showAlert(data.message, 'success'); loadUsers(); }
+  catch (e) { showAlert(e.message, 'error'); }
 }
 
 async function toggleRole(username, currentRole) {
   const newRole = currentRole === 'admin' ? 'user' : 'admin';
   const action = newRole === 'admin' ? 'Promote' : 'Demote';
   if (!confirm(`${action} "${username}" to ${newRole}?`)) return;
-  try {
-    const data = await api('PUT', `api/users/${username}/role`, { role: newRole });
-    showAlert(data.message, 'success');
-    loadUsers();
-  } catch (e) {
-    showAlert(e.message, 'error');
-  }
+  try { const data = await api('PUT', `api/users/${username}/role`, { role: newRole }); showAlert(data.message, 'success'); loadUsers(); }
+  catch (e) { showAlert(e.message, 'error'); }
 }
 
 function openPasswordModal(username) {
@@ -307,34 +259,21 @@ function openPasswordModal(username) {
   document.getElementById('modalPassword').value = '';
   document.getElementById('passwordModal').classList.add('active');
 }
-
-function closeModal() {
-  document.getElementById('passwordModal').classList.remove('active');
-}
+function closeModal() { document.getElementById('passwordModal').classList.remove('active'); }
 
 async function savePassword() {
   const username = document.getElementById('modalUser').textContent;
   const password = document.getElementById('modalPassword').value.trim();
   if (!password) return;
-  try {
-    const data = await api('PUT', `api/users/${username}/password`, { password });
-    showAlert(data.message, 'success');
-    closeModal();
-  } catch (e) {
-    showAlert(e.message, 'error');
-  }
+  try { const data = await api('PUT', `api/users/${username}/password`, { password }); showAlert(data.message, 'success'); closeModal(); }
+  catch (e) { showAlert(e.message, 'error'); }
 }
 
 async function editEmail(username, current) {
-  const newValue = prompt(`Email for "${username}":`, current)
-  if (newValue === null) return
-  try {
-    const data = await api('PUT', `api/users/${username}/email`, { email: newValue.trim() })
-    showAlert(data.message, 'success')
-    loadUsers()
-  } catch (e) {
-    showAlert(e.message, 'error')
-  }
+  const newValue = prompt(`Email for "${username}":`, current);
+  if (newValue === null) return;
+  try { const data = await api('PUT', `api/users/${username}/email`, { email: newValue.trim() }); showAlert(data.message, 'success'); loadUsers(); }
+  catch (e) { showAlert(e.message, 'error'); }
 }
 
 function showSmtpAlert(msg, type) {
@@ -355,11 +294,8 @@ async function loadSmtp() {
     document.getElementById('smtpTls').checked = !!data.use_tls;
     document.getElementById('smtpTimeout').value = data.timeout_sec || '';
     document.getElementById('smtpPassword').value = '';
-    const hint = document.getElementById('smtpPassHint');
-    hint.style.display = data.pass_set ? 'block' : 'none';
-  } catch (e) {
-    // Non-admin or load error — silently skip
-  }
+    document.getElementById('smtpPassHint').style.display = data.pass_set ? 'block' : 'none';
+  } catch (e) { /* non-admin or load error — silently skip */ }
 }
 
 async function saveSmtp(e) {
@@ -374,33 +310,18 @@ async function saveSmtp(e) {
   };
   const pw = document.getElementById('smtpPassword').value;
   if (pw) body.password = pw;
-  try {
-    const data = await api('PUT', 'api/smtp', body);
-    showSmtpAlert(data.message, 'success');
-    document.getElementById('smtpPassword').value = '';
-    loadSmtp();
-  } catch (e) {
-    showSmtpAlert(e.message, 'error');
-  }
+  try { const data = await api('PUT', 'api/smtp', body); showSmtpAlert(data.message, 'success'); document.getElementById('smtpPassword').value = ''; loadSmtp(); }
+  catch (e) { showSmtpAlert(e.message, 'error'); }
 }
 
 async function testSmtp() {
-  try {
-    const data = await api('POST', 'api/smtp/test', {});
-    showSmtpAlert(data.message, 'success');
-  } catch (e) {
-    showSmtpAlert(e.message, 'error');
-  }
+  try { const data = await api('POST', 'api/smtp/test', {}); showSmtpAlert(data.message, 'success'); }
+  catch (e) { showSmtpAlert(e.message, 'error'); }
 }
 
 async function toggleMfa(username, current) {
-  try {
-    const data = await api('PUT', `api/users/${username}/mfa`, { enabled: !current });
-    showAlert(data.message, 'success');
-    loadUsers();
-  } catch (e) {
-    showAlert(e.message, 'error');
-  }
+  try { const data = await api('PUT', `api/users/${username}/mfa`, { enabled: !current }); showAlert(data.message, 'success'); loadUsers(); }
+  catch (e) { showAlert(e.message, 'error'); }
 }
 
 loadUsers();

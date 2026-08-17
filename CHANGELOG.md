@@ -4,6 +4,30 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.15] — 2026-08-17
+
+Redesigned the login / user-management module to match the Model Portal.
+
+### Changed
+- **Login page** rebuilt — SEHC INFRA logo, ITPortal blue, Inter, light + dark
+  themes, animated gradient backdrop, icon-tiled card with a top accent line,
+  inputs with leading icons + a show/hide password toggle, styled loading/error
+  states. The password → email-MFA (6-digit) → redirect flow and all endpoints
+  (`/auth/login`, `/auth/mfa`, `/auth/mfa/resend`) are unchanged.
+- **User Management** (`/users/`) and **Audit Log** (`/logs/`) restyled to the
+  same design system — clean top bar with the SEHC INFRA logo, icon-tiled cards,
+  blue/amber/red action buttons, role badges, light + dark. All user/SMTP/audit
+  functionality and endpoints are unchanged.
+- Cross-links now point between User Management, Audit Log, **Model Portal** and
+  Kong Manager.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.15.sha256.txt
+tar xzf kong-pca-bundle-v1.0.15.tar.gz && cd v1.0.15
+sudo ./pca-deploy.sh kong-deploy-v1.0.15.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.14] — 2026-08-10
 
 ### Added

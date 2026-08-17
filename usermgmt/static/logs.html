@@ -2,50 +2,87 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SEHC AI Gateway — Audit Log</title>
+<link rel="icon" href="data:,">
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; background:#0a1628; color:#cdd5e0; }
-  header { padding: 16px 24px; background: rgba(0,52,89,0.95); display:flex; justify-content:space-between; }
-  header h1 { font-size: 18px; margin:0; color:#fff; }
-  header a { color:#00d09c; text-decoration:none; margin-left:16px; }
-  .filters { padding: 16px 24px; display:flex; gap:12px; flex-wrap:wrap; background:rgba(255,255,255,0.02); }
-  .filters input, .filters button { padding: 8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.06); color:#fff; }
-  .filters button { background:#00d09c; color:#003459; cursor:pointer; border:none; font-weight:700; }
-  table { width:100%; border-collapse:collapse; }
-  th, td { padding: 10px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; }
-  th { color:rgba(255,255,255,0.5); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
-  tr:hover { background:rgba(255,255,255,0.03); cursor:pointer; }
-  pre { background:rgba(0,0,0,0.4); padding:14px; border-radius:8px; font-size:12px; white-space:pre-wrap; }
-  .pager { padding: 16px 24px; display:flex; gap:8px; }
-  .pager button { padding:6px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:transparent; color:#cdd5e0; cursor:pointer; }
-  .pager button:disabled { opacity:0.4; cursor:not-allowed; }
+  :root{
+    --bg:#f9fafb; --card:#ffffff; --text:#0f172a; --sub:#6b7280; --line:#e5e7eb; --input:#f9fafb; --hover:#f3f4f6;
+    --primary:#3b82f6; --primary-t:#1d4ed8; --grad:linear-gradient(135deg,#3b82f6,#2563eb); --sidebar:#0f172a;
+    --shadow:0 10px 15px -3px rgba(15,23,42,.06),0 4px 6px -4px rgba(15,23,42,.05);
+  }
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --bg:#030712; --card:#1e293b; --text:#f1f5f9; --sub:#94a3b8; --line:#334155; --input:#0f172a; --hover:#334155;
+    --primary-t:#93c5fd; --shadow:0 10px 15px -3px rgba(0,0,0,.4);
+  }}
+  :root[data-theme="dark"]{--bg:#030712; --card:#1e293b; --text:#f1f5f9; --sub:#94a3b8; --line:#334155; --input:#0f172a; --hover:#334155; --primary-t:#93c5fd; --shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  a{color:inherit;text-decoration:none}
+  .topbar{background:var(--sidebar);color:#fff;height:60px;display:flex;align-items:center;gap:13px;padding:0 24px;position:sticky;top:0;z-index:20}
+  .topbar .lg{height:26px;object-fit:contain} .topbar .sep{width:1px;height:24px;background:rgba(255,255,255,.15);margin:0 4px}
+  .topbar h1{font-size:15.5px;font-weight:700}
+  .topbar .rt{margin-left:auto;display:flex;gap:18px;align-items:center;font-size:13px;font-weight:600}
+  .topbar .rt a{color:rgba(255,255,255,.65)} .topbar .rt a:hover{color:#fff}
+  .container{max-width:1200px;margin:22px auto;padding:0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:16px}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:16px 18px}
+  .filters input{padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--input);color:var(--text);font-size:13.5px;font-family:inherit}
+  .filters input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(59,130,246,.15)}
+  .btn{padding:9px 16px;border:0;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;color:#fff;background:var(--grad);box-shadow:0 8px 16px -8px rgba(37,99,235,.5)}
+  .btn:hover{filter:brightness(1.06)}
+  .btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:none} .btn.sec:hover{background:var(--hover)}
+  .btn.sec:disabled{opacity:.45;cursor:not-allowed}
+  .twrap{overflow:auto;border-radius:16px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:11px;padding:11px 14px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  td{padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr{cursor:pointer;transition:background .1s} tbody tr:hover{background:var(--hover)}
+  code{font-family:ui-monospace,monospace;font-size:12px}
+  .pager{display:flex;gap:8px;align-items:center;padding:14px 18px}
+  .pager .info{color:var(--sub);font-size:13px}
+  pre{background:var(--input);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:12px;white-space:pre-wrap;font-family:ui-monospace,monospace;margin-bottom:24px}
 </style>
 </head>
 <body>
-<header>
-  <h1>SEHC AI Gateway — Audit Log</h1>
-  <div>
+<div class="topbar">
+  <img class="lg" src="data:image/png;base64,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" alt="SEHC INFRA">
+  <span class="sep"></span>
+  <h1>Audit Log</h1>
+  <div class="rt">
     <a href="/users/">Users</a>
+    <a href="/kongportal">Model Portal</a>
     <a href="/">Kong Manager</a>
     <a href="/auth/logout">Logout</a>
   </div>
-</header>
-<div class="filters">
-  <input id="date" type="date">
-  <input id="actor" type="text" placeholder="actor (exact)">
-  <input id="event" type="text" placeholder="event (glob: login.*)">
-  <button onclick="load(0)">Search</button>
 </div>
-<table>
-  <thead><tr><th>ts (UTC)</th><th>actor</th><th>role</th><th>ip</th><th>event</th><th>target</th></tr></thead>
-  <tbody id="rows"></tbody>
-</table>
-<div class="pager">
-  <button id="prev" onclick="load(offset - limit)">&lt; Newer</button>
-  <span id="info" style="padding:6px"></span>
-  <button id="next" onclick="load(offset + limit)">Older &gt;</button>
+
+<div class="container">
+  <div class="card">
+    <div class="filters">
+      <input id="date" type="date">
+      <input id="actor" type="text" placeholder="actor (exact)">
+      <input id="event" type="text" placeholder="event (glob: login.*)">
+      <button class="btn" onclick="load(0)">Search</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="twrap">
+      <table>
+        <thead><tr><th>ts (UTC)</th><th>actor</th><th>role</th><th>ip</th><th>event</th><th>target</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <button class="btn sec" id="prev" onclick="load(offset - limit)">‹ Newer</button>
+      <span class="info" id="info"></span>
+      <button class="btn sec" id="next" onclick="load(offset + limit)">Older ›</button>
+    </div>
+  </div>
+
+  <pre id="detail" hidden></pre>
 </div>
-<pre id="detail" hidden></pre>
 
 <script>
 const limit = 200;
@@ -72,14 +109,14 @@ async function load(off) {
   total = data.total;
   document.getElementById('rows').innerHTML = data.rows.map(row => `
     <tr onclick='showDetail(${JSON.stringify(JSON.stringify(row))})'>
-      <td>${row.ts || ''}</td>
-      <td>${row.actor || ''}</td>
+      <td><code>${row.ts || ''}</code></td>
+      <td><b>${row.actor || ''}</b></td>
       <td>${row.actor_role || ''}</td>
-      <td>${row.ip || ''}</td>
+      <td><code>${row.ip || ''}</code></td>
       <td>${row.event || ''}</td>
       <td>${row.target || ''}</td>
-    </tr>`).join('');
-  document.getElementById('info').textContent = `${offset + 1}–${offset + data.rows.length} of ${total}`;
+    </tr>`).join('') || '<tr><td colspan=6 style="color:var(--sub);text-align:center;padding:26px">No entries.</td></tr>';
+  document.getElementById('info').textContent = `${data.rows.length ? offset + 1 : 0}–${offset + data.rows.length} of ${total}`;
   document.getElementById('prev').disabled = offset === 0;
   document.getElementById('next').disabled = !data.has_more;
 }
@@ -88,6 +125,7 @@ function showDetail(jsonStr) {
   const el = document.getElementById('detail');
   el.textContent = JSON.stringify(JSON.parse(jsonStr), null, 2);
   el.hidden = false;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 load(0);
