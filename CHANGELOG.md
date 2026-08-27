@@ -4,6 +4,28 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.17] — 2026-08-17
+
+Hardened the portal's API base against a stale localStorage override.
+
+### Fixed
+- The Model Portal read an optional `kong_api` base URL from `localStorage`
+  without validating it. A leftover absolute override pointing at a dead host or
+  port (e.g. an old `http://<gw>/aigw/api` on port 80) forced every Admin-API
+  call there and surfaced as `ERR_CONNECTION_REFUSED`, even though the portal
+  itself was served correctly on `:8002`. The override is now honored only when
+  it is a relative path or a same-origin absolute URL; anything cross-origin is
+  ignored and the portal falls back to the relative `/aigw/api` (same origin).
+  No rebuild needed to recover an affected browser — clear it with
+  `localStorage.removeItem('kong_api')` and reload.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.17.sha256.txt
+tar xzf kong-pca-bundle-v1.0.17.tar.gz && cd v1.0.17
+sudo ./pca-deploy.sh kong-deploy-v1.0.17.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.16] — 2026-08-17
 
 Added self-service **forgot password** to the login page.

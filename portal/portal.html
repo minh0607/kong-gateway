@@ -556,7 +556,13 @@
 
 <script>
 // API base is prefix-aware: /aigw/api when served via IT Portal forward, else /api.
-const API=(function(){const p=location.pathname;const base=(p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/api':'/api';return (localStorage.getItem('kong_api')||base).replace(/\/$/,'');})();
+const API=(function(){const p=location.pathname;const base=(p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/api':'/api';
+  // Honor a localStorage override only if it is a relative path or same-origin absolute URL.
+  // A stale cross-origin/port override (e.g. an old :80 URL) would send every call to a dead
+  // host and surface as ERR_CONNECTION_REFUSED, so ignore it and fall back to the relative base.
+  const ov=localStorage.getItem('kong_api');let use=base;
+  if(ov){try{if(ov.indexOf('/')===0)use=ov;else if(new URL(ov).origin===location.origin)use=ov;}catch(e){}}
+  return use.replace(/\/$/,'');})();
 const METRICS=(function(){const p=location.pathname;return (p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/metrics':'/metrics';})();
 const REQLOG=(function(){const p=location.pathname;return (p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/requests':'/requests';})();
 const MTEST=(function(){const p=location.pathname;return (p.indexOf('/aigw/')===0||p==='/aigw')?'/aigw/modeltest':'/modeltest';})();
