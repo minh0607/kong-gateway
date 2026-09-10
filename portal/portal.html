@@ -219,6 +219,7 @@
           <div class="fld"><label>Mode</label><select id="w_mode" onchange="wModeChange()">
             <option value="new">Create a new model</option>
             <option value="existing">Use an existing model — just add a project</option>
+            <option value="acl">Add a project to existing ACL group(s)</option>
           </select></div>
           <div id="w_newbox">
             <p class="hint">Creates <code>svc-&lt;slug&gt;</code> with key-auth + an <code>acl-&lt;slug&gt;</code> group.</p>
@@ -230,6 +231,12 @@
           <div id="w_existbox" class="hidden">
             <p class="hint">The service, route and security already exist — the wizard just adds a project to this model's ACL group.</p>
             <div class="fld"><label>Existing model</label><select id="w_exist"></select></div>
+          </div>
+          <div id="w_aclbox" class="hidden">
+            <p class="hint">Onboard a new project and grant it access to one or more <b>existing</b> ACL groups. No new model or route is created.</p>
+            <div class="fld"><label>ACL groups <span class="muted">(tick the models this project may call)</span></label>
+              <div id="w_acllist" class="checks"></div></div>
+            <div class="fld"><label>API-key header</label><select id="w_aclheader"><option value="x-api-key">x-api-key (n8n / generic)</option><option value="Authorization">Authorization + Bearer (OpenAI-compatible)</option></select></div>
           </div>
         </div>
         <div class="wstep hidden" data-step="2">
@@ -412,6 +419,17 @@
           </div>
         </div>
       </div>
+      <div class="card" style="margin-top:18px">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="margin:0"><span class="cico sky"><svg viewBox="0 0 24 24"><path d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/><path d="M6 6h.008v.008H6V6z"/></svg></span>ACL groups → members</h2>
+          <div class="row" style="gap:8px"><input placeholder="filter…" oninput="filterTable(this,'acl_groups_body')" style="width:150px;padding:6px 9px"/><button class="btn sec sm" onclick="loadConsumers()">↻ Refresh</button></div>
+        </div>
+        <p class="hint">Which consumers belong to each ACL group — the inverse of the table above. A consumer in a model's <code>acl-*</code> group may call that model.</p>
+        <div style="overflow:auto">
+        <table><thead><tr><th>ACL group</th><th>Members</th><th>Consumers</th></tr></thead>
+          <tbody id="acl_groups_body"><tr><td colspan="3" class="muted">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
     </section>
 
     <!-- ===== UPSTREAMS ===== -->
@@ -543,7 +561,7 @@
       <div class="card" style="max-width:800px;margin:0 auto">
         <div class="row" style="justify-content:space-between;align-items:flex-end">
           <div style="flex:0 0 auto"><label>Choose a model</label><select id="pl_svc" onchange="loadModelProtections()" style="min-width:250px"></select></div>
-          <button class="btn sec sm" onclick="loadModelProtections()">↻ Refresh</button>
+          <div class="row" style="gap:8px"><button class="btn sec sm" onclick="autoNamePlugins()" title="Đặt instance name cho mọi plugin chưa có tên, theo scheme <plugin>-<vị trí>">Auto-name plugins</button><button class="btn sec sm" onclick="loadModelProtections()">↻ Refresh</button></div>
         </div>
         <div id="pl_body" style="margin-top:6px"><div class="muted" style="padding:12px 0">Select a model to manage its protections.</div></div>
       </div>
@@ -781,9 +799,10 @@ async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<
   try{const cons=(await api('GET','/consumers?size=1000')).data;_consumers=cons;
     const opts=cons.map(c=>`<option value="${esc(c.username)}">${esc(c.username)}</option>`).join('')||'<option value="">(none)</option>';
     if($('#c_sel'))$('#c_sel').innerHTML=opts; if($('#k_sel'))$('#k_sel').innerHTML=opts;
-    const rows=[];
+    const rows=[];const groupMap={};
     for(const c of cons){
       const acls=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/acls')).data;
+      for(const a of acls){(groupMap[a.group]=groupMap[a.group]||[]).push(c.username);}
       const keys=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/key-auth')).data;
       const kind=(c.username||'').startsWith('prj-')?'<span class="pill">project</span>':'<span class="pill model">legacy</span>';
       const keycell=keys.length?keys.map(k=>{const id='k'+Math.abs(hash(c.username+k.id));
@@ -795,7 +814,13 @@ async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<
         <td style="white-space:nowrap"><button class="btn sec sm" onclick="editConsumer('${c.id}')">Edit</button> <button class="btn red sm" onclick="delConsumer('${esc(c.username)}')">Delete</button></td></tr>`);
     }
     body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No consumers.</td></tr>';
+    renderAclGroups(groupMap);
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+function renderAclGroups(groupMap){const gb=$('#acl_groups_body');if(!gb)return;
+  const groups=Object.keys(groupMap).sort();
+  gb.innerHTML=groups.length?groups.map(g=>{const mem=groupMap[g].slice().sort();
+    return `<tr><td><b>${esc(g)}</b></td><td><span class="pill">${mem.length}</span></td><td>${mem.map(u=>`<span class="chip">${esc(u)}</span>`).join('')}</td></tr>`;}).join('')
+    :'<tr><td colspan="3" class="muted">No ACL groups — no consumer is in any group yet.</td></tr>';}
 function genKey(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];const el=$('#k_key');el.value=s;el.focus();el.select();toast('Generated a 36-char secure key','ok');}
 async function addConsumerKey(){const c=$('#k_sel').value,k=$('#k_key').value.trim();if(!c)return toast('Pick a consumer','err');
   try{await api('POST','/consumers/'+encodeURIComponent(c)+'/key-auth',k?{key:k}:{});toast('API key created for '+c,'ok');$('#k_key').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
@@ -1017,11 +1042,18 @@ async function loadWizard(){_wiz=1;$('#w_result').innerHTML='';
   try{const svcs=(await api('GET','/services?size=1000')).data;
     $('#w_exist').innerHTML=svcs.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')||'<option value="">(no models yet)</option>';
   }catch(e){}
+  try{const pls=(await api('GET','/plugins?size=1000')).data;
+    const groups=[...new Set(pls.filter(p=>p.name==='acl').flatMap(p=>(p.config&&p.config.allow)||[]))].sort();
+    if($('#w_acllist'))$('#w_acllist').innerHTML=groups.length?groups.map(g=>`<label style="display:flex;align-items:center;gap:6px;font-size:12.5px"><input type="checkbox" value="${esc(g)}" style="width:auto"/> ${esc(g)}</label>`).join(''):'<span class="muted">No ACL groups yet — create a model first.</span>';
+  }catch(e){}
   _pend.w=[];pendRender('w','#w_pluglist');pendFill('#w_plugsel');
   if($('#w_mode'))$('#w_mode').value='new';wModeChange();wRender();}
-function wModeChange(){const ex=wMode()==='existing';
-  $('#w_newbox').classList.toggle('hidden',ex);$('#w_existbox').classList.toggle('hidden',!ex);
-  if($('#w_routebox')){$('#w_routebox').classList.toggle('hidden',ex);$('#w_routeskip').classList.toggle('hidden',!ex);}}
+function wAclGroups(){return [...document.querySelectorAll('#w_acllist input:checked')].map(i=>i.value);}
+function wModeChange(){const m=wMode(),isNew=m==='new',isAcl=m==='acl';
+  $('#w_newbox').classList.toggle('hidden',!isNew);
+  $('#w_existbox').classList.toggle('hidden',m!=='existing');
+  if($('#w_aclbox'))$('#w_aclbox').classList.toggle('hidden',!isAcl);
+  if($('#w_routebox')){$('#w_routebox').classList.toggle('hidden',!isNew);$('#w_routeskip').classList.toggle('hidden',isNew);}}
 function wRender(){const steps=['Model','Route','Project','Review'];
   $('#wsteps').innerHTML=steps.map((s,i)=>`<div class="ws ${i+1===_wiz?'on':(i+1<_wiz?'done':'')}">${i+1}. ${esc(s)}</div>`).join('');
   document.querySelectorAll('#tab-wizard .wstep').forEach(el=>el.classList.toggle('hidden',(+el.dataset.step)!==_wiz));
@@ -1042,7 +1074,8 @@ async function wStep(dir){
         if(!/^https?:\/\/[^/\s]+/.test($('#w_url').value.trim()))return toast('Invalid backend URL','err');
         try{const ex=await api('GET','/services/svc-'+slug);if(ex&&ex.id)return toast('svc-'+slug+' already exists — switch to "Use an existing model".','err');}catch(e){}
         if(!$('#w_path').value.trim())$('#w_path').value='/'+slug;
-      }else{if(!$('#w_exist').value)return toast('Pick an existing model','err');}
+      }else if(wMode()==='existing'){if(!$('#w_exist').value)return toast('Pick an existing model','err');}
+      else{if(!wAclGroups().length)return toast('Tick at least one ACL group','err');}
     }
     if(_wiz===2&&wMode()==='new'){if(!$('#w_path').value.trim())return toast('Path required','err');}
     if(_wiz===3){if(!slugOk($('#w_pname').value.trim()))return toast('Invalid project name','err');if(!$('#w_token').value.trim())return toast('Token required','err');}
@@ -1055,17 +1088,31 @@ async function wReview(){const pname=$('#w_pname').value.trim(),tok=$('#w_token'
     rows=`<tr><td>Model (service)</td><td><b>svc-${esc(slug)}</b> <span class="pill">new</span> → <code>${esc($('#w_url').value.trim())}</code></td></tr>
     <tr><td>Security</td><td>key-auth (<code>${esc(header)}</code>) + acl group <b>acl-${esc(slug)}</b></td></tr>
     <tr><td>Route</td><td><code>${esc($('#w_path').value.trim())}</code>${methods?' · '+esc(methods.toUpperCase()):''} · strip_path=${$('#w_strip').checked}</td></tr>`;
-  }else{const svc=$('#w_exist').value,d=await _wizExisting(svc);_wizTarget=Object.assign({svc},d);
+  }else if(wMode()==='existing'){const svc=$('#w_exist').value,d=await _wizExisting(svc);_wizTarget=Object.assign({svc},d);
     rows=`<tr><td>Model (service)</td><td><b>${esc(svc)}</b> <span class="pill model">existing</span></td></tr>
     <tr><td>Security</td><td>key-auth (<code>${esc(d.header)}</code>) · adds to acl group <b>${esc(d.acl)}</b></td></tr>
-    <tr><td>Route</td><td><code>${esc(d.rp||'—')}</code></td></tr>`;}
+    <tr><td>Route</td><td><code>${esc(d.rp||'—')}</code></td></tr>`;
+  }else{const groups=wAclGroups(),header=$('#w_aclheader').value;_wizTarget={mode:'acl',acl:groups,header};
+    rows=`<tr><td>Access</td><td>join existing groups: ${groups.map(g=>'<b>'+esc(g)+'</b>').join(', ')}</td></tr>
+    <tr><td>Key header</td><td><code>${esc(header)}</code></td></tr>`;}
   $('#w_review').innerHTML=`<table class="wrev"><tbody>${rows}
     <tr><td>Project (consumer)</td><td><b>prj-${esc(pname)}</b> · token <code>${esc(tok.slice(0,4))}…${esc(tok.slice(-2))}</code></td></tr>
     <tr><td>Allowed IPs</td><td>${ips?esc(ips):'<span class="muted">unrestricted</span>'}</td></tr>
-    <tr><td>Result</td><td><b>prj-${esc(pname)}</b> will be able to call <b>${esc(_wizTarget.svc)}</b> at <code>:8000${esc(_wizTarget.rp||'')}</code></td></tr>
+    <tr><td>Result</td><td>${_wizTarget.mode==='acl'?`<b>prj-${esc(pname)}</b> → joins ${(_wizTarget.acl||[]).map(g=>'<b>'+esc(g)+'</b>').join(', ')}`:`<b>prj-${esc(pname)}</b> will be able to call <b>${esc(_wizTarget.svc)}</b> at <code>:8000${esc(_wizTarget.rp||'')}</code>`}</td></tr>
   </tbody></table>`;}
 async function wCreate(){const pname=$('#w_pname').value.trim(),token=$('#w_token').value.trim(),ips=csv($('#w_ips').value);
   const con='prj-'+pname;const res=$('#w_result');res.innerHTML='<p class="muted">Creating…</p>';const log=[];const ok=s=>log.push('✓ '+s);
+  if(wMode()==='acl'){try{
+    const groups=wAclGroups(),header=$('#w_aclheader').value;
+    await api('PUT','/consumers/'+encodeURIComponent(con),{tags:[]});ok('consumer '+con);
+    const fkey=header==='Authorization'?('Bearer '+token):token;
+    await api('POST','/consumers/'+encodeURIComponent(con)+'/key-auth',{key:fkey});ok('API key');
+    for(const g of groups){await api('POST','/consumers/'+encodeURIComponent(con)+'/acls',{group:g});ok('ACL '+g);}
+    if(ips.length){await api('POST','/consumers/'+encodeURIComponent(con)+'/plugins',{name:'ip-restriction',config:{allow:ips}});ok('ip-restriction '+ips.join(','));}
+    res.innerHTML=`<div class="card" style="margin:0;padding:14px 16px;border-color:#059669"><b style="color:#059669">✓ Done —</b> <b>${esc(con)}</b> added to ${groups.map(g=>'<b>'+esc(g)+'</b>').join(', ')}. Try it in the <b>Test</b> tab.<pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0">${esc(log.join('\n'))}</pre></div>`;
+    toast('Wizard: '+con+' → '+groups.length+' group(s)','ok');
+  }catch(e){res.innerHTML=`<div class="card" style="margin:0;padding:14px 16px;border-color:var(--red)"><b style="color:var(--red)">Failed:</b> ${esc(e.message)}${log.length?'<pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0">'+esc(log.join('\n'))+'</pre>':''}</div>`;}
+    return;}
   try{
     let svc,acl,rp,header;
     if(wMode()==='new'){const slug=$('#w_slug').value.trim(),url=$('#w_url').value.trim(),box=$('#w_box').value.trim(),model=$('#w_model').value.trim();
@@ -1095,7 +1142,30 @@ async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('
   const opt=s=>(s.name||'').startsWith('svc-')?`<option value="${esc(s.name)}">${esc(s.name.slice(4))} — ${esc(s.name)}</option>`:`<option value="${esc(s.name)}">${esc(s.name)} (legacy)</option>`;
   sel.innerHTML=(managed.map(opt).join('')+legacy.map(opt).join(''))||'<option value="">(no services)</option>';
   loadModelProtections();}
-function coreRow(ic,name,desc,on){return `<div class="prow"><div class="pico">${ic}</div><div class="pinfo"><b>${name}</b><span>${desc}</span></div><div>${on?'<span class="badge on">✓ Active</span>':'<span class="badge off">Not set</span>'}</div><div></div></div>`;}
+const PLUGIN_DESC={'key-auth':'Yêu cầu API key hợp lệ (định danh caller)','acl':'Giới hạn theo nhóm ACL (phân quyền model)','ip-restriction':'Chỉ cho gọi từ IP/CIDR cho phép','rate-limiting':'Giới hạn số request mỗi phút','request-size-limiting':'Từ chối payload quá lớn','bot-detection':'Chặn user-agent xấu','cors':'Cho phép origin trình duyệt (CORS)','pre-function':'Chạy Lua tuỳ biến (vd tách Bearer→apikey)','post-function':'Chạy Lua sau khi xử lý','proxy-cache':'Cache response','prometheus':'Xuất metrics Prometheus','file-log':'Ghi log request ra file','http-log':'Đẩy log qua HTTP','correlation-id':'Gắn ID theo dõi request','response-transformer':'Sửa response trả về','request-transformer':'Sửa request gửi đi'};
+function pluginPurpose(n){return PLUGIN_DESC[n]||'';}
+function _scopeLabel(p,maps){
+  if(p.service&&p.service.id)return maps.svc[p.service.id]||('svc-'+p.service.id.slice(0,6));
+  if(p.route&&p.route.id)return 'route-'+(maps.rt[p.route.id]||p.route.id.slice(0,6));
+  if(p.consumer&&p.consumer.id)return 'con-'+(maps.con[p.consumer.id]||p.consumer.id.slice(0,6));
+  return 'global';}
+async function autoNamePlugins(){
+  try{const [svcs,rts,cons,pls]=await Promise.all([api('GET','/services?size=1000'),api('GET','/routes?size=1000'),api('GET','/consumers?size=1000'),api('GET','/plugins?size=1000')]);
+    const maps={svc:{},rt:{},con:{}};
+    svcs.data.forEach(s=>maps.svc[s.id]=s.name);rts.data.forEach(r=>maps.rt[r.id]=r.name||r.id.slice(0,6));cons.data.forEach(c=>maps.con[c.id]=c.username);
+    const used=new Set(pls.data.map(p=>p.instance_name).filter(Boolean));
+    const todo=pls.data.filter(p=>!p.instance_name);
+    if(!todo.length)return toast('Mọi plugin đã có instance name rồi','ok');
+    const plan=todo.map(p=>{const base=p.name+'-'+_scopeLabel(p,maps);let nm=base,i=2;while(used.has(nm)){nm=base+'-'+i;i++;}used.add(nm);return {id:p.id,inst:nm,why:pluginPurpose(p.name)};});
+    const preview=plan.slice(0,14).map(x=>'• '+x.inst+(x.why?'  — '+x.why:'')).join('\n');
+    if(!confirm('Đặt instance name cho '+plan.length+' plugin chưa có tên?\n(scheme: <plugin>-<vị trí>)\n\n'+preview+(plan.length>14?'\n… +'+(plan.length-14)+' nữa':'')))return;
+    let done=0;for(const x of plan){try{await api('PATCH','/plugins/'+x.id,{instance_name:x.inst});done++;}catch(e){}}
+    toast('Đã đặt tên '+done+'/'+plan.length+' plugin','ok');if($('#pl_svc')&&$('#pl_svc').value)loadModelProtections();
+  }catch(e){toast('Auto-name lỗi: '+e.message,'err');}}
+function coreRow(ic,name,desc,pl){const on=!!pl;
+  const nb=on&&pl.instance_name?'<b>'+esc(name)+'</b> <span class="pill model">'+esc(pl.instance_name)+'</span>':'<b>'+esc(name)+'</b>';
+  const edit=on?'<button class="btn sec sm" onclick="editPluginId(\''+pl.id+'\')">Edit</button>':'';
+  return `<div class="prow" title="${esc(pluginPurpose(name)||'')}"><div class="pico">${ic}</div><div class="pinfo">${nb}<span>${desc}</span></div><div>${on?'<span class="badge on">✓ Active</span>':'<span class="badge off">Not set</span>'}</div><div>${edit}</div></div>`;}
 function toggleRow(pname,ic,name,desc,svc,plugin,kind,unit,cfgKey,def){
   const on=!!plugin;let cur=on&&plugin.config?plugin.config[cfgKey]:'';if(Array.isArray(cur))cur=cur.join(',');
   let cfg='';
@@ -1118,7 +1188,7 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
     const curated=['key-auth','acl','rate-limiting','request-size-limiting','bot-detection','cors'];
     const others=pls.filter(p=>!curated.includes(p.name));
     h+=`<div class="psec">Other plugins on this model</div>`;
-    h+= others.length? others.map(p=>`<div class="orow"><div class="pico"><svg viewBox="0 0 24 24"><path d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.676.14-3.366.204-5.062.192v0a.657.657 0 01-.643-.658z"/></svg></div><div class="oinfo"><b>${p.instance_name?esc(p.instance_name):esc(p.name)}</b>${p.instance_name?` <span class="pill model">${esc(p.name)}</span>`:''}<span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn sec sm" onclick="editPluginId('${p.id}')">Edit</button><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
+    h+= others.length? others.map(p=>`<div class="orow"><div class="pico"><svg viewBox="0 0 24 24"><path d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.676.14-3.366.204-5.062.192v0a.657.657 0 01-.643-.658z"/></svg></div><div class="oinfo" title="${esc(pluginPurpose(p.name)||p.name)}"><b>${p.instance_name?esc(p.instance_name):esc(p.name)}</b>${p.instance_name?` <span class="pill model">${esc(p.name)}</span>`:''}<span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn sec sm" onclick="editPluginId('${p.id}')">Edit</button><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
     h+=`<div id="pl_editbox" class="hidden" style="margin-top:10px;padding:12px 14px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)"><h2 style="margin:0 0 8px;font-size:14px"><span class="cico sm amber"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></span>Edit <span id="pe_name"></span></h2><div id="pe_form"></div></div>`;
     const avail=await availablePlugins();
     const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
@@ -1293,7 +1363,7 @@ function _pchip(p){const label=p.instance_name?`<b>${esc(p.instance_name)}</b> <
   else if(p.name==='rate-limiting'&&c.minute)extra=' '+c.minute+'/min';
   else if(p.name==='request-size-limiting'&&c.allowed_payload_size)extra=' '+c.allowed_payload_size+'MB';
   const off=p.enabled===false?' <span class="pill model">off</span>':'';
-  return `<span class="chip" style="max-width:100%">${label}${esc(extra)}${off}</span>`;}
+  return `<span class="chip" title="${esc(pluginPurpose(p.name)||p.name)}" style="max-width:100%">${label}${esc(extra)}${off}</span>`;}
 async function loadTopology(){const host=$('#topo');if(!host)return;host.innerHTML='<div class="card muted">Loading…</div>';
   try{
     const svcs=(await api('GET','/services?size=1000')).data;

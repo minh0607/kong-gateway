@@ -46,11 +46,11 @@ many models. Routes belong to exactly one service (one-to-many).
 |---|---|
 | **Overview** | Health strip (Kong version, DB, connections, upstream health, **stray global-auth warning**), counts, a Model ↔ Project access matrix, and the client-access URL per model. |
 | **Topology** | The **whole map** — every service with its routes, plugins (name + instance name), ACL groups, **client-access URLs**, and the consumers that can call it (via which group, **API key**, allowed IPs). Live filter. See §4. |
-| **Wizard** | Guided setup — create a model, its route, **init plugins**, and a project in one flow (see §6). |
+| **Wizard** | Guided setup — create a model, its route, **init plugins**, and a project in one flow (see §7). |
 | **Models** | Register a model (service + route + key-auth + acl + tags, with optional **init plugins**); edit backend / route; delete (cascades routes + plugins); **Make managed** on any un-secured service. Shows all services (managed + legacy). |
 | **Routes** | List / add / edit / delete routes — many per service (paths, methods, hosts, strip_path). |
 | **Projects** | Assign a project (consumer + token + ACL membership + optional IP restriction) to **any** service (managed or legacy); edit its models / IPs / tags; delete. |
-| **Consumers** | Add any consumer (incl. legacy), manage ACL group membership, and **issue / reveal / delete API keys**; edit username + tags. |
+| **Consumers** | Add any consumer (incl. legacy), manage ACL group membership, and **issue / reveal / delete API keys**; edit username + tags. An **ACL groups → members** table shows which consumers each group contains. |
 | **Upstreams** | Load-balancing pools — create an upstream, add backend targets (host:port + weight), watch target health. |
 | **Usage** | Per-consumer traffic **broken down by model** (requests, 5xx, in/out bandwidth) from Prometheus metrics. CSV export. |
 | **Requests** | Recent requests with **source IP** — who called which model from where (access log). CSV export. |
@@ -81,7 +81,38 @@ The **Topology** tab is the single holistic map. Each service is one card showin
 > callers use) vs **backend** (`http://<vllm>:8001`, the real upstream) vs **route
 > path** (`/embed`). The Overview "Models" table also shows the client-access URLs.
 
-## 5. Legacy vs managed, and "Make managed"
+## 5. Access control model & scaling
+
+Access is controlled by **two plugins working together**: `key-auth` identifies the
+caller (API key → a **consumer**), then `acl` authorises it — the consumer must
+belong to a group the model allows, otherwise Kong returns **403** (deny by
+default). Identity and authorisation are inseparable: without key-auth there is no
+consumer for acl to check.
+
+The relationship is **many-to-many** and lives entirely in ACL groups: a consumer
+joins several groups (calls several models), and a group has several members (a
+model reached by several users). The **Consumers** tab shows both directions — the
+per-consumer group list, and an **"ACL groups → members"** table (the inverse:
+which consumers each group contains).
+
+![Access control & model routing](images/diagram-access-control.svg)
+
+**One gateway port, many models (path-per-model).** Every model is its own service
+on a shared port (`:8000` / `:8443`); the **path** selects the model (`/coder`,
+`/embed`, `/chat`). One consumer with one key, joined to several ACL groups,
+reaches several models — each backed by a different machine — all through the same
+port. On Kong OSS the request body's `model` field does **not** pick a backend; the
+path does.
+
+**One model, many machines (upstream load-balancing).** For a hot model, put
+several identical backends behind an **Upstream**: create it in the **Upstreams**
+tab, add each machine as a target (`host:port` + weight), then set the model's
+backend to the upstream name instead of a single URL. Kong balances across targets
+and drops unhealthy ones (active health-check on e.g. vLLM `/health`). All targets
+in one upstream must serve the **same** model. Mix both: light models one machine
+(path-per-model), a busy model behind an upstream.
+
+## 6. Legacy vs managed, and "Make managed"
 
 **Managed** objects follow the convention (`svc-<slug>` with `acl-<slug>`,
 `prj-<name>`); **legacy** objects are pre-existing / ad-hoc config (e.g. a service
@@ -106,9 +137,9 @@ group (`acl-<name>`), turning an open/legacy service into an access-controlled o
 After that it behaves exactly like a model (projects can be granted, consumers show
 in Topology, etc.). Fully-secured services don't show the button.
 
-## 6. Setup Wizard
+## 7. Setup Wizard
 
-A 4-step guided flow (**Model → Route → Project → Review**) with two modes in
+A 4-step guided flow (**Model → Route → Project → Review**) with three modes in
 step 1:
 
 - **Create a new model** — provisions `svc-<slug>` (+ key-auth + `acl-<slug>`),
@@ -118,13 +149,18 @@ step 1:
 - **Use an existing model** — pick a model that already exists (managed or legacy);
   the wizard skips service/route creation, auto-detects that model's ACL group, key
   header and route, and just adds a **new project** to it.
+- **Add a project to existing ACL group(s)** — onboard a new project and grant it
+  access to one or more **existing** ACL groups (tick a multi-select, pick the key
+  header). No model or route is created; the consumer is created, keyed, joined to
+  every ticked group, and optionally IP-restricted. This is the guided way to give a
+  new user access to several existing models at once.
 
 In new-model mode the Route step also has an optional **"Init plugins"** picker —
 add plugins (each with an optional instance name) to the new service, on top of the
 automatic key-auth + acl. The review step summarises everything before it is
 created; the result links to the **Test** tab.
 
-## 7. Plugin config — schema-driven forms & instance names
+## 8. Plugin config — schema-driven forms & instance names
 
 Adding or editing a plugin renders a form generated from the plugin's real Kong
 schema (`GET /schemas/plugins/<name>`): each config field becomes a typed input
@@ -133,18 +169,26 @@ current value. Filling the fields builds and submits the config automatically �
 there is no raw-JSON step.
 
 Each plugin can be given an **instance name** (Kong `instance_name`) when added or
-edited. The Plugins tab and Topology show the instance name as the primary label
+edited — including the **core** key-auth / acl rows, which now have an **Edit**
+button. The Plugins tab and Topology show the instance name as the primary label
 (with the plugin type as a sub-tag), so multiple plugins of the same type are easy
 to tell apart. The Plugins model picker lists **all** services (managed + legacy).
 
-## 8. Health & safety warnings
+**Auto-name plugins** (button in the Plugins tab header) scans every plugin across
+the gateway that has **no** instance name and assigns a readable one following the
+scheme `<plugin>-<scope>` — e.g. `key-auth-svc-coder`, `acl-svc-coder`,
+`ip-restriction-con-prj-app`. It previews the plan, skips already-named plugins, and
+guarantees uniqueness. Hovering any plugin (Plugins tab, Topology) shows a plain
+description of what it does.
+
+## 9. Health & safety warnings
 
 The Overview health strip flags a **stray GLOBAL auth plugin** (`basic-auth`,
 `key-auth`, `jwt`, `oauth2`, `hmac-auth`, `ldap-auth`, `mtls-auth`). Such a plugin
 applies to **every** route and, combined with per-service key-auth, will **401
 all API-key traffic**. Remove it in the Plugins tab unless it is intentional.
 
-## 9. How auth actually resolves (for the Test tab)
+## 10. How auth actually resolves (for the Test tab)
 
 A request through the proxy (`:8000` / `:8443`) is evaluated as:
 
@@ -158,7 +202,7 @@ A request through the proxy (`:8000` / `:8443`) is evaluated as:
 The Test tab reproduces exactly this by proxying through the real Kong pipeline
 (admin-gated `/modeltest/` → `:8000`).
 
-## 10. Backup / restore
+## 11. Backup / restore
 
 - **Export** downloads a JSON snapshot of services, routes, plugins, consumers,
   ACLs, API keys, upstreams and targets. It contains **API keys in clear text** —
@@ -166,7 +210,7 @@ The Test tab reproduces exactly this by proxying through the real Kong pipeline
 - **Restore** upserts every entity by id (idempotent — updates existing,
   recreates missing) and never deletes. Use a backup taken from a healthy config.
 
-## 11. Deployment
+## 12. Deployment
 
 The portal ships inside the standard PCA bundle. `pca-deploy.sh` mounts the
 `portal/` directory into the auth-proxy, serves `/kongportal` behind the admin
@@ -174,7 +218,7 @@ gate over HTTPS (`:8452`), and enables the supporting plugins
 (**Prometheus** for Usage, **file-log** for Requests, with logrotate). No schema
 or data migration is involved — it is UI over the existing Admin API.
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|

@@ -4,6 +4,35 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.0.18] — 2026-09-10
+
+ACL visibility, ACL-only onboarding, and plugin naming.
+
+### Added
+- **ACL groups → members** table in the Consumers tab — the inverse of the
+  per-consumer group list: which consumers belong to each ACL group. Reuses the
+  data already loaded (no extra API calls); has its own filter.
+- **Wizard mode "Add a project to existing ACL group(s)"** — onboard a new
+  project and grant it access to one or more existing ACL groups (multi-select,
+  choose key header), skipping model/route creation. The consumer is created,
+  keyed, joined to every ticked group, and optionally IP-restricted.
+- **Auto-name plugins** (Plugins tab) — scans every plugin gateway-wide with no
+  `instance_name` and assigns a readable one following `<plugin>-<scope>` (e.g.
+  `key-auth-svc-coder`, `ip-restriction-con-prj-app`); previews the plan and
+  skips already-named plugins.
+- **Edit** on the core key-auth / acl rows so their `instance_name` can be set
+  in the UI (previously only non-core plugins were editable).
+- Plain-language **plugin descriptions** on hover (Plugins tab + Topology).
+- Docs: `diagram-access-control.svg` and a new **§5 Access control & scaling**
+  section in the Model Portal guide (path-per-model + upstream load-balancing).
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.0.18.sha256.txt
+tar xzf kong-pca-bundle-v1.0.18.tar.gz && cd v1.0.18
+sudo ./pca-deploy.sh kong-deploy-v1.0.18.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.17] — 2026-08-17
 
 Hardened the portal's API base against a stale localStorage override.

@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 660" font-family="Inter, 'Segoe UI', Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#94A3B8"/>
+    </marker>
+    <style>
+      .h{font-size:13px;font-weight:700;fill:#0F172A;text-anchor:middle;}
+      .hl{font-size:13px;font-weight:700;fill:#0F172A;text-anchor:start;}
+      .s{font-size:10.5px;fill:#64748B;text-anchor:middle;}
+      .sl{font-size:10.5px;fill:#64748B;text-anchor:start;}
+      .flow{stroke:#94A3B8;stroke-width:2;fill:none;}
+      .card{fill:#FFFFFF;stroke:#E6E9EF;stroke-width:1;}
+      .pill{fill:#E9FBF8;stroke:#0F9D94;stroke-width:1;}
+      .pt{font-size:10.5px;font-weight:700;fill:#0B7C74;text-anchor:middle;}
+      .pA{fill:#EFF5FF;stroke:#3B82F6;stroke-width:1;}
+      .ptA{font-size:9.5px;font-weight:700;fill:#1D4ED8;text-anchor:middle;}
+      .pB{fill:#FEF6E7;stroke:#D97706;stroke-width:1;}
+      .ptB{font-size:9.5px;font-weight:700;fill:#B45309;text-anchor:middle;}
+      .mac{fill:#F8FAFC;stroke:#CBD5E1;stroke-width:1;}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1060" height="660" fill="#F7F8FA"/>
+  <text x="530" y="40" font-size="19" font-weight="800" fill="#0F172A" text-anchor="middle">Kiểm soát truy cập &amp; định tuyến model — Kong OSS 3.9</text>
+  <text x="530" y="62" font-size="11.5" fill="#64748B" text-anchor="middle">Một cổng gateway · ACL phân quyền · path-per-model (A) + upstream load-balance (B)</text>
+
+  <!-- ===== Client ===== -->
+  <rect class="card" x="30" y="250" width="180" height="215" rx="14"/>
+  <text class="h" x="120" y="280">User / App</text>
+  <line x1="52" y1="292" x2="188" y2="292" stroke="#EEF0F4"/>
+  <text class="s" x="120" y="313">consumer: <tspan font-weight="700" fill="#0F172A">prj-app</tspan></text>
+  <text class="s" x="120" y="333">1 key · x-api-key</text>
+  <text class="s" x="120" y="357">member of ACL groups:</text>
+  <rect class="pill" x="52" y="366" width="136" height="20" rx="10"/><text class="pt" x="120" y="380">acl-coder</text>
+  <rect class="pill" x="52" y="392" width="136" height="20" rx="10"/><text class="pt" x="120" y="406">acl-embed</text>
+  <rect class="pill" x="52" y="418" width="136" height="20" rx="10"/><text class="pt" x="120" y="432">acl-chat</text>
+
+  <path class="flow" d="M210,350 L236,350" marker-end="url(#ar)"/>
+
+  <!-- ===== Gateway ===== -->
+  <rect x="240" y="108" width="256" height="474" rx="18" fill="#F4FBFA" stroke="#CDEBE7"/>
+  <text x="368" y="134" font-size="12.5" font-weight="700" fill="#0B7C74" text-anchor="middle">Kong Gateway — MỘT cổng vào</text>
+  <rect class="pill" x="270" y="146" width="196" height="26" rx="13"/>
+  <text class="pt" x="368" y="163">:8000 HTTP · :8443 HTTPS</text>
+
+  <text class="s" x="368" y="197">Chuỗi kiểm soát mỗi request</text>
+  <rect class="card" x="270" y="206" width="196" height="50" rx="10"/>
+  <text class="hl" x="286" y="228">1 · key-auth</text><text class="sl" x="286" y="245">định danh — đọc x-api-key</text>
+  <path class="flow" d="M368,256 L368,268" marker-end="url(#ar)"/>
+  <rect class="card" x="270" y="270" width="196" height="50" rx="10"/>
+  <text class="hl" x="286" y="292">2 · acl</text><text class="sl" x="286" y="309">phân quyền — theo group</text>
+  <path class="flow" d="M368,320 L368,332" marker-end="url(#ar)"/>
+  <rect class="card" x="270" y="334" width="196" height="50" rx="10"/>
+  <text class="hl" x="286" y="356">3 · ip-restriction</text><text class="sl" x="286" y="373">khoá IP nguồn / consumer</text>
+
+  <text class="s" x="368" y="410" font-weight="700" fill="#B91C1C">acl: sai group → 403 (deny by default)</text>
+  <text class="s" x="368" y="430">Định tuyến theo PATH ↓</text>
+  <line x1="270" y1="444" x2="466" y2="444" stroke="#D6ECE9"/>
+  <text class="s" x="368" y="463">/coder · /embed · /chat</text>
+  <text class="s" x="368" y="481">(cùng cổng, khác path)</text>
+
+  <!-- arrows gateway -> services -->
+  <path class="flow" d="M496,300 C516,300 516,161 536,161" marker-end="url(#ar)"/>
+  <path class="flow" d="M496,300 L536,300" marker-end="url(#ar)"/>
+  <path class="flow" d="M496,300 C516,300 516,441 536,441" marker-end="url(#ar)"/>
+
+  <!-- ===== Services (routes) ===== -->
+  <rect class="card" x="538" y="130" width="210" height="62" rx="12"/>
+  <text class="hl" x="556" y="156">/coder → svc-coder</text><text class="sl" x="556" y="176">strip_path · 1 backend</text>
+  <rect class="pA" x="700" y="140" width="34" height="18" rx="9"/><text class="ptA" x="717" y="153">A</text>
+
+  <rect class="card" x="538" y="270" width="210" height="62" rx="12"/>
+  <text class="hl" x="556" y="296">/embed → svc-embed</text><text class="sl" x="556" y="316">strip_path · 1 backend</text>
+  <rect class="pA" x="700" y="280" width="34" height="18" rx="9"/><text class="ptA" x="717" y="293">A</text>
+
+  <rect class="card" x="538" y="410" width="210" height="62" rx="12"/>
+  <text class="hl" x="556" y="436">/chat → svc-chat</text><text class="sl" x="556" y="456">host = up-chat (upstream)</text>
+  <rect class="pB" x="700" y="420" width="34" height="18" rx="9"/><text class="ptB" x="717" y="433">B</text>
+
+  <!-- arrows services -> backends -->
+  <path class="flow" d="M748,161 L792,161" marker-end="url(#ar)"/>
+  <path class="flow" d="M748,301 L792,301" marker-end="url(#ar)"/>
+  <path class="flow" d="M748,441 L766,441" marker-end="url(#ar)"/>
+
+  <!-- ===== Backends ===== -->
+  <rect class="mac" x="794" y="132" width="220" height="58" rx="12"/>
+  <text class="hl" x="812" y="157">LLM01</text><text class="sl" x="812" y="176">coder model · :8000</text>
+
+  <rect class="mac" x="794" y="272" width="220" height="58" rx="12"/>
+  <text class="hl" x="812" y="297">LLM03</text><text class="sl" x="812" y="316">embed model · :8000</text>
+
+  <!-- upstream box -->
+  <rect x="768" y="352" width="270" height="196" rx="14" fill="#FEF6E7" stroke="#D97706"/>
+  <text x="903" y="374" font-size="11" font-weight="700" fill="#B45309" text-anchor="middle">up-chat · cân tải + health-check</text>
+  <rect class="mac" x="788" y="386" width="230" height="42" rx="10"/><text class="hl" x="806" y="412">LLM02 · chat · :8000</text>
+  <rect class="mac" x="788" y="434" width="230" height="42" rx="10"/><text class="hl" x="806" y="460">LLM05 · chat · :8000</text>
+  <rect class="mac" x="788" y="482" width="230" height="42" rx="10"/><text class="hl" x="806" y="508">LLM06 · chat · :8000 (w=50)</text>
+
+  <!-- ===== Legend ===== -->
+  <rect class="pA" x="30" y="600" width="22" height="16" rx="8"/><text class="sl" x="60" y="613" font-weight="600" fill="#1D4ED8">A</text>
+  <text class="sl" x="76" y="613">Path-per-model — mỗi model 1 path, 1 máy (model ít tải)</text>
+  <rect class="pB" x="520" y="600" width="22" height="16" rx="8"/><text class="sl" x="550" y="613" font-weight="600" fill="#B45309">B</text>
+  <text class="sl" x="566" y="613">Upstream — 1 model chạy nhiều máy, tự loại máy chết (model nóng)</text>
+  <text class="sl" x="30" y="636" fill="#0B7C74" font-weight="600">Mọi request đi qua cùng cổng 8000/8443; key-auth định danh, ACL quyết định gọi được model nào.</text>
+</svg>
