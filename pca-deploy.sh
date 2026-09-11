@@ -556,7 +556,7 @@ enable_prometheus_plugin
 enable_filelog_plugin
 
 # Quick smoke test
-if curl -sf http://localhost:8002/auth/login | grep -q "SEHC AI GATEWAY"; then
+if curl -sf http://localhost:8002/auth/login | grep -qi "SEHC AI Gateway"; then
   ok "Login page rebrand visible"
 else
   warn "rebrand check failed — inspect 'docker compose logs kong-auth-proxy'"
