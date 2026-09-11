@@ -45,12 +45,13 @@ many models. Routes belong to exactly one service (one-to-many).
 | Tab | Purpose |
 |---|---|
 | **Overview** | Health strip (Kong version, DB, connections, upstream health, **stray global-auth warning**), counts, a Model ↔ Project access matrix, and the client-access URL per model. |
-| **Topology** | The **whole map** — every service with its routes, plugins (name + instance name), ACL groups, **client-access URLs**, and the consumers that can call it (via which group, **API key**, allowed IPs). Live filter. See §4. |
+| **Topology** | The **whole map** — every service with its routes, plugins (name + instance name), ACL groups, **client-access URLs**, and the consumers that can call it (via which group, **API key**, allowed IPs). **Everything is editable inline**: add/edit/delete services, routes, plugins, ACL-group allow-lists and memberships. Live filter. See §4. |
 | **Wizard** | Guided setup — create a model, its route, **init plugins**, and a project in one flow (see §7). |
 | **Models** | Register a model (service + route + key-auth + acl + tags, with optional **init plugins**); edit backend / route; delete (cascades routes + plugins); **Make managed** on any un-secured service. Shows all services (managed + legacy). |
 | **Routes** | List / add / edit / delete routes — many per service (paths, methods, hosts, strip_path). |
 | **Projects** | Assign a project (consumer + token + ACL membership + optional IP restriction) to **any** service (managed or legacy); edit its models / IPs / tags; delete. |
 | **Consumers** | Add any consumer (incl. legacy), manage ACL group membership, and **issue / reveal / delete API keys**; edit username + tags. An **ACL groups → members** table shows which consumers each group contains. |
+| **Access (ACL)** | Central access-control management + **audit**. Each group with the services that allow it and its member projects; add/remove **members** and service **allow-lists** inline (× on any chip revokes). The audit panel flags open (no-ACL) services, services missing key-auth, empty allow-lists, and stray **global** auth plugins. |
 | **Upstreams** | Load-balancing pools — create an upstream, add backend targets (host:port + weight), watch target health. |
 | **Usage** | Per-consumer traffic **broken down by model** (requests, 5xx, in/out bandwidth) from Prometheus metrics. CSV export. |
 | **Requests** | Recent requests with **source IP** — who called which model from where (access log). CSV export. |

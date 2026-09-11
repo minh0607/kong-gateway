@@ -4,6 +4,32 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.2.0] — 2026-09-11
+
+Access control as a first-class feature, and full inline editing in Topology.
+
+### Added
+- **Access (ACL) tab** — central management + audit. Lists every ACL group with
+  the services that allow it and its member projects; **add/remove members** and
+  service **allow-lists** inline (× on any chip revokes). Two toolbars: *Add
+  member* (consumer → group) and *Allow group on service*. An **audit panel**
+  flags open (no-ACL) services, services with ACL but no key-auth, empty
+  allow-lists, and stray **global** auth plugins.
+- **Topology inline CRUD** — every entity is now editable from the map:
+  - Service: **Edit** backend URL, **Delete** (cascades routes + plugins).
+  - Routes: **add**, **edit paths**, **delete**.
+  - Plugins: **add** (schema-driven form in a modal), **edit** config +
+    instance name + enabled, **delete** — reusing the Plugins-tab form engine.
+  - ACL groups: **allow** a group on a service, **remove** it.
+  - Memberships: **remove** a consumer from a group directly on its row.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.2.0.sha256.txt
+tar xzf kong-pca-bundle-v1.2.0.tar.gz && cd v1.2.0
+sudo ./pca-deploy.sh kong-deploy-v1.2.0.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.1.0] — 2026-09-11
 
 Milestone release. Rolls up everything through 1.0.18 and makes the running

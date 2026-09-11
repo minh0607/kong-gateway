@@ -170,6 +170,7 @@
     <div class="nav-item" data-tab="routes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg></span><span>Routes</span></div>
     <div class="nav-item" data-tab="projects"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></span><span>Projects</span></div>
     <div class="nav-item" data-tab="consumers"><span class="ic"><svg viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></span><span>Consumers</span></div>
+    <div class="nav-item" data-tab="acl"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg></span><span>Access (ACL)</span></div>
     <div class="nav-item" data-tab="upstreams"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7M12 17.25h.008v.008H12v-.008z"/></svg></span><span>Upstreams</span></div>
     <div class="nav-item" data-tab="usage"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></span><span>Usage</span></div>
     <div class="nav-item" data-tab="requests"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg></span><span>Requests</span></div>
@@ -208,6 +209,12 @@
         <button class="btn sec sm" onclick="loadTopology()">↻ Refresh</button>
       </div>
       <div id="topo"><div class="card muted">Loading…</div></div>
+      <div id="topo_modal" style="position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:50;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto">
+        <div class="card" style="max-width:520px;width:100%;margin:0">
+          <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0;font-size:15px" id="topo_modal_title">Edit</h2><button class="btn sec sm" onclick="topoModalClose()">Close</button></div>
+          <div id="topo_modal_body" style="margin-top:10px"></div>
+        </div>
+      </div>
     </section>
 
     <!-- ===== WIZARD ===== -->
@@ -432,6 +439,23 @@
       </div>
     </section>
 
+    <!-- ===== ACCESS (ACL) ===== -->
+    <section id="tab-acl" class="hidden">
+      <div id="acl_audit" style="margin-bottom:16px"><div class="card muted">Loading…</div></div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="margin:0"><span class="cico sky"><svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>ACL groups</h2>
+          <div class="row" style="gap:8px"><input id="acl_filter" placeholder="filter…" oninput="renderAclManage()" style="width:150px;padding:6px 9px"/><button class="btn sec sm" onclick="loadAcl()">↻ Refresh</button></div>
+        </div>
+        <p class="hint">Each group is a model's access boundary. <b>Add member</b> = grant a project access; <b>Allow group on service</b> = open a model to that group. The <code>×</code> on each chip revokes it.</p>
+        <div class="row" style="gap:16px;flex-wrap:wrap;margin:8px 0 12px">
+          <div class="row" style="gap:6px;align-items:center"><b style="font-size:12px">Add member:</b><select id="acl_mc" style="padding:6px 9px"></select><span class="muted">→</span><select id="acl_mg" style="padding:6px 9px"></select><button class="btn sm" onclick="aclAddMember()">Add</button></div>
+          <div class="row" style="gap:6px;align-items:center"><b style="font-size:12px">Allow group on service:</b><select id="acl_sg" style="padding:6px 9px"></select><span class="muted">→</span><select id="acl_ss" style="padding:6px 9px"></select><button class="btn sm" onclick="aclAllowOnService()">Allow</button></div>
+        </div>
+        <div style="overflow:auto"><table><thead><tr><th>ACL group</th><th>Allowed on (services)</th><th>Members (projects)</th></tr></thead><tbody id="acl_manage_body"><tr><td colspan="3" class="muted">Loading…</td></tr></tbody></table></div>
+      </div>
+    </section>
+
     <!-- ===== UPSTREAMS ===== -->
     <section id="tab-upstreams" class="hidden">
       <div class="split">
@@ -607,7 +631,7 @@ async function api(method,path,body){const o={method,headers:{},credentials:'sam
 const slugOk=s=>/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s);
 function tagList(t){return(t||[]).map(x=>{let c='pill';if(x.startsWith('box:'))c='pill box';else if(x.startsWith('model:'))c='pill model';return `<span class="${c}">${esc(x)}</span>`;}).join('');}
 
-const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],topology:['Topology','The whole map — each service with its routes, plugins, ACL groups and the consumers that can call it'],wizard:['Setup Wizard','Create a model, its route and a project — all in one guided flow'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],test:['Test','Send a real request through Kong with a project key — validate auth + routing'],audit:['Audit','Admin change log — who created / edited / deleted what, from which IP'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model'],backup:['Backup','Export the whole gateway config to JSON, or restore it from a file']};
+const PAGES={overview:['Overview','How models, routes, ACL groups and projects are linked'],topology:['Topology','The whole map — each service with its routes, plugins, ACL groups and the consumers that can call it'],wizard:['Setup Wizard','Create a model, its route and a project — all in one guided flow'],models:['Models','Register & manage models (Service + Route, named by capability)'],routes:['Routes','Manage routes — many per service: paths, methods, hosts, strip-path'],projects:['Projects','Assign projects to models — each with its own token & IPs (consumer)'],consumers:['Consumers','Add consumers and manage ACL group membership — shows ALL consumers, incl. legacy'],acl:['Access control (ACL)','Manage which projects reach which models — groups, allow-lists, members — and audit open / unprotected services'],upstreams:['Upstreams','Load-balancing pools — create an upstream, add backend targets, watch health'],usage:['Usage','Per-consumer traffic broken down by model — requests, errors and bandwidth (Prometheus)'],requests:['Requests','Recent requests with source IP — who called which model from where (access log)'],test:['Test','Send a real request through Kong with a project key — validate auth + routing'],audit:['Audit','Admin change log — who created / edited / deleted what, from which IP'],plugins:['Plugins','View every plugin and attach traffic / security plugins to a model'],backup:['Backup','Export the whole gateway config to JSON, or restore it from a file']};
 document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));t.classList.add('active');
   const tab=t.dataset.tab;
@@ -620,6 +644,7 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(t=>t.onclick=()=>{
   if(tab==='routes') loadRoutes();
   if(tab==='projects'){loadModelChecks();loadProjects();}
   if(tab==='consumers') loadConsumers();
+  if(tab==='acl') loadAcl();
   if(tab==='upstreams') loadUpstreams();
   if(tab==='usage') loadUsage();
   if(tab==='requests') loadRequests();
@@ -822,6 +847,60 @@ function renderAclGroups(groupMap){const gb=$('#acl_groups_body');if(!gb)return;
   gb.innerHTML=groups.length?groups.map(g=>{const mem=groupMap[g].slice().sort();
     return `<tr><td><b>${esc(g)}</b></td><td><span class="pill">${mem.length}</span></td><td>${mem.map(u=>`<span class="chip">${esc(u)}</span>`).join('')}</td></tr>`;}).join('')
     :'<tr><td colspan="3" class="muted">No ACL groups — no consumer is in any group yet.</td></tr>';}
+// ===== ACCESS (ACL) tab: central management + audit =====
+let _aclData=null;
+async function loadAcl(){const body=$('#acl_manage_body');if(body)body.innerHTML='<tr><td colspan="3" class="muted">Loading…</td></tr>';
+  try{const [svcs,plugins,cons,acls]=await Promise.all([api('GET','/services?size=1000'),api('GET','/plugins?size=1000'),api('GET','/consumers?size=1000'),api('GET','/acls?size=1000')]);
+    const conName={};cons.data.forEach(c=>conName[c.id]=c.username);
+    const svcById={};svcs.data.forEach(s=>svcById[s.id]={name:s.name,acl:null,aclId:null,allow:[],keyauth:false});
+    const strayAuth=[];
+    plugins.data.forEach(p=>{
+      if((p.name==='acl'||p.name==='key-auth'||p.name==='basic-auth')&&!p.service&&!p.route)strayAuth.push(p);
+      if(!p.service||!svcById[p.service.id])return;
+      if(p.name==='acl'){svcById[p.service.id].acl=p;svcById[p.service.id].aclId=p.id;svcById[p.service.id].allow=(p.config&&p.config.allow)||[];}
+      if(p.name==='key-auth')svcById[p.service.id].keyauth=true;});
+    const groupServices={},groupMembers={};const allGroups=new Set();
+    Object.values(svcById).forEach(s=>s.allow.forEach(g=>{allGroups.add(g);(groupServices[g]=groupServices[g]||[]).push(s.name);}));
+    acls.data.forEach(a=>{allGroups.add(a.group);(groupMembers[a.group]=groupMembers[a.group]||[]).push({user:conName[a.consumer.id]||a.consumer.id,id:a.id});});
+    _aclData={svcById,groupServices,groupMembers,groups:[...allGroups].sort(),consumers:cons.data.map(c=>c.username).sort(),services:svcs.data.map(s=>s.name).sort(),strayAuth};
+    const gopt=_aclData.groups.map(g=>`<option>${esc(g)}</option>`).join('');
+    if($('#acl_mc'))$('#acl_mc').innerHTML=_aclData.consumers.map(u=>`<option>${esc(u)}</option>`).join('')||'<option value="">(none)</option>';
+    if($('#acl_mg'))$('#acl_mg').innerHTML=gopt||'<option value="">(no groups)</option>';
+    if($('#acl_sg'))$('#acl_sg').innerHTML=gopt||'<option value="">(no groups)</option>';
+    if($('#acl_ss'))$('#acl_ss').innerHTML=_aclData.services.map(s=>`<option>${esc(s)}</option>`).join('')||'<option value="">(none)</option>';
+    renderAclAudit();renderAclManage();
+  }catch(e){if(body)body.innerHTML=`<tr><td colspan="3" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+function renderAclAudit(){const el=$('#acl_audit');if(!el||!_aclData)return;const issues=[];
+  Object.values(_aclData.svcById).forEach(s=>{
+    if(!s.acl)issues.push({lvl:'warn',t:`<b>${esc(s.name)}</b> has <b>no ACL</b> — any valid API key can call it.`});
+    else if(!s.keyauth)issues.push({lvl:'err',t:`<b>${esc(s.name)}</b> has ACL but <b>no key-auth</b> — ACL has no caller to check.`});
+    else if(!s.allow.length)issues.push({lvl:'err',t:`<b>${esc(s.name)}</b> ACL allow-list is <b>empty</b> — nobody can call it.`});});
+  _aclData.strayAuth.forEach(p=>issues.push({lvl:'err',t:`Global <b>${esc(p.name)}</b> plugin — applies to EVERY route and will block all traffic. Remove unless intentional.`}));
+  if(!issues.length){el.innerHTML=`<div class="card" style="margin:0;border-color:#059669"><b style="color:#166534">✓ ACL audit clean</b> — every service has key-auth + a non-empty ACL, and no stray global auth plugin.</div>`;return;}
+  el.innerHTML=`<div class="card" style="margin:0"><h2 style="margin:0 0 10px"><span class="cico rose"><svg viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg></span>ACL audit — ${issues.length} issue(s)</h2>${issues.map(i=>`<div style="margin:5px 0;padding:8px 12px;border-radius:9px;font-size:12.5px;background:${i.lvl==='err'?'#fee2e2':'#fef3c7'};color:${i.lvl==='err'?'#991b1b':'#92400e'};border:1px solid ${i.lvl==='err'?'#fca5a5':'#fcd34d'}">${i.t}</div>`).join('')}</div>`;}
+function renderAclManage(){const body=$('#acl_manage_body');if(!body||!_aclData)return;
+  const f=(($('#acl_filter')&&$('#acl_filter').value)||'').toLowerCase().trim();
+  let groups=_aclData.groups;
+  if(f)groups=groups.filter(g=>g.toLowerCase().includes(f)||(_aclData.groupMembers[g]||[]).some(m=>m.user.toLowerCase().includes(f))||(_aclData.groupServices[g]||[]).some(s=>s.toLowerCase().includes(f)));
+  body.innerHTML=groups.length?groups.map(g=>{
+    const svcs=(_aclData.groupServices[g]||[]).slice().sort();
+    const mem=(_aclData.groupMembers[g]||[]).slice().sort((a,b)=>a.user.localeCompare(b.user));
+    const svcChips=svcs.length?svcs.map(sn=>{const sd=Object.values(_aclData.svcById).find(x=>x.name===sn);return `<span class="chip">${esc(sn)}<b title="remove group from this service" onclick="aclRemoveFromService('${esc(sn)}','${sd?sd.aclId:''}','${esc(g)}')">×</b></span>`;}).join(''):'<span class="muted">— not on any service</span>';
+    const memChips=mem.length?mem.map(m=>`<span class="chip">${esc(m.user)}<b title="remove member" onclick="aclRemoveMember('${esc(m.user)}','${m.id}')">×</b></span>`).join(''):'<span class="muted">— no members</span>';
+    return `<tr><td><b>${esc(g)}</b></td><td>${svcChips}</td><td>${memChips}</td></tr>`;}).join(''):'<tr><td colspan="3" class="muted">No ACL groups yet.</td></tr>';}
+async function aclAddMember(){const c=$('#acl_mc').value,g=$('#acl_mg').value;if(!c||!g)return toast('Pick a consumer and a group','err');
+  try{await api('POST','/consumers/'+encodeURIComponent(c)+'/acls',{group:g});toast(c+' → '+g,'ok');loadAcl();}catch(e){toast('Error: '+e.message,'err');}}
+async function aclRemoveMember(c,id){if(!confirm('Remove '+c+' from this group?'))return;
+  try{await api('DELETE','/consumers/'+encodeURIComponent(c)+'/acls/'+id);toast('Removed '+c,'ok');loadAcl();}catch(e){toast('Error: '+e.message,'err');}}
+async function aclAllowOnService(){const g=$('#acl_sg').value,s=$('#acl_ss').value;if(!g||!s)return toast('Pick a group and a service','err');
+  const sd=Object.values(_aclData.svcById).find(x=>x.name===s);
+  try{if(sd&&sd.aclId){const cfg=Object.assign({},sd.acl.config,{allow:[...new Set([...(sd.allow||[]),g])]});await api('PATCH','/plugins/'+sd.aclId,{config:cfg});}
+    else{await api('POST','/services/'+encodeURIComponent(s)+'/plugins',{name:'acl',config:{allow:[g]},instance_name:'acl-'+s});}
+    toast(g+' allowed on '+s,'ok');loadAcl();}catch(e){toast('Error: '+e.message,'err');}}
+async function aclRemoveFromService(s,pluginId,g){if(!pluginId)return toast('No ACL plugin on '+s,'err');
+  const sd=Object.values(_aclData.svcById).find(x=>x.name===s);const allow=(sd?sd.allow:[]).filter(x=>x!==g);
+  if(!allow.length&&!confirm('This is the last group on '+s+'. Removing it leaves an empty allow-list (nobody can call it). Continue?'))return;
+  try{const cfg=Object.assign({},sd.acl.config,{allow});await api('PATCH','/plugins/'+pluginId,{config:cfg});toast('Removed '+g+' from '+s,'ok');loadAcl();}catch(e){toast('Error: '+e.message,'err');}}
 function genKey(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];const el=$('#k_key');el.value=s;el.focus();el.select();toast('Generated a 36-char secure key','ok');}
 async function addConsumerKey(){const c=$('#k_sel').value,k=$('#k_key').value.trim();if(!c)return toast('Pick a consumer','err');
   try{await api('POST','/consumers/'+encodeURIComponent(c)+'/key-auth',k?{key:k}:{});toast('API key created for '+c,'ok');$('#k_key').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
@@ -1357,14 +1436,15 @@ async function loadHealth(){const el=$('#ov_health');if(!el)return;
 
 // ===== TOPOLOGY (whole map: service → route → plugin → acl → consumer) =====
 let _topo=null;
-function _pchip(p){const label=p.instance_name?`<b>${esc(p.instance_name)}</b> <span class="muted">(${esc(p.name)})</span>`:esc(p.name);
+function _pchip(p,act){const label=p.instance_name?`<b>${esc(p.instance_name)}</b> <span class="muted">(${esc(p.name)})</span>`:esc(p.name);
   const c=p.config||{};let extra='';
   if(p.name==='acl'&&c.allow)extra=' → '+c.allow.join(',');
   else if(p.name==='key-auth'&&c.key_names)extra=' ['+c.key_names.join('/')+']';
   else if(p.name==='rate-limiting'&&c.minute)extra=' '+c.minute+'/min';
   else if(p.name==='request-size-limiting'&&c.allowed_payload_size)extra=' '+c.allowed_payload_size+'MB';
   const off=p.enabled===false?' <span class="pill model">off</span>':'';
-  return `<span class="chip" title="${esc(pluginPurpose(p.name)||p.name)}" style="max-width:100%">${label}${esc(extra)}${off}</span>`;}
+  return `<span class="chip" title="${esc(pluginPurpose(p.name)||p.name)}" style="max-width:100%">${label}${esc(extra)}${off}${act||''}</span>`;}
+function topoPluginBtns(p){return `<b style="cursor:pointer;margin-left:6px" title="edit" onclick="topoEditPlugin('${p.id}')">✎</b><b style="cursor:pointer" title="delete" onclick="topoDelPlugin('${p.id}','${esc(p.name)}')">×</b>`;}
 async function loadTopology(){const host=$('#topo');if(!host)return;host.innerHTML='<div class="card muted">Loading…</div>';
   try{
     const svcs=(await api('GET','/services?size=1000')).data;
@@ -1373,11 +1453,11 @@ async function loadTopology(){const host=$('#topo');if(!host)return;host.innerHT
     const cons=(await api('GET','/consumers?size=1000')).data;
     const conInfo={};
     for(const c of cons){
-      const acls=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/acls')).data.map(a=>a.group);
+      const aclrows=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/acls')).data;const acls=aclrows.map(a=>a.group);
       const kd=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/key-auth')).data;
       const pls=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/plugins')).data;
       const ipr=pls.find(p=>p.name==='ip-restriction');
-      conInfo[c.username]={groups:acls,keys:kd.length,keyval:(kd[0]&&kd[0].key)||'',ips:ipr?(ipr.config.allow||[]):[]};}
+      conInfo[c.username]={groups:acls,aclIds:Object.fromEntries(aclrows.map(a=>[a.group,a.id])),keys:kd.length,keyval:(kd[0]&&kd[0].key)||'',ips:ipr?(ipr.config.allow||[]):[]};}
     const groupCons={};Object.entries(conInfo).forEach(([u,i])=>i.groups.forEach(g=>{(groupCons[g]=groupCons[g]||[]).push(u);}));
     _topo={svcs,routes,plugins,conInfo,groupCons};
     renderTopo();
@@ -1398,18 +1478,58 @@ function renderTopo(){if(!_topo)return;const host=$('#topo');const f=(($('#topo_
     html+=`<div class="card" style="margin-bottom:14px">
       <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <div><b style="font-size:15px">${esc(s.name)}</b> <span class="pill ${legacy?'model':''}">${legacy?'legacy':'managed'}</span></div>
-        <code>${esc(back)}</code></div>
+        <div class="row" style="gap:6px;align-items:center"><code>${esc(back)}</code><button class="btn sec sm" title="Edit backend URL" onclick="topoEditSvc('${esc(s.name)}','${esc(back)}')">Edit</button><button class="btn red sm" title="Delete service" onclick="topoDelSvc('${esc(s.name)}')">✕</button></div></div>
       <div class="topgrid">
-        <div><div class="tl">Routes</div>${svcRoutes.length?svcRoutes.map(r=>`<span class="chip">${esc((r.paths||[]).join(', ')||r.name||r.id.slice(0,8))}${r.methods&&r.methods.length?' ['+esc(r.methods.join('/'))+']':''}</span>`).join(''):'<span class="muted">none</span>'}</div>
-        <div><div class="tl">Plugins</div>${allPl.length?allPl.map(_pchip).join(''):'<span class="muted">none</span>'}</div>
-        <div><div class="tl">ACL groups</div>${allow.length?allow.map(g=>`<span class="pill">${esc(g)}</span>`).join(''):'<span class="muted">open (no acl)</span>'}</div>
+        <div><div class="tl">Routes <b style="cursor:pointer;color:var(--primary);font-weight:700;margin-left:4px" title="Add route" onclick="topoAddRoute('${esc(s.name)}')">＋</b></div>${svcRoutes.length?svcRoutes.map(r=>`<span class="chip">${esc((r.paths||[]).join(', ')||r.name||r.id.slice(0,8))}${r.methods&&r.methods.length?' ['+esc(r.methods.join('/'))+']':''}<b style="cursor:pointer;margin-left:5px" title="edit paths" onclick="topoEditRoute('${r.id}','${esc((r.paths||[]).join(','))}')">✎</b><b style="cursor:pointer" title="delete route" onclick="topoDelRoute('${r.id}')">×</b></span>`).join(''):'<span class="muted">none</span>'}</div>
+        <div><div class="tl">Plugins <b style="cursor:pointer;color:var(--primary);font-weight:700;margin-left:4px" title="Add plugin" onclick="topoAddPlugin('${esc(s.name)}')">＋</b></div>${allPl.length?allPl.map(p=>_pchip(p,topoPluginBtns(p))).join(''):'<span class="muted">none</span>'}</div>
+        <div><div class="tl">ACL groups <b style="cursor:pointer;color:var(--primary);font-weight:700;margin-left:4px" title="Allow a group" onclick="topoAddAclGroup('${esc(s.name)}')">＋</b></div>${allow.length?allow.map(g=>`<span class="pill">${esc(g)}<b style="cursor:pointer;margin-left:5px" title="remove group" onclick="topoRemoveAclGroup('${esc(s.name)}','${esc(g)}')">×</b></span>`).join(''):'<span class="muted">open (no acl)</span>'}</div>
       </div>
       <div class="tl" style="margin-top:14px">Client access <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— the URL a project calls (click to copy)</span></div>
       ${svcRoutes.length?svcRoutes.flatMap(r=>(r.paths&&r.paths.length?r.paths:['/'])).map(pth=>`<div class="accrow"><code class="cp" onclick="copyText(this.textContent)">${esc(accessURL('http',pth))}</code><code class="cp" onclick="copyText(this.textContent)">${esc(accessURL('https',pth))}</code></div>`).join(''):'<span class="muted">no route — not reachable</span>'}
       <div class="tl" style="margin-top:14px">Consumers that can call this ${reachable.length?'('+reachable.length+')':''}</div>
-      ${reachable.length?`<div style="overflow:auto"><table><thead><tr><th>Consumer</th><th>via group</th><th>API key</th><th>Allowed IPs</th></tr></thead><tbody>${reachable.map(u=>{const ki=conInfo[u];const kid='tk'+Math.abs(hash(s.name+'|'+u));const kc=ki.keyval?`<code id="${kid}" class="cp" title="click to copy" onclick="copyText('${esc(ki.keyval)}')">••••••</code> <b style="cursor:pointer" title="reveal" onclick="revToken('${kid}','${esc(ki.keyval)}')"><svg class="bico" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></b>${ki.keys>1?` <span class="muted">(+${ki.keys-1})</span>`:''}`:'<span class="muted">no key</span>';return `<tr><td><b>${esc(u)}</b></td><td>${ki.groups.filter(g=>allow.includes(g)).map(g=>`<span class="pill">${esc(g)}</span>`).join('')}</td><td>${kc}</td><td>${ki.ips.length?ki.ips.map(x=>`<code>${esc(x)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td></tr>`;}).join('')}</tbody></table></div>`:(allow.length?'<span class="muted">No consumer is in these ACL groups yet.</span>':'<span class="muted">No ACL — any consumer with a valid key can call it.</span>')}
+      ${reachable.length?`<div style="overflow:auto"><table><thead><tr><th>Consumer</th><th>via group</th><th>API key</th><th>Allowed IPs</th></tr></thead><tbody>${reachable.map(u=>{const ki=conInfo[u];const kid='tk'+Math.abs(hash(s.name+'|'+u));const kc=ki.keyval?`<code id="${kid}" class="cp" title="click to copy" onclick="copyText('${esc(ki.keyval)}')">••••••</code> <b style="cursor:pointer" title="reveal" onclick="revToken('${kid}','${esc(ki.keyval)}')"><svg class="bico" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></b>${ki.keys>1?` <span class="muted">(+${ki.keys-1})</span>`:''}`:'<span class="muted">no key</span>';return `<tr><td><b>${esc(u)}</b></td><td>${ki.groups.filter(g=>allow.includes(g)).map(g=>`<span class="pill">${esc(g)}<b style="cursor:pointer;margin-left:5px" title="remove ${esc(u)} from ${esc(g)}" onclick="topoRemoveMember('${esc(u)}','${esc(g)}')">×</b></span>`).join('')}</td><td>${kc}</td><td>${ki.ips.length?ki.ips.map(x=>`<code>${esc(x)}</code>`).join(' '):'<span class="muted">unrestricted</span>'}</td></tr>`;}).join('')}</tbody></table></div>`:(allow.length?'<span class="muted">No consumer is in these ACL groups yet.</span>':'<span class="muted">No ACL — any consumer with a valid key can call it.</span>')}
     </div>`;}
   host.innerHTML=html||'<div class="card muted">No services match.</div>';}
+// ===== Topology inline CRUD =====
+function topoModalOpen(title){$('#topo_modal_title').textContent=title;$('#topo_modal').style.display='flex';}
+function topoModalClose(){$('#topo_modal').style.display='none';$('#topo_modal_body').innerHTML='';}
+function _topoAclPlugin(svc){return _topo.plugins.find(p=>p.name==='acl'&&p.service&&_topo.svcs.some(s=>s.id===p.service.id&&s.name===svc));}
+async function topoEditSvc(name,back){const url=prompt('New backend URL for '+name+':',back);if(url===null)return;if(!/^https?:\/\/[^/\s]+/.test(url.trim()))return toast('Invalid URL','err');
+  try{await api('PUT','/services/'+encodeURIComponent(name),{url:url.trim()});toast('Updated '+name,'ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoDelSvc(name){if(!confirm('Delete service '+name+' + its routes & plugins?\nConsumers / keys are NOT touched.'))return;
+  try{const routes=(await api('GET','/services/'+encodeURIComponent(name)+'/routes')).data;for(const r of routes)await api('DELETE','/routes/'+r.id);await api('DELETE','/services/'+encodeURIComponent(name));toast('Deleted '+name,'ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoAddRoute(svc){const path=prompt('New route path for '+svc+' (e.g. /chat):','');if(path===null)return;const p=(path||'').trim();if(!p)return;
+  try{await api('POST','/services/'+encodeURIComponent(svc)+'/routes',{paths:[p[0]==='/'?p:'/'+p],strip_path:true});toast('Route added','ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoEditRoute(id,paths){const np=prompt('Paths (comma-separated):',paths);if(np===null)return;const arr=np.split(',').map(x=>x.trim()).filter(Boolean);if(!arr.length)return toast('At least one path required','err');
+  try{await api('PATCH','/routes/'+id,{paths:arr});toast('Route updated','ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoDelRoute(id){if(!confirm('Delete this route?'))return;try{await api('DELETE','/routes/'+id);toast('Route deleted','ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoDelPlugin(id,name){if(!confirm('Delete plugin '+name+'?'))return;try{await api('DELETE','/plugins/'+id);toast('Deleted '+name,'ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoAddAclGroup(svc){const g=prompt('ACL group to allow on '+svc+':','acl-');if(g===null)return;const grp=(g||'').trim();if(!grp)return;const sp=_topoAclPlugin(svc);
+  try{if(sp){const allow=[...new Set([...((sp.config&&sp.config.allow)||[]),grp])];await api('PATCH','/plugins/'+sp.id,{config:Object.assign({},sp.config,{allow})});}
+    else{await api('POST','/services/'+encodeURIComponent(svc)+'/plugins',{name:'acl',config:{allow:[grp]},instance_name:'acl-'+svc});}
+    toast('Allowed '+grp,'ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoRemoveAclGroup(svc,g){const sp=_topoAclPlugin(svc);if(!sp)return;const allow=((sp.config&&sp.config.allow)||[]).filter(x=>x!==g);
+  if(!allow.length&&!confirm('Last group on '+svc+' — an empty allow-list means nobody can call it. Continue?'))return;
+  try{await api('PATCH','/plugins/'+sp.id,{config:Object.assign({},sp.config,{allow})});toast('Removed '+g,'ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoRemoveMember(user,group){const id=_topo.conInfo[user]&&_topo.conInfo[user].aclIds&&_topo.conInfo[user].aclIds[group];if(!id)return toast('Membership not found','err');
+  if(!confirm('Remove '+user+' from '+group+'?'))return;
+  try{await api('DELETE','/consumers/'+encodeURIComponent(user)+'/acls/'+id);toast('Removed '+user,'ok');loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoEditPlugin(id){const p=_topo.plugins.find(x=>x.id===id);if(!p)return;topoModalOpen('Edit '+(p.instance_name||p.name));
+  const fields=await pluginSchema(p.name);const form=fields.map(f=>fieldInput(p.name,f,(p.config||{})[f.name])).filter(Boolean).join('');
+  $('#topo_modal_body').innerHTML=`<div class="fld"><label>Instance name <span class="muted">(optional)</span></label><input id="tm_inst" value="${esc(p.instance_name||'')}"/></div>
+    <label class="pfrow"><span>enabled</span><input type="checkbox" id="tm_en" ${p.enabled!==false?'checked':''}/></label>
+    <div class="pfform">${form||'<p class="muted">No editable config.</p>'}</div>
+    <button class="btn sm" onclick="topoSavePlugin('${id}','${esc(p.name)}')">Save</button>`;}
+async function topoSavePlugin(id,name){const fields=await pluginSchema(name);const cfg=buildConfig(name,fields);const inst=($('#tm_inst')&&$('#tm_inst').value||'').trim();const en=$('#tm_en')?$('#tm_en').checked:true;
+  try{await api('PATCH','/plugins/'+id,{config:cfg,instance_name:inst||null,enabled:en});toast('Saved '+(inst||name),'ok');topoModalClose();loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
+async function topoAddPlugin(svc){topoModalOpen('Add plugin to '+svc);const avail=await availablePlugins();const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  $('#topo_modal_body').innerHTML=`<div class="fld"><label>Plugin</label><select id="tm_add" onchange="topoAddFields('${esc(svc)}')" style="width:100%">${opts||'<option value="">(list unavailable)</option>'}</select></div><div id="tm_addform"><p class="muted">Pick a plugin.</p></div>`;
+  if($('#tm_add')&&$('#tm_add').value)topoAddFields(svc);}
+async function topoAddFields(svc){const name=$('#tm_add').value;const box=$('#tm_addform');if(!name){box.innerHTML='';return;}box.innerHTML='<p class="muted">Loading…</p>';
+  const fields=await pluginSchema(name);const form=fields.map(f=>fieldInput(name,f)).filter(Boolean).join('');
+  box.innerHTML=`<div class="fld"><label>Instance name <span class="muted">(optional)</span></label><input id="tm_ainst" placeholder="${esc(name)}-${esc(svc)}"/></div><div class="pfform">${form||'<p class="muted">No config fields.</p>'}</div><button class="btn sm" onclick="topoAddSave('${esc(svc)}','${esc(name)}')">Add ${esc(name)}</button>`;}
+async function topoAddSave(svc,name){const fields=await pluginSchema(name);const config=buildConfig(name,fields);const body={name,config};const inst=($('#tm_ainst')&&$('#tm_ainst').value||'').trim();if(inst)body.instance_name=inst;
+  try{await api('POST','/services/'+encodeURIComponent(svc)+'/plugins',body);toast('Added '+(inst||name),'ok');topoModalClose();loadTopology();}catch(e){toast('Error: '+e.message,'err');}}
 
 $('#p_taginput').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===','){e.preventDefault();addTag(e.target.value);e.target.value='';}});
 (function(){const cl=$('#lnk-console');if(cl)cl.href=location.pathname.indexOf('/aigw')===0?'/aigw/':'/';})();
