@@ -4,6 +4,35 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.1.0] — 2026-09-11
+
+Milestone release. Rolls up everything through 1.0.18 and makes the running
+version visible, so a wrong-bundle deploy can't go unnoticed.
+
+### Added
+- **Portal shows its release version** — the sidebar footer displays `v<version>`
+  (injected into `portal.html` at build time from the `VERSION` file).
+
+### Fixed
+- **Deploy banner shows the real deployed version** — it now reads
+  `<install>/VERSION` and prints it, and drops a stale hard-coded "new features"
+  list. Deploying the wrong (older) tarball is now obvious immediately.
+- **Rebrand smoke-test** no longer false-warns — the post-upgrade check matched a
+  stale uppercase brand string; it is now case-insensitive (carried from 1.0.17-fix).
+
+### Included since 1.0.15
+Login/user/audit redesign, self-service forgot-password, portal API-base guard,
+ACL groups → members, Wizard "existing ACL group(s)" mode, plugin Auto-name +
+core-plugin instance-name editing + descriptions, and the access-control /
+upstream docs + diagram.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.1.0.sha256.txt
+tar xzf kong-pca-bundle-v1.1.0.tar.gz && cd v1.1.0
+sudo ./pca-deploy.sh kong-deploy-v1.1.0.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.0.18] — 2026-09-10
 
 ACL visibility, ACL-only onboarding, and plugin naming.

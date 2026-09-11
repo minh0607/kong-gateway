@@ -574,11 +574,10 @@ ${C_GRN}════════════════════════
   Login:       http://${IP:-<pca-ip>}:8002/
 
   Existing users + passwords + Postgres data preserved.
-  New features available:
-    • SMTP config GUI (User Mgmt → SMTP Settings)
-    • Per-user MFA toggle (button on each user row)
-    • Audit log viewer (http://${IP:-<pca-ip>}:8002/logs/)
-    • Server-side session revocation on logout
+
+  Deployed version:  v$(cat "$INSTALL/VERSION" 2>/dev/null || echo '?')
+  Model Portal:      http://${IP:-<pca-ip>}:8002/kongportal
+  What changed:      see CHANGELOG.md in this bundle
 
   Rollback if needed:  sudo $0 --rollback
 ${C_GRN}══════════════════════════════════════════════════════════${C_RST}

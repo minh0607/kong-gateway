@@ -100,6 +100,11 @@ while IFS= read -r f; do
   cp "$f" "$dest"
 done < "$INCLUDE_LIST"
 
+# ── inject the release version into the portal (replaces the %%VERSION%% token) ──
+if [[ -f "$SOURCE_STAGE/portal/portal.html" ]]; then
+  sed -i "s/%%VERSION%%/${VERSION}/g" "$SOURCE_STAGE/portal/portal.html"
+fi
+
 # ── safety check: VERSION must be in the staged files ───────────────────────
 
 [[ -f "$SOURCE_STAGE/VERSION" ]] || die "SAFETY: VERSION not found in staged files — aborting."

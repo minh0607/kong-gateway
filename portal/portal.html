@@ -181,7 +181,7 @@
     <a class="nav-item" id="lnk-console" href="/" style="text-decoration:none"><span class="ic"><svg viewBox="0 0 24 24"><path d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437"/></svg></span><span>Kong Manager</span></a>
   </nav>
   <div class="sb-foot">
-    <span id="conn">connecting…</span>
+    <div style="display:flex;flex-direction:column;gap:1px;line-height:1.25"><span id="conn">connecting…</span><span id="pver" class="muted" style="font-size:10px"></span></div>
     <button class="toggle" onclick="toggleDark()" title="Light / Dark">🌓</button>
   </div>
 </aside>
@@ -592,6 +592,7 @@ function toggleDark(){const d=document.documentElement.classList.toggle('dark');
 function toast(m,k='ok'){const e=document.createElement('div');e.className=k;e.textContent=m;$('#toast').appendChild(e);setTimeout(()=>e.remove(),k==='err'?6000:3500);}
 // Client-facing gateway host: the host the portal was opened on (proxy is same box, ports 8000/8443).
 const GWHOST=(location.hostname||'GATEWAY');
+(function(){const v='%%VERSION%%';const el=document.getElementById('pver');if(el&&v.indexOf('%')<0)el.textContent='v'+v;})();
 function accessURL(scheme,path){return scheme+'://'+GWHOST+':'+(scheme==='https'?'8443':'8000')+(path||'');}
 function copyText(t){const done=()=>toast('Copied '+t,'ok');if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,done);}else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();done();}}
 function genToken(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';const a=new Uint32Array(36);crypto.getRandomValues(a);let s='';for(const n of a)s+=chars[n%chars.length];const el=$('#p_token');el.value=s;el.focus();el.select();toast('Generated a 36-char secure token','ok');}
