@@ -50,10 +50,10 @@ many models. Routes belong to exactly one service (one-to-many).
 | **Models** | Register a model (service + route + key-auth + acl + tags, with optional **init plugins**); edit backend / route; delete (cascades routes + plugins); **Make managed** on any un-secured service. Shows all services (managed + legacy). |
 | **Routes** | List / add / edit / delete routes — many per service (paths, methods, hosts, strip_path). |
 | **Projects** | Assign a project (consumer + token + ACL membership + optional IP restriction) to **any** service (managed or legacy); edit its models / IPs / tags; delete. |
-| **Consumers** | Add any consumer (incl. legacy), manage ACL group membership, and **issue / reveal / delete API keys**; edit username + tags. An **ACL groups → members** table shows which consumers each group contains. |
+| **Consumers** | Add any consumer (incl. legacy), manage ACL group membership, and **issue / reveal / delete API keys**; edit username + tags. An **ACL groups → members** table shows which consumers each group contains. **Convert to project** renames a legacy consumer to `prj-*` (keys / ACL / IP are kept — they bind to the id) so it shows up as a Project. |
 | **Access (ACL)** | Central access-control management + **audit**. Each group with the services that allow it and its member projects; add/remove **members** and service **allow-lists** inline (× on any chip revokes). The audit panel flags open (no-ACL) services, services missing key-auth, empty allow-lists, and stray **global** auth plugins. |
 | **Upstreams** | Load-balancing pools — create an upstream, add backend targets (host:port + weight), watch target health. |
-| **Usage** | Per-consumer traffic **broken down by model** (requests, 5xx, in/out bandwidth) from Prometheus metrics. CSV export. |
+| **Usage** | Per-consumer traffic **broken down by model** (requests, 5xx, in/out bandwidth) from Prometheus metrics. **Group by consumer** (default) rolls all of a consumer's models into one row with a per-model breakdown; untick for the flat consumer×model view. CSV export. |
 | **Requests** | Recent requests with **source IP** — who called which model from where (access log). CSV export. |
 | **Test** | Send a real request through Kong with a project's key — see status / latency / body (key-auth, ACL and routing all apply). |
 | **Audit** | Admin change log — who created / edited / deleted what, from which IP. |

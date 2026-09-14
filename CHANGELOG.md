@@ -4,6 +4,27 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.2.1] — 2026-09-14
+
+Consumer/project consolidation and a clearer, consumer-centric Usage view.
+
+### Added
+- **Convert to project** button on legacy consumers (Consumers tab) — renames a
+  consumer to `prj-*` so it shows up as a Project. Keys, ACL membership and IP
+  restriction are preserved (they bind to the consumer id, not the name), so no
+  traffic is affected.
+- **Usage → Group by consumer** (default on) — one row per consumer with the
+  total requests / 5xx / bandwidth and a per-model breakdown (each model with its
+  request count), so a consumer that spans several models is a single line
+  instead of scattered rows. Untick to get the flat consumer×model table.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.2.1.sha256.txt
+tar xzf kong-pca-bundle-v1.2.1.tar.gz && cd v1.2.1
+sudo ./pca-deploy.sh kong-deploy-v1.2.1.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.2.0] — 2026-09-11
 
 Access control as a first-class feature, and full inline editing in Topology.

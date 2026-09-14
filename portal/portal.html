@@ -491,6 +491,7 @@
         <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div><h2 style="margin:0">Traffic by consumer × model</h2><p class="hint" style="margin:4px 0 0">Cumulative counters since Kong last (re)started. Only authenticated (key-auth) traffic is attributed to a consumer.</p></div>
           <div class="row" style="gap:10px">
+            <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px"><input type="checkbox" id="us_group" checked onchange="renderUsage()" style="width:auto"/> Group by consumer</label>
             <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px"><input type="checkbox" id="us_named" checked onchange="renderUsage()" style="width:auto"/> Authenticated only</label>
             <button class="btn sec sm" onclick="usageCSV()">⬇ CSV</button>
             <button class="btn sec sm" onclick="loadUsage()">↻ Refresh</button>
@@ -498,7 +499,7 @@
         </div>
         <div id="usage_stats" class="stats" style="margin-top:16px"></div>
         <div style="overflow:auto;margin-top:8px">
-          <table><thead><tr><th>Consumer</th><th>Model</th><th style="text-align:right">Requests</th><th style="text-align:right">Errors (5xx)</th><th style="text-align:right">In</th><th style="text-align:right">Out</th></tr></thead>
+          <table><thead><tr><th>Consumer</th><th>Model(s)</th><th style="text-align:right">Requests</th><th style="text-align:right">Errors (5xx)</th><th style="text-align:right">In</th><th style="text-align:right">Out</th></tr></thead>
             <tbody id="usage_body"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody></table>
         </div>
       </div>
@@ -837,7 +838,7 @@ async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<
         <td>${acls.length?acls.map(a=>`<span class="chip">${esc(a.group)}<b onclick="removeConsumerAcl('${esc(c.username)}','${a.id}')">×</b></span>`).join(''):'<span class="muted">—</span>'}</td>
         <td>${keycell}</td>
         <td>${(c.tags||[]).map(t=>`<span class="pill model">${esc(t)}</span>`).join('')||'<span class="muted">—</span>'}</td>
-        <td style="white-space:nowrap"><button class="btn sec sm" onclick="editConsumer('${c.id}')">Edit</button> <button class="btn red sm" onclick="delConsumer('${esc(c.username)}')">Delete</button></td></tr>`);
+        <td style="white-space:nowrap"><button class="btn sec sm" onclick="editConsumer('${c.id}')">Edit</button>${(c.username||'').startsWith('prj-')?'':` <button class="btn sm" style="background:linear-gradient(135deg,#34d399,#059669)" title="Rename to prj-* so it shows as a Project (keys / ACL / IP kept)" onclick="convertToProject('${c.id}','${esc(c.username)}')">→ project</button>`} <button class="btn red sm" onclick="delConsumer('${esc(c.username)}')">Delete</button></td></tr>`);
     }
     body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No consumers.</td></tr>';
     renderAclGroups(groupMap);
@@ -918,6 +919,13 @@ function editConsumer(id){const c=_consumers.find(x=>x.id===id);if(!c)return;_ed
 async function saveConsumer(){if(!_editConsumerId)return;const name=$('#ce_name').value.trim();if(!name)return toast('Username required','err');
   const tags=$('#ce_tags').value.split(',').map(x=>x.trim()).filter(Boolean);
   try{await api('PATCH','/consumers/'+_editConsumerId,{username:name,tags});toast('Saved '+name,'ok');$('#c_editbox').classList.add('hidden');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
+async function convertToProject(id,username){
+  const base=(username||'').toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'')||'consumer';
+  const suggested=/^prj-/.test(base)?base:'prj-'+base;
+  const nm=prompt('Rename "'+username+'" to a project name.\nKeys, ACL membership and IP restriction are kept (they bind to the id, not the name).',suggested);
+  if(nm===null)return;const nn=nm.trim();
+  if(!/^prj-[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(nn))return toast('Name must be prj-<a-z0-9-…>','err');
+  try{await api('PATCH','/consumers/'+encodeURIComponent(id),{username:nn});toast('Converted → '+nn,'ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 
 // ===== UPSTREAMS (load-balancing) =====
 function healthBadge(h){const m={HEALTHY:['ok','healthy'],UNHEALTHY:['err','unhealthy'],HEALTHCHECKS_OFF:['','no check'],DNS_ERROR:['err','dns error']};
@@ -966,12 +974,20 @@ async function loadUsage(){const body=$('#usage_body');body.innerHTML='<tr><td c
     _usageRows=Object.values(agg).filter(o=>o.req>0||o.ingress>0||o.egress>0);
     renderUsage();
   }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)} — is the Prometheus plugin enabled?</td></tr>`;$('#usage_stats').innerHTML='';}}
-function renderUsage(){const body=$('#usage_body');const named=$('#us_named')&&$('#us_named').checked;
+function _short(n){n=Math.round(n);return n>=1000?(n/1000).toFixed(n>=10000?0:1)+'k':String(n);}
+function renderUsage(){const body=$('#usage_body');const named=$('#us_named')&&$('#us_named').checked;const grouped=!$('#us_group')||$('#us_group').checked;
   let rows=_usageRows.slice();if(named)rows=rows.filter(o=>o.consumer);
-  rows.sort((a,b)=>b.req-a.req);
   const cons=new Set(rows.map(o=>o.consumer||'(anon)')),models=new Set(rows.map(o=>o.service).filter(Boolean));
   const treq=rows.reduce((a,o)=>a+o.req,0),terr=rows.reduce((a,o)=>a+o.err,0),tbw=rows.reduce((a,o)=>a+o.ingress+o.egress,0);
   $('#usage_stats').innerHTML=stat(cons.size,'Consumers')+stat(models.size,'Models used')+stat(Math.round(treq).toLocaleString(),'Requests')+stat(Math.round(terr),'5xx errors')+stat(fmtBytes(tbw),'Bandwidth');
+  if(grouped){
+    const g={};rows.forEach(o=>{const k=o.consumer||'(unauthenticated)';const e=g[k]||(g[k]={consumer:k,req:0,err:0,ingress:0,egress:0,models:[]});e.req+=o.req;e.err+=o.err;e.ingress+=o.ingress;e.egress+=o.egress;if(o.service)e.models.push({s:o.service,req:o.req});});
+    const list=Object.values(g).sort((a,b)=>b.req-a.req);
+    body.innerHTML=list.length?list.map(o=>{const mc=o.models.sort((a,b)=>b.req-a.req).map(m=>`<span class="pill" title="${Math.round(m.req).toLocaleString()} requests">${esc(m.s)} <b>${_short(m.req)}</b></span>`).join('')||'<span class="muted">—</span>';
+      return `<tr><td><b>${esc(o.consumer)}</b> <span class="muted" style="font-size:11px">· ${o.models.length} model${o.models.length!==1?'s':''}</span></td><td>${mc}</td><td style="text-align:right"><b>${Math.round(o.req).toLocaleString()}</b></td><td style="text-align:right">${o.err?('<span style="color:var(--red)">'+Math.round(o.err)+'</span>'):'0'}</td><td style="text-align:right">${fmtBytes(o.ingress)}</td><td style="text-align:right">${fmtBytes(o.egress)}</td></tr>`;}).join('')
+      :`<tr><td colspan="6" class="muted">No ${named?'authenticated ':''}traffic recorded yet. Metrics accrue as requests flow through the gateway.</td></tr>`;
+    return;}
+  rows.sort((a,b)=>b.req-a.req);
   body.innerHTML=rows.length?rows.map(o=>`<tr>
     <td><b>${esc(o.consumer||'(unauthenticated)')}</b></td>
     <td>${o.service?esc(o.service):'<span class="muted">—</span>'}</td>
