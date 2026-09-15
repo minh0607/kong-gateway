@@ -4,6 +4,24 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.2.2] — 2026-09-15
+
+### Added
+- **Grafana links** — a sidebar **Grafana** entry and a **Grafana ↗** button in
+  the Usage tab open the historical per-consumer dashboard
+  (`http://<gateway>:3000/d/kong-overview`) in a new tab. The host is taken from
+  the page (defaults to the gateway host on port 3000) and can be overridden with
+  `localStorage['grafana_url']` if the monitoring stack lives elsewhere. Portal
+  Usage stays the live per-consumer request/bandwidth snapshot; Grafana is the
+  history/trends view.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.2.2.sha256.txt
+tar xzf kong-pca-bundle-v1.2.2.tar.gz && cd v1.2.2
+sudo ./pca-deploy.sh kong-deploy-v1.2.2.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.2.1] — 2026-09-14
 
 Consumer/project consolidation and a clearer, consumer-centric Usage view.

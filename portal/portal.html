@@ -180,6 +180,7 @@
     <div class="nav-item" data-tab="backup"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg></span><span>Backup</span></div>
     <div class="lbl" style="margin-top:auto">Switch to</div>
     <a class="nav-item" id="lnk-console" href="/" style="text-decoration:none"><span class="ic"><svg viewBox="0 0 24 24"><path d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437"/></svg></span><span>Kong Manager</span></a>
+    <a class="nav-item" id="lnk-grafana" target="_blank" rel="noopener" href="#" style="text-decoration:none"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></span><span>Grafana</span></a>
   </nav>
   <div class="sb-foot">
     <div style="display:flex;flex-direction:column;gap:1px;line-height:1.25"><span id="conn">connecting…</span><span id="pver" class="muted" style="font-size:10px"></span></div>
@@ -493,6 +494,7 @@
           <div class="row" style="gap:10px">
             <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px"><input type="checkbox" id="us_group" checked onchange="renderUsage()" style="width:auto"/> Group by consumer</label>
             <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px"><input type="checkbox" id="us_named" checked onchange="renderUsage()" style="width:auto"/> Authenticated only</label>
+            <a class="btn sec sm" id="us_grafana" target="_blank" rel="noopener" href="#" style="text-decoration:none" title="Historical trends per consumer in Grafana">Grafana ↗</a>
             <button class="btn sec sm" onclick="usageCSV()">⬇ CSV</button>
             <button class="btn sec sm" onclick="loadUsage()">↻ Refresh</button>
           </div>
@@ -1549,6 +1551,8 @@ async function topoAddSave(svc,name){const fields=await pluginSchema(name);const
 
 $('#p_taginput').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===','){e.preventDefault();addTag(e.target.value);e.target.value='';}});
 (function(){const cl=$('#lnk-console');if(cl)cl.href=location.pathname.indexOf('/aigw')===0?'/aigw/':'/';})();
+// Grafana link (monitoring). Default http://<gateway-host>:3000; override with localStorage 'grafana_url'.
+(function(){const base=(localStorage.getItem('grafana_url')||('http://'+GWHOST+':3000')).replace(/\/$/,'');const u=base+'/d/kong-overview';['lnk-grafana','us_grafana'].forEach(id=>{const el=document.getElementById(id);if(el)el.href=u;});})();
 ping();loadOverview();
 </script>
 </body>
