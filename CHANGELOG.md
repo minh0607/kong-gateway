@@ -4,6 +4,27 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.5.0] — 2026-09-15
+
+### Added
+- **Users tab in the portal.** User management (previously the standalone
+  `/users/` page) is now a **Users** tab inside the Model Portal: add / delete
+  users, promote / demote role, reset password, set email, toggle per-user MFA,
+  and edit **SMTP** settings with a test-send. It calls the usermgmt app under
+  `/users/api` with the same session (admin-only); the standalone page still
+  works too.
+
+### QA
+- Full smoke pass across all **15 tabs** on a live gateway: every tab renders
+  real data with **no JS errors** and nothing stuck loading.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.5.0.sha256.txt
+tar xzf kong-pca-bundle-v1.5.0.tar.gz && cd v1.5.0
+sudo ./pca-deploy.sh kong-deploy-v1.5.0.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.4.2] — 2026-09-15
 
 ### Changed

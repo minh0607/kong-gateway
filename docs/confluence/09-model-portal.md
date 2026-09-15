@@ -58,6 +58,7 @@ many models. Routes belong to exactly one service (one-to-many).
 | **Audit** | Admin change log — who created / edited / deleted what, from which IP. |
 | **Plugins** | Per-model protections for **any** service (managed or legacy): key-auth / acl / rate-limiting / request-size-limiting / bot-detection / cors toggles, plus a schema-driven form to add & edit **any** Kong plugin (no JSON), each with an optional **instance name**. |
 | **Backup** | Export the whole gateway config to JSON; restore it from a file (idempotent upsert by id, never deletes). |
+| **Users** | Portal / admin **login accounts**, folded into the portal (was a separate `/users/` page): add / delete users, promote / demote role, reset password, set email, toggle per-user MFA, and edit **SMTP** settings (host / port / auth / from / TLS) with a test-send. Calls the usermgmt app under `/users/api` with the same session; admin-only. |
 
 Tables on Models / Routes / Consumers / Projects / Topology have a quick client-side filter.
 
