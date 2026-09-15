@@ -4,6 +4,14 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.5.1] — 2026-09-15
+
+### Changed
+- **Removed the standalone "Users" link** from the Kong Manager nav bar and the
+  Audit Log top bar, now that user management lives in the portal's Users tab —
+  one path instead of two. The standalone `/users/` page still works if reached
+  directly.
+
 ## [1.5.0] — 2026-09-15
 
 ### Added
