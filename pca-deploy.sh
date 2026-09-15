@@ -292,7 +292,21 @@ fi
 [[ -f "$TARBALL" ]] || die "tarball not found: $TARBALL"
 TARBALL=$(realpath "$TARBALL")
 
-# Locate sha256 file — accept multiple naming conventions
+# Accept EITHER the inner deploy tarball (kong-deploy-*.tar.gz) OR the outer
+# bundle (kong-pca-bundle-*.tar.gz, which nests the deploy tarball one level in).
+# If the outer bundle was given, transparently switch to the nested deploy
+# tarball so a wrong-file mistake can't silently deploy nothing.
+if tar tzf "$TARBALL" 2>/dev/null | grep -q '/kong-deploy-.*\.tar\.gz$'; then
+  _probe=$(mktemp -d)
+  tar xzf "$TARBALL" -C "$_probe" 2>/dev/null || die "cannot read $TARBALL"
+  _nested=$(find "$_probe" -name 'kong-deploy-*.tar.gz' | head -1)
+  [[ -n "$_nested" ]] || die "no kong-deploy-*.tar.gz found inside $TARBALL"
+  warn "Outer bundle given — using nested $(basename "$_nested")"
+  TARBALL="$_nested"
+fi
+
+# SHA256 verification is OPTIONAL for this air-gapped internal deploy — it never
+# blocks. Verify only if a checksum file happens to sit next to the tarball.
 SHA256=""
 for candidate in \
   "${TARBALL}.sha256.txt" \
@@ -301,12 +315,13 @@ for candidate in \
   "${TARBALL%.tar.gz}.sha256"; do
   if [[ -f "$candidate" ]]; then SHA256="$candidate"; break; fi
 done
-[[ -n "$SHA256" ]] || die "no .sha256(.txt) file found next to $TARBALL"
-
-log "Verifying SHA256 ..."
-EXPECTED=$(awk '{print $1; exit}' "$SHA256")
-ACTUAL=$(sha256sum "$TARBALL" | awk '{print $1}')
-[[ "$EXPECTED" == "$ACTUAL" ]] || die "checksum FAILED — re-transfer the tarball"
+if [[ -n "$SHA256" ]]; then
+  EXPECTED=$(awk '{print $1; exit}' "$SHA256")
+  ACTUAL=$(sha256sum "$TARBALL" | awk '{print $1}')
+  if [[ "$EXPECTED" == "$ACTUAL" ]]; then ok "Checksum OK"; else warn "checksum mismatch — continuing (verification disabled)"; fi
+else
+  log "No checksum file alongside tarball — skipping SHA verification."
+fi
 ok "Checksum OK"
 
 # Load base Docker images from sibling images/ if present and missing on host

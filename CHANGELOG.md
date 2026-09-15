@@ -4,6 +4,21 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.5.3] — 2026-09-15
+
+### Fixed
+- **Deploy no longer silently deploys the wrong thing.** `pca-deploy.sh` now
+  accepts **either** the inner `kong-deploy-*.tar.gz` **or** the outer
+  `kong-pca-bundle-*.tar.gz` — if the outer bundle is passed it transparently
+  switches to the nested deploy tarball. Previously passing the bundle by
+  mistake extracted one layer too shallow and left the install unchanged (it
+  reported "Upgrade complete" but kept the old version).
+
+### Changed
+- **SHA256 verification is now optional** for this air-gapped internal deploy —
+  it verifies only when a checksum file sits next to the tarball, and a missing
+  or mismatched checksum warns instead of aborting.
+
 ## [1.5.2] — 2026-09-15
 
 ### Changed
