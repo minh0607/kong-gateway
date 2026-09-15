@@ -184,8 +184,11 @@ plugin is **never created unnamed**. Examples: `key-auth-svc-coder`,
 **Auto-name plugins** (button in the Plugins tab header) does the same for
 **existing** plugins that have no instance name — useful for plugins created
 outside the portal (Kong Manager / Admin API). It previews the plan and skips
-already-named plugins. Hovering any plugin (Plugins tab, Topology) shows a plain
-description of what it does.
+already-named plugins. Every plugin also shows a **friendly type label** so its
+kind is clear without knowing Kong's shorthand — e.g. `key-auth` → **API key**,
+`acl` → **ACL · phân quyền**, `ip-restriction` → **Giới hạn IP**, `rate-limiting`
+→ **Giới hạn tần suất** (the raw Kong name stays visible alongside). Hovering any
+plugin (Plugins tab, Topology, Models) shows a plain description of what it does.
 
 ## 9. Health & safety warnings
 

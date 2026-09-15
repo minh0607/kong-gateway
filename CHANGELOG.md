@@ -4,6 +4,23 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.4.1] — 2026-09-15
+
+### Added
+- **Friendly plugin type labels.** Kong's plugin names are cryptic shorthand, so
+  every plugin now shows a readable Vietnamese label next to (or in place of) the
+  raw name — `key-auth` → "API key", `acl` → "ACL · phân quyền", `ip-restriction`
+  → "Giới hạn IP", `rate-limiting` → "Giới hạn tần suất", `file-log` → "Ghi log
+  file", etc. Applied in the Plugins tab (core + other rows), Topology chips and
+  the Models Security column; the raw Kong name stays visible for reference.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.4.1.sha256.txt
+tar xzf kong-pca-bundle-v1.4.1.tar.gz && cd v1.4.1
+sudo ./pca-deploy.sh kong-deploy-v1.4.1.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.4.0] — 2026-09-15
 
 ### Added
