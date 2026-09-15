@@ -672,18 +672,28 @@ async function ping(){try{await api('GET','/status');$('#conn').textContent='●
   catch(e){$('#conn').textContent='✕ disconnected';$('#conn').style.color='#dc2626';}}
 
 // ===== MODELS =====
+// Deep-link into the Plugins tab: switch tab, select the service, open a plugin editor.
+async function gotoPluginTab(svc,pluginId){
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  const nav=document.querySelector('.nav-item[data-tab="plugins"]');if(nav)nav.classList.add('active');
+  document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.classList.toggle('hidden',s.id!=='tab-plugins'));
+  if(PAGES.plugins){$('#page-title').textContent=PAGES.plugins[0];$('#page-sub').textContent=PAGES.plugins[1];}
+  await loadPluginModels();
+  if($('#pl_svc')&&svc){$('#pl_svc').value=svc;await loadModelProtections();}
+  if(pluginId)editPluginId(pluginId);
+  const box=$('#pl_body');if(box)box.scrollIntoView({behavior:'smooth',block:'start'});}
 async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td colspan="4" class="muted">Loading…</td></tr>';
   const showAll=$('#m_showall')&&$('#m_showall').checked;
   try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>showAll?true:(s.name||'').startsWith('svc-'));
     const routes=(await api('GET','/routes?size=1000')).data;const rows=[];
     for(const s of svcs){const rt=routes.find(r=>r.service&&r.service.id===s.id);
-      const plugins=(await api('GET','/services/'+encodeURIComponent(s.name)+'/plugins')).data.map(p=>p.name);
+      const plugins=(await api('GET','/services/'+encodeURIComponent(s.name)+'/plugins')).data;
       const back=`${s.protocol}://${s.host}:${s.port}${s.path||''}`;const path=rt?(rt.paths||[]).join(', '):'—';
       const legacy=!(s.name||'').startsWith('svc-')?' <span class="pill model">legacy</span>':' <span class="pill">managed</span>';
       const rid=rt?rt.id:'';
-      const secured=plugins.includes('key-auth')&&plugins.includes('acl');
+      const secured=plugins.some(p=>p.name==='key-auth')&&plugins.some(p=>p.name==='acl');
       const conv=secured?'':` <button class="btn sm" style="background:linear-gradient(135deg,#34d399,#059669)" title="Add key-auth + acl so it can be access-controlled" onclick="makeManaged('${esc(s.name)}')">Make managed</button>`;
-      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.map(p=>`<span class="pill">${esc(p)}</span>`).join('')}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button>${conv} <button class="btn red sm" onclick="delModel('${esc(s.name)}')">Delete</button></td></tr>`);}
+      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.length?plugins.map(p=>`<span class="pill cp" title="Open in Plugins to edit" onclick="gotoPluginTab('${esc(s.name)}','${p.id}')">${esc(p.instance_name||p.name)}</span>`).join(''):'<span class="muted">none</span>'}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button>${conv} <button class="btn red sm" onclick="delModel('${esc(s.name)}')">Delete</button></td></tr>`);}
     body.innerHTML=rows.join('')||`<tr><td colspan="5" class="muted">${showAll?'No services.':'No models yet (svc-*). Tick “Show all” to see legacy services.'}</td></tr>`;
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 async function delModel(name){if(!confirm('Delete model '+name+'?\n\nThis removes its service, all its routes and plugins. Consumers/keys are NOT touched.'))return;
@@ -710,7 +720,7 @@ async function loadRoutes(){const body=$('#routes_body');body.innerHTML='<tr><td
     _routes=(await api('GET','/routes?size=1000')).data;
     body.innerHTML=_routes.length?_routes.map(r=>{const svc=r.service?(byId[r.service.id]||r.service.id):'—';
       const paths=(r.paths||[]).join(', ')||'—';const methods=(r.methods||[]).join(', ')||'<span class="muted">all</span>';
-      return `<tr><td><b>${esc(r.name||r.id.slice(0,8))}</b></td><td>${esc(svc)}</td><td><code>${esc(paths)}</code></td><td>${methods}</td><td>${r.strip_path?'✓':'—'}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editRoute('${r.id}')">Edit</button> <button class="btn red sm" onclick="delRoute('${r.id}','${esc(r.name||r.id.slice(0,8))}')">Delete</button></td></tr>`;
+      return `<tr><td><b>${esc(r.name||r.id.slice(0,8))}</b></td><td>${esc(svc)}</td><td><code>${esc(paths)}</code></td><td>${methods}</td><td>${r.strip_path?'✓':'—'}</td><td style="white-space:nowrap">${r.service?`<button class="btn sec sm" onclick="gotoPluginTab('${esc(svc)}',null)" title="Manage the plugins that apply to this route (its model)">Plugins</button> `:''}<button class="btn sec sm" onclick="editRoute('${r.id}')">Edit</button> <button class="btn red sm" onclick="delRoute('${r.id}','${esc(r.name||r.id.slice(0,8))}')">Delete</button></td></tr>`;
     }).join(''):'<tr><td colspan="6" class="muted">No routes yet.</td></tr>';
   }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 async function addRoute(){const svc=$('#r_svc').value,paths=csv($('#r_paths').value),methods=csv($('#r_methods').value).map(m=>m.toUpperCase()),hosts=csv($('#r_hosts').value);

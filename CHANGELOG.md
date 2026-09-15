@@ -4,6 +4,23 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.4.0] — 2026-09-15
+
+### Added
+- **Plugin deep-links from Models and Routes.**
+  - **Models** — each plugin chip in the Security column is now clickable: it
+    switches to the Plugins tab, selects that service and opens the plugin's
+    editor, so you can adjust it without hunting for it.
+  - **Routes** — a **Plugins** button per route opens the Plugins tab for that
+    route's model to manage the plugins that apply to it.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.4.0.sha256.txt
+tar xzf kong-pca-bundle-v1.4.0.tar.gz && cd v1.4.0
+sudo ./pca-deploy.sh kong-deploy-v1.4.0.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.3.1] — 2026-09-15
 
 ### Added
