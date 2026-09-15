@@ -588,7 +588,7 @@
       <div class="card" style="max-width:800px;margin:0 auto">
         <div class="row" style="justify-content:space-between;align-items:flex-end">
           <div style="flex:0 0 auto"><label>Choose a model</label><select id="pl_svc" onchange="loadModelProtections()" style="min-width:250px"></select></div>
-          <div class="row" style="gap:8px"><button class="btn sec sm" onclick="autoNamePlugins()" title="Đặt instance name cho mọi plugin chưa có tên, theo scheme <plugin>-<vị trí>">Auto-name plugins</button><button class="btn sec sm" onclick="loadModelProtections()">↻ Refresh</button></div>
+          <div class="row" style="gap:8px"><button class="btn sec sm" onclick="autoNamePlugins()" title="Name every plugin that has no instance name, scheme <plugin>-<scope>">Auto-name plugins</button><button class="btn sec sm" onclick="loadModelProtections()">↻ Refresh</button></div>
         </div>
         <div id="pl_body" style="margin-top:6px"><div class="muted" style="padding:12px 0">Select a model to manage its protections.</div></div>
       </div>
@@ -693,7 +693,7 @@ async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td
       const rid=rt?rt.id:'';
       const secured=plugins.some(p=>p.name==='key-auth')&&plugins.some(p=>p.name==='acl');
       const conv=secured?'':` <button class="btn sm" style="background:linear-gradient(135deg,#34d399,#059669)" title="Add key-auth + acl so it can be access-controlled" onclick="makeManaged('${esc(s.name)}')">Make managed</button>`;
-      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.length?plugins.map(p=>`<span class="pill cp" title="${esc(p.instance_name||p.name)} — bấm để sửa" onclick="gotoPluginTab('${esc(s.name)}','${p.id}')">${esc(pluginLabel(p.name))}</span>`).join(''):'<span class="muted">none</span>'}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button>${conv} <button class="btn red sm" onclick="delModel('${esc(s.name)}')">Delete</button></td></tr>`);}
+      rows.push(`<tr><td><b>${esc(s.name)}</b>${legacy}<br><code>${esc(path)}</code></td><td>${esc(back)}</td><td>${tagList(s.tags)}</td><td>${plugins.length?plugins.map(p=>`<span class="pill cp" title="${esc(p.instance_name||p.name)} — click to edit" onclick="gotoPluginTab('${esc(s.name)}','${p.id}')">${esc(pluginLabel(p.name))}</span>`).join(''):'<span class="muted">none</span>'}</td><td style="white-space:nowrap"><button class="btn sec sm" onclick="editService('${esc(s.name)}','${esc(back)}','${rid}','${esc(rt?(rt.paths||[]).join(', '):'')}')">Edit</button>${conv} <button class="btn red sm" onclick="delModel('${esc(s.name)}')">Delete</button></td></tr>`);}
     body.innerHTML=rows.join('')||`<tr><td colspan="5" class="muted">${showAll?'No services.':'No models yet (svc-*). Tick “Show all” to see legacy services.'}</td></tr>`;
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 async function delModel(name){if(!confirm('Delete model '+name+'?\n\nThis removes its service, all its routes and plugins. Consumers/keys are NOT touched.'))return;
@@ -1075,7 +1075,7 @@ async function sendTest(){const path=$('#t_path').value.trim(),proj=$('#t_proj')
     const t0=performance.now();const r=await fetch(MTEST+(path[0]==='/'?path:'/'+path),opt);const ms=Math.round(performance.now()-t0);
     const txt=await r.text();let pretty=txt;try{pretty=JSON.stringify(JSON.parse(txt),null,2);}catch(e){}
     const color=r.status<300?'#166534':r.status<500?'#b45309':'var(--red)';
-    const hint=r.status===401?'401 = key sai/thiếu — kiểm tra Project + header.':r.status===403?'403 = key OK nhưng ACL không cho model này.':r.status>=502?'5xx từ Kong = backend/upstream không tới được.':r.status<300?'✔ OK — auth + routing + upstream đều thông.':'';
+    const hint=r.status===401?'401 = missing/invalid key — check the consumer + header.':r.status===403?'403 = key OK but ACL does not allow this model.':r.status>=502?'5xx from Kong = backend/upstream unreachable.':r.status<300?'✔ OK — auth + routing + upstream all good.':'';
     box.innerHTML=`<div style="margin-bottom:10px"><b style="color:${color};font-size:24px">${r.status}</b> <span class="muted">${esc(r.statusText||'')} · ${ms} ms</span></div>
       <pre style="background:var(--primary-l);border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;max-height:420px;font-size:12px;white-space:pre-wrap;margin:0">${esc(pretty.slice(0,4000))||'(empty)'}</pre>
       ${hint?`<p class="hint" style="margin-top:8px">${hint}</p>`:''}`;
@@ -1269,10 +1269,10 @@ async function loadPluginModels(){const sel=$('#pl_svc');const svcs=(await api('
   const opt=s=>(s.name||'').startsWith('svc-')?`<option value="${esc(s.name)}">${esc(s.name.slice(4))} — ${esc(s.name)}</option>`:`<option value="${esc(s.name)}">${esc(s.name)} (legacy)</option>`;
   sel.innerHTML=(managed.map(opt).join('')+legacy.map(opt).join(''))||'<option value="">(no services)</option>';
   loadModelProtections();}
-const PLUGIN_DESC={'key-auth':'Yêu cầu API key hợp lệ (định danh caller)','acl':'Giới hạn theo nhóm ACL (phân quyền model)','ip-restriction':'Chỉ cho gọi từ IP/CIDR cho phép','rate-limiting':'Giới hạn số request mỗi phút','request-size-limiting':'Từ chối payload quá lớn','bot-detection':'Chặn user-agent xấu','cors':'Cho phép origin trình duyệt (CORS)','pre-function':'Chạy Lua tuỳ biến (vd tách Bearer→apikey)','post-function':'Chạy Lua sau khi xử lý','proxy-cache':'Cache response','prometheus':'Xuất metrics Prometheus','file-log':'Ghi log request ra file','http-log':'Đẩy log qua HTTP','correlation-id':'Gắn ID theo dõi request','response-transformer':'Sửa response trả về','request-transformer':'Sửa request gửi đi'};
+const PLUGIN_DESC={'key-auth':'Requires a valid API key (identifies the caller)','acl':'Restricts access by ACL group (authorization)','ip-restriction':'Allow only listed IPs/CIDRs','rate-limiting':'Cap requests per time window','request-size-limiting':'Reject oversized payloads','bot-detection':'Block bad user-agents','cors':'Allow browser origins (CORS)','pre-function':'Run custom Lua (e.g. strip Bearer→apikey)','post-function':'Run custom Lua after handling','proxy-cache':'Cache responses','prometheus':'Expose Prometheus metrics','file-log':'Write request logs to a file','http-log':'Ship logs over HTTP','correlation-id':'Attach a request tracing ID','response-transformer':'Modify the response','request-transformer':'Modify the request'};
 function pluginPurpose(n){return PLUGIN_DESC[n]||'';}
 // Short human-readable type label shown visibly (the raw Kong name is cryptic).
-const PLUGIN_LABEL={'key-auth':'API key','acl':'ACL · phân quyền','ip-restriction':'Giới hạn IP','rate-limiting':'Giới hạn tần suất','request-size-limiting':'Giới hạn dung lượng','bot-detection':'Chặn bot','cors':'CORS','pre-function':'Lua tuỳ biến','post-function':'Lua sau xử lý','proxy-cache':'Cache','prometheus':'Metrics','file-log':'Ghi log file','http-log':'Log qua HTTP','correlation-id':'ID theo dõi','response-transformer':'Sửa response','request-transformer':'Sửa request','jwt':'JWT','basic-auth':'Basic auth','hmac-auth':'HMAC auth','oauth2':'OAuth2'};
+const PLUGIN_LABEL={'key-auth':'API Key','acl':'ACL (authorization)','ip-restriction':'IP Restriction','rate-limiting':'Rate Limit','request-size-limiting':'Request Size Limit','bot-detection':'Bot Detection','cors':'CORS','pre-function':'Pre-function (Lua)','post-function':'Post-function (Lua)','proxy-cache':'Proxy Cache','prometheus':'Metrics (Prometheus)','file-log':'File Log','http-log':'HTTP Log','correlation-id':'Correlation ID','response-transformer':'Response Transformer','request-transformer':'Request Transformer','jwt':'JWT','basic-auth':'Basic Auth','hmac-auth':'HMAC Auth','oauth2':'OAuth2'};
 function pluginLabel(n){return PLUGIN_LABEL[n]||n;}
 function _scopeLabel(p,maps){
   if(p.service&&p.service.id)return maps.svc[p.service.id]||('svc-'+p.service.id.slice(0,6));
@@ -1285,13 +1285,13 @@ async function autoNamePlugins(){
     svcs.data.forEach(s=>maps.svc[s.id]=s.name);rts.data.forEach(r=>maps.rt[r.id]=r.name||r.id.slice(0,6));cons.data.forEach(c=>maps.con[c.id]=c.username);
     const used=new Set(pls.data.map(p=>p.instance_name).filter(Boolean));
     const todo=pls.data.filter(p=>!p.instance_name);
-    if(!todo.length)return toast('Mọi plugin đã có instance name rồi','ok');
+    if(!todo.length)return toast('All plugins already have an instance name','ok');
     const plan=todo.map(p=>{const base=p.name+'-'+_scopeLabel(p,maps);let nm=base,i=2;while(used.has(nm)){nm=base+'-'+i;i++;}used.add(nm);return {id:p.id,inst:nm,why:pluginPurpose(p.name)};});
     const preview=plan.slice(0,14).map(x=>'• '+x.inst+(x.why?'  — '+x.why:'')).join('\n');
-    if(!confirm('Đặt instance name cho '+plan.length+' plugin chưa có tên?\n(scheme: <plugin>-<vị trí>)\n\n'+preview+(plan.length>14?'\n… +'+(plan.length-14)+' nữa':'')))return;
+    if(!confirm('Name '+plan.length+' plugin(s) with no instance name?\n(scheme: <plugin>-<scope>)\n\n'+preview+(plan.length>14?'\n… +'+(plan.length-14)+' more':'')))return;
     let done=0;for(const x of plan){try{await api('PATCH','/plugins/'+x.id,{instance_name:x.inst});done++;}catch(e){}}
-    toast('Đã đặt tên '+done+'/'+plan.length+' plugin','ok');if($('#pl_svc')&&$('#pl_svc').value)loadModelProtections();
-  }catch(e){toast('Auto-name lỗi: '+e.message,'err');}}
+    toast('Named '+done+'/'+plan.length+' plugin(s)','ok');if($('#pl_svc')&&$('#pl_svc').value)loadModelProtections();
+  }catch(e){toast('Auto-name failed: '+e.message,'err');}}
 function coreRow(ic,name,desc,pl){const on=!!pl;
   const ttl='<b>'+esc(pluginLabel(name))+'</b> <span class="muted" style="font-size:11px">'+esc(name)+'</span>';
   const nb=on&&pl.instance_name?ttl+' <span class="pill model">'+esc(pl.instance_name)+'</span>':ttl;

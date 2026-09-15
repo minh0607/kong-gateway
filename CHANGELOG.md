@@ -4,6 +4,14 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.4.2] — 2026-09-15
+
+### Changed
+- **Portal UI is English by default.** Converted the strings that had crept in as
+  Vietnamese back to English: plugin type labels (`API Key`, `ACL (authorization)`,
+  `IP Restriction`, `Rate Limit`, …) and descriptions, the Auto-name dialog and
+  toasts, the Test-tab status hints, and a couple of tooltips. No behaviour change.
+
 ## [1.4.1] — 2026-09-15
 
 ### Added
