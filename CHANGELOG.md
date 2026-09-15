@@ -4,6 +4,25 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.3.1] — 2026-09-15
+
+### Added
+- **Auto-naming plugins on create.** Every plugin created through the portal
+  (Register Model, Wizard, Plugins tab, Topology, ACL / consumer flows) now gets
+  a readable `instance_name` — `<plugin>-<scope>` derived from the target (e.g.
+  `key-auth-svc-coder`, `ip-restriction-con-prj-n8n`) — unless one was typed. A
+  plugin is never created unnamed, so the Plugins/Topology views are always
+  legible. Implemented once in the API layer so it covers every current and
+  future creation path; the existing **Auto-name** button still handles plugins
+  created outside the portal.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.3.1.sha256.txt
+tar xzf kong-pca-bundle-v1.3.1.tar.gz && cd v1.3.1
+sudo ./pca-deploy.sh kong-deploy-v1.3.1.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.3.0] — 2026-09-15
 
 Consolidated Projects into Consumers to remove the Project/Consumer overlap.

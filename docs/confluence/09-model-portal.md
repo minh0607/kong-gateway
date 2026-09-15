@@ -175,11 +175,16 @@ button. The Plugins tab and Topology show the instance name as the primary label
 (with the plugin type as a sub-tag), so multiple plugins of the same type are easy
 to tell apart. The Plugins model picker lists **all** services (managed + legacy).
 
-**Auto-name plugins** (button in the Plugins tab header) scans every plugin across
-the gateway that has **no** instance name and assigns a readable one following the
-scheme `<plugin>-<scope>` — e.g. `key-auth-svc-coder`, `acl-svc-coder`,
-`ip-restriction-con-prj-app`. It previews the plan, skips already-named plugins, and
-guarantees uniqueness. Hovering any plugin (Plugins tab, Topology) shows a plain
+**Auto-naming on create** — any plugin created through the portal (Register Model,
+Wizard, Plugins tab, Topology, ACL/consumer flows) is automatically given an
+instance name following the scheme `<plugin>-<scope>` unless you typed one, so a
+plugin is **never created unnamed**. Examples: `key-auth-svc-coder`,
+`acl-svc-coder`, `ip-restriction-con-prj-app`. Explicit names always win.
+
+**Auto-name plugins** (button in the Plugins tab header) does the same for
+**existing** plugins that have no instance name — useful for plugins created
+outside the portal (Kong Manager / Admin API). It previews the plan and skips
+already-named plugins. Hovering any plugin (Plugins tab, Topology) shows a plain
 description of what it does.
 
 ## 9. Health & safety warnings
