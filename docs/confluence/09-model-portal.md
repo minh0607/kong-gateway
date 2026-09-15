@@ -49,8 +49,7 @@ many models. Routes belong to exactly one service (one-to-many).
 | **Wizard** | Guided setup — create a model, its route, **init plugins**, and a project in one flow (see §7). |
 | **Models** | Register a model (service + route + key-auth + acl + tags, with optional **init plugins**); edit backend / route; delete (cascades routes + plugins); **Make managed** on any un-secured service. Shows all services (managed + legacy). |
 | **Routes** | List / add / edit / delete routes — many per service (paths, methods, hosts, strip_path). |
-| **Projects** | Assign a project (consumer + token + ACL membership + optional IP restriction) to **any** service (managed or legacy); edit its models / IPs / tags; delete. |
-| **Consumers** | Add any consumer (incl. legacy), manage ACL group membership, and **issue / reveal / delete API keys**; edit username + tags. An **ACL groups → members** table shows which consumers each group contains. **Convert to project** renames a legacy consumer to `prj-*` (keys / ACL / IP are kept — they bind to the id) so it shows up as a Project. |
+| **Consumers** | Add any consumer (incl. legacy), manage ACL group membership, and **issue / reveal / delete API keys**; edit username, tags, and **Allowed IPs** (ip-restriction — blank removes it). Replaces the old Projects tab; create with a token + models via the **Wizard**, manage membership in **Access (ACL)**. An **ACL groups → members** table shows which consumers each group contains. **Convert to project** renames a legacy consumer to `prj-*` (keys / ACL / IP are kept — they bind to the id) so it shows up as a Project. |
 | **Access (ACL)** | Central access-control management + **audit**. Each group with the services that allow it and its member projects; add/remove **members** and service **allow-lists** inline (× on any chip revokes). The audit panel flags open (no-ACL) services, services missing key-auth, empty allow-lists, and stray **global** auth plugins. |
 | **Upstreams** | Load-balancing pools — create an upstream, add backend targets (host:port + weight), watch target health. |
 | **Usage** | Per-consumer traffic **broken down by model** (requests, 5xx, in/out bandwidth) from Prometheus metrics. **Group by consumer** (default) rolls all of a consumer's models into one row with a per-model breakdown; untick for the flat consumer×model view. CSV export. A **Grafana ↗** link (also a sidebar **Grafana** entry) opens the historical per-consumer dashboard (`http://<gateway>:3000/d/kong-overview`; override with `localStorage['grafana_url']`). |
@@ -127,10 +126,11 @@ configured object. The only differences:
   Legacy objects are inherited as-is.
 - **Granting a project** needs the service to have an **ACL group**. For managed
   models it's `acl-<slug>`; for legacy the portal reads the service's **real** acl
-  group. A legacy service with **no ACL** (open — any valid key works) is shown but
-  disabled in the Projects picker until you give it one.
-- **Overview / Projects list** are convention views; the **Topology** tab is the
-  all-objects view.
+  group. A legacy service with **no ACL** (open — any valid key works) is flagged in
+  the **Access (ACL)** audit until you give it one (add a group there or via the
+  Wizard).
+- **Overview** is the convention summary; the **Topology** tab is the all-objects
+  view.
 
 **Make managed** (Models tab): any service missing key-auth or acl shows a one-click
 **Make managed** button — it adds **key-auth** (you pick the header) and an **acl**

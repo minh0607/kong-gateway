@@ -4,6 +4,27 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.3.0] — 2026-09-15
+
+Consolidated Projects into Consumers to remove the Project/Consumer overlap.
+
+### Changed
+- **Removed the "Projects" sidebar tab.** A Project was only a naming convention
+  over a Consumer (`prj-*`), so the two tabs duplicated each other. Everything a
+  Project needed now lives on other tabs:
+  - **Consumers** — the single place for consumers/projects. The Edit form now
+    also sets **Allowed IPs** (creates/updates/removes the `ip-restriction`
+    plugin). Plus the existing **Convert to project** (rename legacy → `prj-*`).
+  - **Wizard** — create a project with a token + models in one guided flow.
+  - **Access (ACL)** — manage which projects reach which models.
+
+### Deploy
+```bash
+sha256sum -c kong-pca-bundle-v1.3.0.sha256.txt
+tar xzf kong-pca-bundle-v1.3.0.tar.gz && cd v1.3.0
+sudo ./pca-deploy.sh kong-deploy-v1.3.0.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.2.2] — 2026-09-15
 
 ### Added
