@@ -4,6 +4,15 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.5.2] — 2026-09-15
+
+### Changed
+- **Default API-key header is now `Authorization: Bearer` (OpenAI-compatible).**
+  The header selector in Register Model and both Wizard modes now defaults to the
+  OpenAI standard instead of `x-api-key`; `x-api-key` (n8n / generic) is still
+  available as the second option. Keys created for the Authorization style are
+  stored with the `Bearer ` prefix, as before.
+
 ## [1.5.1] — 2026-09-15
 
 ### Changed

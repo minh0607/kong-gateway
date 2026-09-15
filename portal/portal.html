@@ -234,7 +234,7 @@
             <div class="fld"><label>Capability slug <span class="muted">(a-z0-9-)</span></label><input id="w_slug" placeholder="chat"/></div>
             <div class="fld"><label>Backend URL</label><input id="w_url" placeholder="http://107.118.109.31:8000"/></div>
             <div class="row"><div class="fld"><label>Server tag <span class="muted">(optional)</span></label><input id="w_box" placeholder="vllm01"/></div><div class="fld"><label>Model tag <span class="muted">(optional)</span></label><input id="w_model" placeholder="gemma-3-27b"/></div></div>
-            <div class="fld"><label>API-key header</label><select id="w_header"><option value="x-api-key">x-api-key (n8n / generic)</option><option value="Authorization">Authorization + Bearer (OpenAI-compatible)</option></select></div>
+            <div class="fld"><label>API-key header</label><select id="w_header"><option value="Authorization">Authorization: Bearer (OpenAI-compatible)</option><option value="x-api-key">x-api-key (n8n / generic)</option></select></div>
           </div>
           <div id="w_existbox" class="hidden">
             <p class="hint">The service, route and security already exist — the wizard just adds a project to this model's ACL group.</p>
@@ -244,7 +244,7 @@
             <p class="hint">Onboard a new project and grant it access to one or more <b>existing</b> ACL groups. No new model or route is created.</p>
             <div class="fld"><label>ACL groups <span class="muted">(tick the models this project may call)</span></label>
               <div id="w_acllist" class="checks"></div></div>
-            <div class="fld"><label>API-key header</label><select id="w_aclheader"><option value="x-api-key">x-api-key (n8n / generic)</option><option value="Authorization">Authorization + Bearer (OpenAI-compatible)</option></select></div>
+            <div class="fld"><label>API-key header</label><select id="w_aclheader"><option value="Authorization">Authorization: Bearer (OpenAI-compatible)</option><option value="x-api-key">x-api-key (n8n / generic)</option></select></div>
           </div>
         </div>
         <div class="wstep hidden" data-step="2">
@@ -293,7 +293,7 @@
             <div><label>Model (tag)</label><input id="m_model" placeholder="bge-m3"/></div>
           </div>
           <div class="fld"><label>API-key header</label>
-            <select id="m_header"><option value="x-api-key">x-api-key (n8n)</option><option value="Authorization">Authorization + Bearer (Dify)</option></select></div>
+            <select id="m_header"><option value="Authorization">Authorization: Bearer (OpenAI-compatible)</option><option value="x-api-key">x-api-key (n8n / generic)</option></select></div>
           <div class="fld"><label>Init plugins <span class="muted">(optional — key-auth + acl are always added)</span></label>
             <div class="row" style="gap:8px"><select id="m_plugsel" style="flex:2"></select><input id="m_pluginst" placeholder="instance name (optional)" style="flex:1.4"/><button type="button" class="btn sec sm" onclick="pendAdd('m','#m_plugsel','#m_pluginst','#m_pluglist')">+ Add</button></div>
             <div id="m_pluglist" style="margin-top:8px"></div>
