@@ -4,6 +4,18 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.1] — 2026-09-16
+
+### Changed
+- **Redesigned the Wizard to be mode-first.** The tab now opens on a landing
+  screen with three intent cards — **New model** (service + route + key-auth +
+  acl + first project), **New project** (add a project to a model that already
+  exists), and **Grant access** (give a new project one or more existing ACL
+  groups) — instead of a single long form. Picking a card reveals only the
+  fields that mode needs; **← Change type** returns to the landing. Same
+  underlying create logic (`wCreate`), fewer irrelevant fields on screen.
+  (Replaces the previous step/review wizard.)
+
 ## [1.7.0] — 2026-09-16
 
 ### Changed
