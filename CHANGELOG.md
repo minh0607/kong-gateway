@@ -4,6 +4,15 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.6.1] — 2026-09-16
+
+### Changed
+- **Type-ahead instead of pick-by-eye** on the ACL and Consumers pickers. The
+  *Add member* (consumer / group), *Allow group on service* (group / service),
+  and the Consumers *Add to ACL group* and *Create key* consumer/group fields are
+  now typeable inputs with an autocomplete suggestion list (`<datalist>`): start
+  typing to filter, and you can still enter a brand-new group name.
+
 ## [1.6.0] — 2026-09-16
 
 ### Added

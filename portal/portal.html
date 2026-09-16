@@ -400,13 +400,13 @@
           <div style="height:22px"></div>
           <h2><span class="cico violet"><svg viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></span>Add consumer to ACL group</h2>
           <p class="hint">Grant an existing consumer access to a model's ACL group.</p>
-          <div class="fld"><label>Consumer</label><select id="c_sel"></select></div>
-          <div class="fld"><label>ACL group</label><input id="c_group" placeholder="e.g. acl-embed"/></div>
+          <div class="fld"><label>Consumer</label><input list="dl_csel" id="c_sel" placeholder="type to search…"/><datalist id="dl_csel"></datalist></div>
+          <div class="fld"><label>ACL group</label><input id="c_group" list="dl_cgroup" placeholder="e.g. acl-embed"/><datalist id="dl_cgroup"></datalist></div>
           <button class="btn" onclick="addConsumerAcl()">Add to group</button>
           <div style="height:22px"></div>
           <h2><span class="cico amber"><svg viewBox="0 0 24 24"><path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg></span>Create API key</h2>
           <p class="hint">Issue a <code>key-auth</code> credential. Leave the key blank to auto-generate a secure one.</p>
-          <div class="fld"><label>Consumer</label><select id="k_sel"></select></div>
+          <div class="fld"><label>Consumer</label><input list="dl_ksel" id="k_sel" placeholder="type to search…"/><datalist id="dl_ksel"></datalist></div>
           <div class="fld"><label>Key <span class="muted">(blank = auto)</span></label>
             <div style="display:flex;gap:8px"><input id="k_key" placeholder="custom key, or Generate"/><button type="button" class="btn sec" style="white-space:nowrap" onclick="genKey()"><svg class="bico" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg> Generate</button></div>
           </div>
@@ -451,8 +451,8 @@
         </div>
         <p class="hint">Each group is a model's access boundary. <b>Add member</b> = grant a project access; <b>Allow group on service</b> = open a model to that group. The <code>×</code> on each chip revokes it.</p>
         <div class="row" style="gap:16px;flex-wrap:wrap;margin:8px 0 12px">
-          <div class="row" style="gap:6px;align-items:center"><b style="font-size:12px">Add member:</b><select id="acl_mc" style="padding:6px 9px"></select><span class="muted">→</span><select id="acl_mg" style="padding:6px 9px"></select><button class="btn sm" onclick="aclAddMember()">Add</button></div>
-          <div class="row" style="gap:6px;align-items:center"><b style="font-size:12px">Allow group on service:</b><select id="acl_sg" style="padding:6px 9px"></select><span class="muted">→</span><select id="acl_ss" style="padding:6px 9px"></select><button class="btn sm" onclick="aclAllowOnService()">Allow</button></div>
+          <div class="row" style="gap:6px;align-items:center"><b style="font-size:12px">Add member:</b><input list="dl_mc" id="acl_mc" placeholder="consumer…" style="padding:6px 9px;width:160px"/><datalist id="dl_mc"></datalist><span class="muted">→</span><input list="dl_mg" id="acl_mg" placeholder="group…" style="padding:6px 9px;width:160px"/><datalist id="dl_mg"></datalist><button class="btn sm" onclick="aclAddMember()">Add</button></div>
+          <div class="row" style="gap:6px;align-items:center"><b style="font-size:12px">Allow group on service:</b><input list="dl_sg" id="acl_sg" placeholder="group…" style="padding:6px 9px;width:160px"/><datalist id="dl_sg"></datalist><span class="muted">→</span><input list="dl_ss" id="acl_ss" placeholder="service…" style="padding:6px 9px;width:160px"/><datalist id="dl_ss"></datalist><button class="btn sm" onclick="aclAllowOnService()">Allow</button></div>
         </div>
         <div style="overflow:auto"><table><thead><tr><th>ACL group</th><th>Allowed on (services)</th><th>Members (projects)</th></tr></thead><tbody id="acl_manage_body"><tr><td colspan="3" class="muted">Loading…</td></tr></tbody></table></div>
       </div>
@@ -883,7 +883,7 @@ async function delProject(con){if(!confirm('Delete project '+con+' (token + ACL 
 async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<tr><td colspan="5" class="muted">Loading…</td></tr>';
   try{const cons=(await api('GET','/consumers?size=1000')).data;_consumers=cons;
     const opts=cons.map(c=>`<option value="${esc(c.username)}">${esc(c.username)}</option>`).join('')||'<option value="">(none)</option>';
-    if($('#c_sel'))$('#c_sel').innerHTML=opts; if($('#k_sel'))$('#k_sel').innerHTML=opts;
+    if($('#dl_csel'))$('#dl_csel').innerHTML=opts; if($('#dl_ksel'))$('#dl_ksel').innerHTML=opts;
     const rows=[];const groupMap={};
     for(const c of cons){
       const acls=(await api('GET','/consumers/'+encodeURIComponent(c.username)+'/acls')).data;
@@ -899,6 +899,7 @@ async function loadConsumers(){const body=$('#consumers_body');body.innerHTML='<
         <td style="white-space:nowrap"><button class="btn sec sm" onclick="editConsumer('${c.id}')">Edit</button>${(c.username||'').startsWith('prj-')?'':` <button class="btn sm" style="background:linear-gradient(135deg,#34d399,#059669)" title="Rename to prj-* so it shows as a Project (keys / ACL / IP kept)" onclick="convertToProject('${c.id}','${esc(c.username)}')">→ project</button>`} <button class="btn red sm" onclick="delConsumer('${esc(c.username)}')">Delete</button></td></tr>`);
     }
     body.innerHTML=rows.join('')||'<tr><td colspan="5" class="muted">No consumers.</td></tr>';
+    if($('#dl_cgroup'))$('#dl_cgroup').innerHTML=Object.keys(groupMap).sort().map(g=>`<option value="${esc(g)}">`).join('');
     renderAclGroups(groupMap);
   }catch(e){body.innerHTML=`<tr><td colspan="5" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 function renderAclGroups(groupMap){const gb=$('#acl_groups_body');if(!gb)return;
@@ -922,11 +923,11 @@ async function loadAcl(){const body=$('#acl_manage_body');if(body)body.innerHTML
     Object.values(svcById).forEach(s=>s.allow.forEach(g=>{allGroups.add(g);(groupServices[g]=groupServices[g]||[]).push(s.name);}));
     acls.data.forEach(a=>{allGroups.add(a.group);(groupMembers[a.group]=groupMembers[a.group]||[]).push({user:conName[a.consumer.id]||a.consumer.id,id:a.id});});
     _aclData={svcById,groupServices,groupMembers,groups:[...allGroups].sort(),consumers:cons.data.map(c=>c.username).sort(),services:svcs.data.map(s=>s.name).sort(),strayAuth};
-    const gopt=_aclData.groups.map(g=>`<option>${esc(g)}</option>`).join('');
-    if($('#acl_mc'))$('#acl_mc').innerHTML=_aclData.consumers.map(u=>`<option>${esc(u)}</option>`).join('')||'<option value="">(none)</option>';
-    if($('#acl_mg'))$('#acl_mg').innerHTML=gopt||'<option value="">(no groups)</option>';
-    if($('#acl_sg'))$('#acl_sg').innerHTML=gopt||'<option value="">(no groups)</option>';
-    if($('#acl_ss'))$('#acl_ss').innerHTML=_aclData.services.map(s=>`<option>${esc(s)}</option>`).join('')||'<option value="">(none)</option>';
+    const dopt=arr=>arr.map(x=>`<option value="${esc(x)}">`).join('');
+    if($('#dl_mc'))$('#dl_mc').innerHTML=dopt(_aclData.consumers);
+    if($('#dl_mg'))$('#dl_mg').innerHTML=dopt(_aclData.groups);
+    if($('#dl_sg'))$('#dl_sg').innerHTML=dopt(_aclData.groups);
+    if($('#dl_ss'))$('#dl_ss').innerHTML=dopt(_aclData.services);
     renderAclAudit();renderAclManage();
   }catch(e){if(body)body.innerHTML=`<tr><td colspan="3" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 function renderAclAudit(){const el=$('#acl_audit');if(!el||!_aclData)return;const issues=[];
