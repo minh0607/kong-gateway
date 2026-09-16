@@ -4,6 +4,23 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.6.0] — 2026-09-16
+
+### Added
+- **Access-denied diagnostics in the Requests tab.** Quick filters for
+  **Denied (4xx)** and **Errors (5xx)**, a **Path** column, and a **"Why blocked"**
+  hint per row: 401 → key-auth (missing/invalid key); 403 → ACL **or**
+  ip-restriction (compare the **Source IP** with the consumer's Allowed IPs);
+  5xx → upstream unreachable. Blocked rows are tinted, and the Source IP shown is
+  what Kong actually sees — the fix for the common "IP not allowed" case where a
+  Docker/NAT address is whitelisted instead of the client's LAN IP.
+
+### Deploy
+```bash
+tar xzf kong-pca-bundle-v1.6.0.tar.gz && cd v1.6.0
+sudo ./pca-deploy.sh kong-pca-bundle-v1.6.0.tar.gz --cert-ip <PCA_IP>
+```
+
 ## [1.5.3] — 2026-09-15
 
 ### Fixed

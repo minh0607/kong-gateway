@@ -513,15 +513,16 @@
       <div class="card">
         <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div><h2 style="margin:0">Recent requests</h2><p class="hint" style="margin:4px 0 0">Latest calls through the gateway — source IP, consumer, model and status (Kong access log).</p></div>
-          <div class="row" style="gap:10px">
-            <input id="rq_filter" placeholder="filter IP / consumer / model…" style="width:220px;padding:7px 10px" oninput="renderRequests()"/>
+          <div class="row" style="gap:10px;flex-wrap:wrap">
+            <div class="row" style="gap:6px"><button class="btn sec sm" id="rqf_all" onclick="reqFilterStatus('all')">All</button><button class="btn sec sm" id="rqf_denied" onclick="reqFilterStatus('denied')">Denied 4xx</button><button class="btn sec sm" id="rqf_5xx" onclick="reqFilterStatus('5xx')">Errors 5xx</button></div>
+            <input id="rq_filter" placeholder="filter IP / consumer / model / path…" style="width:220px;padding:7px 10px" oninput="renderRequests()"/>
             <button class="btn sec sm" onclick="requestsCSV()">⬇ CSV</button>
             <button class="btn sec sm" onclick="loadRequests()">↻ Refresh</button>
           </div>
         </div>
         <div style="overflow:auto;margin-top:14px">
-          <table><thead><tr><th>Time</th><th>Source IP</th><th>Consumer</th><th>Model</th><th style="text-align:right">Status</th><th style="text-align:right">Latency</th></tr></thead>
-            <tbody id="requests_body"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody></table>
+          <table><thead><tr><th>Time</th><th>Source IP</th><th>Consumer</th><th>Model</th><th>Path</th><th style="text-align:right">Status</th><th>Why blocked</th></tr></thead>
+            <tbody id="requests_body"><tr><td colspan="7" class="muted">Loading…</td></tr></tbody></table>
         </div>
       </div>
     </section>
@@ -1065,27 +1066,44 @@ function renderUsage(){const body=$('#usage_body');const named=$('#us_named')&&$
 let _reqRows=[];
 async function loadRequests(){const body=$('#requests_body');body.innerHTML='<tr><td colspan="6" class="muted">Loading…</td></tr>';
   try{const r=await fetch(REQLOG,{headers:{'Range':'bytes=-262144'},credentials:'same-origin'});
-    if(r.status===404){_reqRows=[];body.innerHTML='<tr><td colspan="6" class="muted">No requests logged yet. Traffic through the gateway will appear here.</td></tr>';return;}
+    if(r.status===404){_reqRows=[];body.innerHTML='<tr><td colspan="7" class="muted">No requests logged yet. Traffic through the gateway will appear here.</td></tr>';return;}
     if(!r.ok&&r.status!==206)throw new Error('HTTP '+r.status);
     const txt=await r.text();const rows=[];
     txt.split('\n').forEach(ln=>{const s=ln.trim();if(!s||s[0]!=='{')return;let d;try{d=JSON.parse(s);}catch(e){return;}
-      rows.push({t:d.started_at||0,ip:d.client_ip||'',consumer:(d.consumer&&d.consumer.username)||'',model:(d.service&&d.service.name)||'',status:(d.response&&d.response.status)||0,lat:(d.latencies&&d.latencies.request)});});
+      rows.push({t:d.started_at||0,ip:d.client_ip||'',consumer:(d.consumer&&d.consumer.username)||'',model:(d.service&&d.service.name)||'',status:(d.response&&d.response.status)||0,lat:(d.latencies&&d.latencies.request),path:(d.request&&(d.request.uri||d.request.url))||''});});
     rows.reverse();_reqRows=rows;renderRequests();
-  }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;}}
+  }catch(e){body.innerHTML=`<tr><td colspan="7" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;}}
 function _statusColor(s){if(s>=500)return 'var(--red)';if(s>=400)return '#b45309';if(s>=200&&s<300)return '#166534';return 'var(--sub)';}
 function sbadge(s){if(!s)return '<span class="muted">—</span>';const bg=s>=500?'#fee2e2':s>=400?'#fef3c7':(s>=200&&s<300)?'#dcfce7':'#eef2f7';return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-weight:700;font-size:11.5px;background:${bg};color:${_statusColor(s)}">${s}</span>`;}
 function _fmtTime(ms){if(!ms)return '—';const d=new Date(ms);const p=n=>String(n).padStart(2,'0');return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());}
+let _reqStatus='all';
+function _reqReason(s,consumer){if(!s)return '';
+  if(s===401)return 'key-auth: missing / invalid API key';
+  if(s===403)return consumer?'ACL or IP restriction — check Source IP vs the consumer’s Allowed IPs':'blocked before a consumer was identified';
+  if(s===429)return 'rate-limited';
+  if(s>=502)return 'upstream / backend unreachable';
+  if(s>=500)return 'upstream error';
+  if(s>=400)return 'client error';
+  return '';}
+function reqFilterStatus(v){_reqStatus=v;
+  [['rqf_all','all'],['rqf_denied','denied'],['rqf_5xx','5xx']].forEach(([id,k])=>{const el=$('#'+id);if(el){el.style.background=(k===v)?'var(--primary)':'';el.style.color=(k===v)?'#fff':'';}});
+  renderRequests();}
 function renderRequests(){const body=$('#requests_body');const f=(($('#rq_filter')&&$('#rq_filter').value)||'').toLowerCase().trim();
-  let rows=_reqRows;if(f)rows=rows.filter(o=>(o.ip+' '+o.consumer+' '+o.model).toLowerCase().includes(f));
-  rows=rows.slice(0,300);
-  body.innerHTML=rows.length?rows.map(o=>`<tr>
-    <td class="muted" style="white-space:nowrap" title="${esc(new Date(o.t).toLocaleString())}">${_fmtTime(o.t)}</td>
+  let rows=_reqRows;
+  if(_reqStatus==='denied')rows=rows.filter(o=>o.status>=400&&o.status<500);
+  else if(_reqStatus==='5xx')rows=rows.filter(o=>o.status>=500);
+  if(f)rows=rows.filter(o=>(o.ip+' '+o.consumer+' '+o.model+' '+(o.path||'')).toLowerCase().includes(f));
+  const shown=rows.slice(0,300);
+  body.innerHTML=shown.length?shown.map(o=>{const denied=o.status>=400;const bg=o.status>=500?'#fef2f2':(o.status>=400?'#fffbeb':'');
+    return `<tr${bg?' style="background:'+bg+'"':''}>
+    <td class="muted" style="white-space:nowrap" title="${esc(new Date(o.t).toLocaleString())}${o.lat!=null?' · '+o.lat+' ms':''}">${_fmtTime(o.t)}</td>
     <td><code>${esc(o.ip||'—')}</code></td>
     <td>${o.consumer?('<b>'+esc(o.consumer)+'</b>'):'<span class="muted">(unauthenticated)</span>'}</td>
     <td>${o.model?esc(o.model):'<span class="muted">—</span>'}</td>
+    <td><code style="font-size:11px">${esc((o.path||'—').slice(0,44))}</code></td>
     <td style="text-align:right">${sbadge(o.status)}</td>
-    <td style="text-align:right" class="muted">${o.lat!=null?o.lat+' ms':'—'}</td></tr>`).join('')
-    :`<tr><td colspan="6" class="muted">${_reqRows.length?'No matching requests.':'No requests logged yet.'}</td></tr>`;}
+    <td class="muted" style="font-size:11.5px;color:${denied?(o.status>=500?'var(--red)':'#b45309'):'var(--sub)'}">${esc(_reqReason(o.status,o.consumer))}</td></tr>`;}).join('')
+    :`<tr><td colspan="7" class="muted">${_reqRows.length?'No matching requests'+(_reqStatus!=='all'?' ('+_reqStatus+')':'')+'.':'No requests logged yet.'}</td></tr>`;}
 
 // ===== TEST a model through Kong =====
 let _svcPath={};
