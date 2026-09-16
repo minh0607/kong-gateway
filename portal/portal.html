@@ -618,13 +618,13 @@
 
     <!-- ===== PLUGINS ===== -->
     <section id="tab-plugins" class="hidden">
-      <div class="card" style="max-width:800px;margin:0 auto">
-        <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div class="card" style="margin-bottom:14px">
+        <div class="row" style="justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px">
           <div style="flex:0 0 auto"><label>Choose a model</label><select id="pl_svc" onchange="loadModelProtections()" style="min-width:250px"></select></div>
           <div class="row" style="gap:8px"><button class="btn sec sm" onclick="autoNamePlugins()" title="Name every plugin that has no instance name, scheme <plugin>-<scope>">Auto-name plugins</button><button class="btn sec sm" onclick="loadModelProtections()">↻ Refresh</button></div>
         </div>
-        <div id="pl_body" style="margin-top:6px"><div class="muted" style="padding:12px 0">Select a model to manage its protections.</div></div>
       </div>
+      <div id="pl_body"><div class="card muted">Select a model to manage its plugins.</div></div>
     </section>
 
   </div>
@@ -1344,43 +1344,61 @@ async function autoNamePlugins(){
     let done=0;for(const x of plan){try{await api('PATCH','/plugins/'+x.id,{instance_name:x.inst});done++;}catch(e){}}
     toast('Named '+done+'/'+plan.length+' plugin(s)','ok');if($('#pl_svc')&&$('#pl_svc').value)loadModelProtections();
   }catch(e){toast('Auto-name failed: '+e.message,'err');}}
-function coreRow(ic,name,desc,pl){const on=!!pl;
-  const ttl='<b>'+esc(pluginLabel(name))+'</b> <span class="muted" style="font-size:11px">'+esc(name)+'</span>';
-  const nb=on&&pl.instance_name?ttl+' <span class="pill model">'+esc(pl.instance_name)+'</span>':ttl;
-  const edit=on?'<button class="btn sec sm" onclick="editPluginId(\''+pl.id+'\')">Edit</button>':'';
-  return `<div class="prow" title="${esc(pluginPurpose(name)||'')}"><div class="pico">${ic}</div><div class="pinfo">${nb}<span>${desc}</span></div><div>${on?'<span class="badge on">✓ Active</span>':'<span class="badge off">Not set</span>'}</div><div>${edit}</div></div>`;}
-function toggleRow(pname,ic,name,desc,svc,plugin,kind,unit,cfgKey,def){
-  const on=!!plugin;let cur=on&&plugin.config?plugin.config[cfgKey]:'';if(Array.isArray(cur))cur=cur.join(',');
-  let cfg='';
-  if(on&&kind==='num')cfg=`<input class="pin" id="cfg_${pname}" value="${esc(cur||def)}"/><span class="muted">${unit}</span><button class="btn sm" onclick="savePlugin('${svc}','${pname}','${cfgKey}','${kind}')">Save</button>`;
-  else if(on&&kind==='text')cfg=`<input class="pin wide" id="cfg_${pname}" placeholder="* = any" value="${esc(cur||'*')}"/><button class="btn sm" onclick="savePlugin('${svc}','${pname}','${cfgKey}','${kind}')">Save</button>`;
-  return `<div class="prow"><div class="pico">${ic}</div><div class="pinfo"><b>${name}</b><span>${desc}</span></div><div class="pcfg">${cfg}</div><label class="switch"><input type="checkbox" ${on?'checked':''} onchange="toggleProtection('${svc}','${pname}','${cfgKey}','${kind}','${def}',this.checked)"/><span class="sl"></span></label></div>`;}
+const PICO={
+ 'key-auth':'<svg viewBox="0 0 24 24"><path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>',
+ 'acl':'<svg viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>',
+ 'ip-restriction':'<svg viewBox="0 0 24 24"><path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>',
+ 'rate-limiting':'<svg viewBox="0 0 24 24"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+ 'request-size-limiting':'<svg viewBox="0 0 24 24"><path d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6.5 3.75h3.5M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>',
+ 'bot-detection':'<svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>',
+ 'cors':'<svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3M3.6 9h16.8M3.6 15h16.8"/></svg>'};
+function pico(n){return PICO[n]||'<svg viewBox="0 0 24 24"><path d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.676.14-3.366.204-5.062.192v0a.657.657 0 01-.643-.658z"/></svg>';}
+function _actRow(p){const on=p.enabled!==false;
+  return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)" title="${esc(pluginPurpose(p.name)||p.name)}">
+    <div class="pico">${pico(p.name)}</div>
+    <div style="flex:1;min-width:0"><b>${esc(p.instance_name||pluginLabel(p.name))}</b> <span class="pill model">${esc(p.name)}</span><div class="muted" style="font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(cfgText(p))}</div></div>
+    <span class="badge ${on?'on':'off'}">${on?'On':'Off'}</span>
+    <button class="btn sec sm" onclick="editPluginId('${p.id}')">Edit</button>
+    <button class="btn gray sm" onclick="togglePluginId('${p.id}',${on})">${on?'Off':'On'}</button>
+    <button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button>
+  </div>`;}
+function _addRow(name,svc){
+  return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)">
+    <div class="pico">${pico(name)}</div>
+    <div style="flex:1;min-width:0"><b>${esc(pluginLabel(name))}</b> <span class="muted" style="font-size:11px">${esc(name)}</span><div class="muted" style="font-size:11.5px">${esc(pluginPurpose(name)||'')}</div></div>
+    <button class="btn sm" onclick="addProtection('${esc(svc)}','${esc(name)}')">Add</button>
+  </div>`;}
+async function addProtection(svc,name){const slug=svc.replace(/^svc-/,'');
+  const defs={'key-auth':{key_names:['Authorization']},'acl':{allow:['acl-'+slug]},'ip-restriction':{allow:['0.0.0.0/0']},'rate-limiting':{minute:60},'request-size-limiting':{allowed_payload_size:10},'bot-detection':{},'cors':{origins:['*']}};
+  try{await api('POST','/services/'+encodeURIComponent(svc)+'/plugins',{name,config:defs[name]||{}});toast('Added '+pluginLabel(name)+' — click Edit to configure','ok');loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
 async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$('#pl_body');
-  if(!svc){body.innerHTML='<div class="muted" style="padding:12px 0">No model.</div>';return;}
-  body.innerHTML='<div class="muted" style="padding:12px 0">Loading…</div>';
-  try{const pls=(await api('GET','/services/'+svc+'/plugins')).data;const has=n=>pls.find(p=>p.name===n);
+  if(!svc){body.innerHTML='<div class="card muted">Select a model to manage its plugins.</div>';return;}
+  body.innerHTML='<div class="card muted">Loading…</div>';
+  try{const pls=(await api('GET','/services/'+encodeURIComponent(svc)+'/plugins')).data;const has=n=>pls.find(p=>p.name===n);
     _modelPlugins=pls;_pluginSvc=svc;
-    let h=`<div class="psec">Core security · set when the model was created</div>`;
-    h+=coreRow('<svg viewBox="0 0 24 24"><path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>','key-auth','requires a valid API key',has('key-auth'));
-    h+=coreRow('<svg viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>','acl','restricts access to allowed groups',has('acl'));
-    h+=`<div class="psec">Optional protection · flip a switch</div>`;
-    h+=toggleRow('rate-limiting','<svg viewBox="0 0 24 24"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>','rate-limiting','cap requests per minute',svc,has('rate-limiting'),'num','req / min','minute',60);
-    h+=toggleRow('request-size-limiting','<svg viewBox="0 0 24 24"><path d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6.5 3.75h3.5M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>','request-size-limiting','reject oversized payloads',svc,has('request-size-limiting'),'num','MB','allowed_payload_size',10);
-    h+=toggleRow('bot-detection','<svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>','bot-detection','deny known bad user-agents',svc,has('bot-detection'),'none');
-    h+=toggleRow('cors','<svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3M3.6 9h16.8M3.6 15h16.8"/></svg>','cors','allow browser origins',svc,has('cors'),'text','','origins','*');
-    const curated=['key-auth','acl','rate-limiting','request-size-limiting','bot-detection','cors'];
-    const others=pls.filter(p=>!curated.includes(p.name));
-    h+=`<div class="psec">Other plugins on this model</div>`;
-    h+= others.length? others.map(p=>`<div class="orow"><div class="pico"><svg viewBox="0 0 24 24"><path d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.676.14-3.366.204-5.062.192v0a.657.657 0 01-.643-.658z"/></svg></div><div class="oinfo" title="${esc(pluginPurpose(p.name)||p.name)}"><b>${p.instance_name?esc(p.instance_name):esc(pluginLabel(p.name))}</b> <span class="pill model" title="Kong plugin type">${esc(p.name)}</span><span>${esc(cfgText(p))}</span></div><span class="badge ${p.enabled?'on':'off'}">${p.enabled?'on':'off'}</span><button class="btn sec sm" onclick="editPluginId('${p.id}')">Edit</button><button class="btn gray sm" onclick="togglePluginId('${p.id}',${p.enabled})">${p.enabled?'Off':'On'}</button><button class="btn red sm" onclick="delPluginId('${p.id}','${esc(p.name)}')">✕</button></div>`).join('') : '<div class="muted" style="padding:6px 0">None.</div>';
-    h+=`<div id="pl_editbox" class="hidden" style="margin-top:10px;padding:12px 14px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)"><h2 style="margin:0 0 8px;font-size:14px"><span class="cico sm amber"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></span>Edit <span id="pe_name"></span></h2><div id="pe_form"></div></div>`;
+    const catalog=['key-auth','acl','ip-restriction','rate-limiting','request-size-limiting','bot-detection','cors'];
+    const active=pls.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    const addable=catalog.filter(n=>!has(n));
     const avail=await availablePlugins();
     const opts=(avail.length?avail:[]).slice().sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
-    h+=`<div class="psec">Add any plugin (advanced)</div>
-      <div class="fld"><label>Plugin</label><select id="adv_plugin" onchange="advPluginFields('${svc}')" style="width:100%">${opts||'<option value="">(list unavailable)</option>'}</select></div>
-      <div id="adv_form"><p class="muted">Pick a plugin above, fill the fields, click Add — no JSON needed.</p></div>`;
-    body.innerHTML=h;
+    body.innerHTML=`<div class="split">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0"><span class="cico blue"><svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>Active on ${esc(svc)}</h2><span class="pill">${active.length}</span></div>
+        <p class="hint">Plugins currently applied to this model. Edit config, turn on/off, or remove.</p>
+        <div>${active.length?active.map(_actRow).join(''):'<div class="muted" style="padding:10px 0">No plugins yet — add one from the right →</div>'}</div>
+        <div id="pl_editbox" class="hidden" style="margin-top:12px;padding:12px 14px;border:2px solid var(--primary);border-radius:12px;background:var(--primary-l)"><h2 style="margin:0 0 8px;font-size:14px"><span class="cico sm amber"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></span>Edit <span id="pe_name"></span></h2><div id="pe_form"></div></div>
+      </div>
+      <div class="card">
+        <h2 style="margin:0"><span class="cico green"><svg viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg></span>Add protection</h2>
+        <p class="hint">One click adds it with sensible defaults; then Edit to fine-tune.</p>
+        <div>${addable.length?addable.map(n=>_addRow(n,svc)).join(''):'<div class="muted" style="padding:10px 0">All curated protections are already active.</div>'}</div>
+        <div class="psec" style="margin-top:16px">Any Kong plugin</div>
+        <div class="fld"><label>Plugin</label><select id="adv_plugin" onchange="advPluginFields('${esc(svc)}')" style="width:100%">${opts||'<option value="">(list unavailable)</option>'}</select></div>
+        <div id="adv_form"><p class="muted">Pick a plugin, fill the fields, click Add.</p></div>
+      </div>
+    </div>`;
     if($('#adv_plugin')&&$('#adv_plugin').value) advPluginFields(svc);
-  }catch(e){body.innerHTML=`<div style="color:var(--red);padding:12px 0">Error: ${esc(e.message)}</div>`;}}
+  }catch(e){body.innerHTML=`<div class="card" style="color:var(--red)">Error: ${esc(e.message)}</div>`;}}
 // build a form from the plugin's real Kong schema — no JSON needed
 async function pluginSchema(name){try{const s=await api('GET','/schemas/plugins/'+encodeURIComponent(name));
   const cfg=(s.fields||[]).find(f=>f.config);if(!cfg||!cfg.config)return [];
@@ -1429,23 +1447,6 @@ async function savePluginId(id,name){const p=_modelPlugins.find(x=>x.id===id);co
 async function addAnyPlugin(svc){const name=$('#adv_plugin').value;if(!name)return toast('No plugin selected','err');const raw=($('#adv_cfg').value||'').trim();let config={};
   if(raw){try{config=JSON.parse(raw);}catch(e){return toast('Config must be valid JSON','err');}}
   try{await api('POST','/services/'+svc+'/plugins',{name,config});toast('Added '+name,'ok');const el=$('#adv_cfg');if(el)el.value='';loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
-async function toggleProtection(svc,pname,cfgKey,kind,def,on){
-  try{
-    if(on){let config={};
-      if(kind==='num')config[cfgKey]=parseInt(def)||60;
-      else if(kind==='text')config[cfgKey]=['*'];
-      if(pname==='rate-limiting')config.policy='local';
-      await api('POST','/services/'+svc+'/plugins',{name:pname,config});toast('Enabled: '+pname,'ok');
-    }else{const ex=(await api('GET','/services/'+svc+'/plugins')).data.find(p=>p.name===pname);if(ex)await api('DELETE','/plugins/'+ex.id);toast('Disabled: '+pname,'ok');}
-    loadModelProtections();
-  }catch(e){toast('Error: '+e.message,'err');loadModelProtections();}}
-async function savePlugin(svc,pname,cfgKey,kind){const v=($('#cfg_'+pname).value||'').trim();let config={};
-  if(kind==='num'){const n=parseInt(v);if(!n)return toast('Enter a number','err');config[cfgKey]=n;if(pname==='rate-limiting')config.policy='local';}
-  else if(kind==='text'){config[cfgKey]=v?v.split(',').map(x=>x.trim()).filter(Boolean):['*'];}
-  try{const ex=(await api('GET','/services/'+svc+'/plugins')).data.find(p=>p.name===pname);
-    if(ex)await api('PATCH','/plugins/'+ex.id,{config});else await api('POST','/services/'+svc+'/plugins',{name:pname,config});
-    toast('Saved','ok');loadModelProtections();
-  }catch(e){toast('Error: '+e.message,'err');}}
 
 // ===== OVERVIEW =====
 function stat(n,l){return `<div class="statc"><div class="n">${n}</div><div class="l">${l}</div></div>`;}

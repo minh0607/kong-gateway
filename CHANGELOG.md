@@ -4,6 +4,18 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.0] — 2026-09-16
+
+### Changed
+- **Redesigned the Plugins tab into two columns.** **Active on this model** (left)
+  lists every plugin currently applied — icon, friendly + raw name, config
+  summary, status, and Edit / On-Off / delete — with the config editor inline.
+  **Add protection** (right) shows the curated plugins not yet active
+  (key-auth, acl, ip-restriction, rate-limiting, request-size-limiting,
+  bot-detection, cors) as one-click **Add** with sensible defaults, plus an
+  *any Kong plugin* picker. Clearer active-vs-available split; new plugins are
+  auto-named. (Replaces the old stacked toggle list.)
+
 ## [1.6.1] — 2026-09-16
 
 ### Changed
