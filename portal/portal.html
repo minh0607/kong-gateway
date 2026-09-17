@@ -493,8 +493,15 @@
     <section id="tab-usage" class="hidden">
       <div class="card">
         <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-          <div><h2 style="margin:0">Traffic by consumer × model</h2><p class="hint" style="margin:4px 0 0">Cumulative counters since Kong last (re)started. Only authenticated (key-auth) traffic is attributed to a consumer.</p></div>
+          <div><h2 style="margin:0">Traffic by consumer × model</h2><p class="hint" id="us_hint" style="margin:4px 0 0">Cumulative counters since Kong last (re)started. Only authenticated (key-auth) traffic is attributed to a consumer.</p></div>
           <div class="row" style="gap:10px">
+            <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px">Period
+              <select id="us_range" onchange="loadUsage()" style="width:auto;padding:5px 8px">
+                <option value="all">All-time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="7d">Last 7 days</option>
+              </select></label>
             <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px"><input type="checkbox" id="us_group" checked onchange="renderUsage()" style="width:auto"/> Group by consumer</label>
             <label style="margin:0;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px"><input type="checkbox" id="us_named" checked onchange="renderUsage()" style="width:auto"/> Authenticated only</label>
             <a class="btn sec sm" id="us_grafana" target="_blank" rel="noopener" href="#" style="text-decoration:none" title="Historical trends per consumer in Grafana">Grafana ↗</a>
@@ -1030,7 +1037,16 @@ async function delUpstream(u){if(!confirm('Delete upstream '+u+' and its targets
 let _usageRows=[];
 function _parseLabels(s){const o={};s.replace(/(\w+)="([^"]*)"/g,(m,k,v)=>{o[k]=v;return m;});return o;}
 function fmtBytes(n){if(!n)return '0';const u=['B','KB','MB','GB','TB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++;}return n.toFixed(i?1:0)+' '+u[i];}
+// Resolve the selected period to a [from,to) window in epoch-ms (local day boundaries).
+function _usageRange(range){const s=new Date();s.setHours(0,0,0,0);const startToday=s.getTime();const DAY=86400000;
+  if(range==='today')return{from:startToday,to:Date.now(),label:'today'};
+  if(range==='yesterday')return{from:startToday-DAY,to:startToday,label:'yesterday'};
+  if(range==='7d')return{from:startToday-6*DAY,to:Date.now(),label:'the last 7 days'};
+  return null;}
 async function loadUsage(){const body=$('#usage_body');body.innerHTML='<tr><td colspan="6" class="muted">Loading…</td></tr>';
+  const range=$('#us_range')?$('#us_range').value:'all';const win=_usageRange(range);
+  if(win)return loadUsageLog(win);
+  if($('#us_hint'))$('#us_hint').textContent='Cumulative counters since Kong last (re)started. Only authenticated (key-auth) traffic is attributed to a consumer.';
   try{const r=await fetch(METRICS,{credentials:'same-origin'});if(!r.ok)throw new Error('metrics HTTP '+r.status);const txt=await r.text();
     const agg={};
     txt.split('\n').forEach(line=>{if(!line||line[0]==='#')return;let m;
@@ -1045,6 +1061,21 @@ async function loadUsage(){const body=$('#usage_body');body.innerHTML='<tr><td c
     _usageRows=Object.values(agg).filter(o=>o.req>0||o.ingress>0||o.egress>0);
     renderUsage();
   }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)} — is the Prometheus plugin enabled?</td></tr>`;$('#usage_stats').innerHTML='';}}
+// Time-windowed usage, aggregated from the request log (has per-request started_at + sizes).
+async function loadUsageLog(win){const body=$('#usage_body');
+  if($('#us_hint'))$('#us_hint').textContent='Requests for '+win.label+', computed from the gateway request log (kept up to ~10 MB of recent traffic). Rows without a consumer are unauthenticated calls.';
+  try{const r=await fetch(REQLOG,{credentials:'same-origin'});
+    if(r.status===404){_usageRows=[];renderUsage();return;}
+    if(!r.ok&&r.status!==206)throw new Error('HTTP '+r.status);
+    const txt=await r.text();const agg={};
+    txt.split('\n').forEach(ln=>{const s=ln.trim();if(!s||s[0]!=='{')return;let d;try{d=JSON.parse(s);}catch(e){return;}
+      const t=d.started_at||0;if(t<win.from||t>=win.to)return;
+      const consumer=(d.consumer&&d.consumer.username)||'',service=(d.service&&d.service.name)||'';
+      const k=consumer+'|'+service,o=agg[k]||(agg[k]={consumer,service,req:0,err:0,ingress:0,egress:0});
+      o.req+=1;const st=(d.response&&d.response.status)||0;if(st>=500)o.err+=1;
+      o.ingress+=(d.request&&d.request.size)||0;o.egress+=(d.response&&d.response.size)||0;});
+    _usageRows=Object.values(agg);renderUsage();
+  }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;$('#usage_stats').innerHTML='';}}
 function _short(n){n=Math.round(n);return n>=1000?(n/1000).toFixed(n>=10000?0:1)+'k':String(n);}
 function renderUsage(){const body=$('#usage_body');const named=$('#us_named')&&$('#us_named').checked;const grouped=!$('#us_group')||$('#us_group').checked;
   let rows=_usageRows.slice();if(named)rows=rows.filter(o=>o.consumer);

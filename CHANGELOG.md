@@ -4,6 +4,17 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.3] — 2026-09-17
+
+### Added
+- **Time period selector on the Usage tab** — *All-time · Today · Yesterday ·
+  Last 7 days.* All-time keeps the live Prometheus counters (cumulative since
+  Kong restart). The dated ranges are computed from the gateway request log
+  (per-request `started_at` + request/response sizes), so requests, 5xx and
+  bandwidth are attributed per consumer × model within the chosen day window.
+  The hint line notes which source is in use; dated ranges cover the retained
+  request log (~10 MB rolling).
+
 ## [1.7.2] — 2026-09-17
 
 ### Added
