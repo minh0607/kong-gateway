@@ -4,6 +4,17 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.5] — 2026-09-17
+
+### Added
+- **Consumer and model filters on the Usage tab.** Two dropdowns (**All
+  consumers / All models** by default) narrow the table to one consumer, one
+  model, or both — client-side, no reload. Options are rebuilt from the current
+  period's data and the pick is preserved across refreshes; stats, grouped and
+  flat views, and the CSV export all respect the active filter. An
+  *(unauthenticated)* entry filters anonymous traffic when *Authenticated only*
+  is off.
+
 ## [1.7.4] — 2026-09-17
 
 ### Added
