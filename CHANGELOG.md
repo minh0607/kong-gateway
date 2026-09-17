@@ -4,6 +4,19 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.2] — 2026-09-17
+
+### Added
+- **Tag management on Models, Routes and Consumers.** Every list now shows the
+  Kong tags on each object, and the edit panel has a **Tags** field
+  (comma-separated) to add, change or remove them:
+  - **Models** — edit box gained a Tags field (`PATCH /services` now sends
+    `tags`); the Tags column already existed.
+  - **Routes** — new **Tags** column in the table plus a Tags field in the edit
+    box (`PATCH /routes` now sends `tags`).
+  - **Consumers** — already supported (unchanged).
+  Clearing the field and saving removes all tags.
+
 ## [1.7.1] — 2026-09-16
 
 ### Changed

@@ -314,6 +314,7 @@
             <h2 style="margin:0 0 10px"><span class="cico sm amber"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></span>Edit — <span id="me_name"></span></h2>
             <div class="fld"><label>Backend URL</label><input id="me_url" placeholder="http://host:port/path"/></div>
             <div class="fld"><label>Route path <span class="muted">(leave blank if none)</span></label><input id="me_path" placeholder="/slug"/></div>
+            <div class="fld"><label>Tags <span class="muted">(comma-separated)</span></label><input id="me_tags" placeholder="env:pca, kind:vllm, model:gemma-3-27b"/></div>
             <div class="row" style="gap:8px"><button class="btn sm" onclick="saveService()">Save</button><button class="btn sec sm" onclick="document.getElementById('m_editbox').classList.add('hidden')">Cancel</button></div>
           </div>
           <div style="overflow:auto">
@@ -345,12 +346,13 @@
             <div class="fld"><label>Paths</label><input id="re_paths"/></div>
             <div class="fld"><label>Methods <span class="muted">(blank = all)</span></label><input id="re_methods"/></div>
             <div class="fld"><label>Hosts <span class="muted">(blank = any)</span></label><input id="re_hosts"/></div>
+            <div class="fld"><label>Tags <span class="muted">(comma-separated)</span></label><input id="re_tags" placeholder="env:pca, kind:vllm"/></div>
             <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin:4px 0 12px"><input type="checkbox" id="re_strip" style="width:auto"/> strip_path</label>
             <div class="row" style="gap:8px"><button class="btn sm" onclick="saveRoute()">Save</button><button class="btn sec sm" onclick="document.getElementById('r_editbox').classList.add('hidden')">Cancel</button></div>
           </div>
           <div style="overflow:auto">
-          <table><thead><tr><th>Route</th><th>Service</th><th>Paths</th><th>Methods</th><th>Strip</th><th></th></tr></thead>
-            <tbody id="routes_body"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody></table>
+          <table><thead><tr><th>Route</th><th>Service</th><th>Paths</th><th>Methods</th><th>Strip</th><th>Tags</th><th></th></tr></thead>
+            <tbody id="routes_body"><tr><td colspan="7" class="muted">Loading…</td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -719,6 +721,7 @@ async function gotoPluginTab(svc,pluginId){
 async function loadModels(){const body=$('#models_body');body.innerHTML='<tr><td colspan="4" class="muted">Loading…</td></tr>';
   const showAll=$('#m_showall')&&$('#m_showall').checked;
   try{const svcs=(await api('GET','/services?size=1000')).data.filter(s=>showAll?true:(s.name||'').startsWith('svc-'));
+    _models=svcs;
     const routes=(await api('GET','/routes?size=1000')).data;const rows=[];
     for(const s of svcs){const rt=routes.find(r=>r.service&&r.service.id===s.id);
       const plugins=(await api('GET','/services/'+encodeURIComponent(s.name)+'/plugins')).data;
@@ -754,29 +757,31 @@ async function loadRoutes(){const body=$('#routes_body');body.innerHTML='<tr><td
     _routes=(await api('GET','/routes?size=1000')).data;
     body.innerHTML=_routes.length?_routes.map(r=>{const svc=r.service?(byId[r.service.id]||r.service.id):'—';
       const paths=(r.paths||[]).join(', ')||'—';const methods=(r.methods||[]).join(', ')||'<span class="muted">all</span>';
-      return `<tr><td><b>${esc(r.name||r.id.slice(0,8))}</b></td><td>${esc(svc)}</td><td><code>${esc(paths)}</code></td><td>${methods}</td><td>${r.strip_path?'✓':'—'}</td><td style="white-space:nowrap">${r.service?`<button class="btn sec sm" onclick="gotoPluginTab('${esc(svc)}',null)" title="Manage the plugins that apply to this route (its model)">Plugins</button> `:''}<button class="btn sec sm" onclick="editRoute('${r.id}')">Edit</button> <button class="btn red sm" onclick="delRoute('${r.id}','${esc(r.name||r.id.slice(0,8))}')">Delete</button></td></tr>`;
-    }).join(''):'<tr><td colspan="6" class="muted">No routes yet.</td></tr>';
-  }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
+      return `<tr><td><b>${esc(r.name||r.id.slice(0,8))}</b></td><td>${esc(svc)}</td><td><code>${esc(paths)}</code></td><td>${methods}</td><td>${r.strip_path?'✓':'—'}</td><td>${tagList(r.tags)||'<span class="muted">—</span>'}</td><td style="white-space:nowrap">${r.service?`<button class="btn sec sm" onclick="gotoPluginTab('${esc(svc)}',null)" title="Manage the plugins that apply to this route (its model)">Plugins</button> `:''}<button class="btn sec sm" onclick="editRoute('${r.id}')">Edit</button> <button class="btn red sm" onclick="delRoute('${r.id}','${esc(r.name||r.id.slice(0,8))}')">Delete</button></td></tr>`;
+    }).join(''):'<tr><td colspan="7" class="muted">No routes yet.</td></tr>';
+  }catch(e){body.innerHTML=`<tr><td colspan="7" style="color:var(--red)">Error: ${esc(e.message)}</td></tr>`;}}
 async function addRoute(){const svc=$('#r_svc').value,paths=csv($('#r_paths').value),methods=csv($('#r_methods').value).map(m=>m.toUpperCase()),hosts=csv($('#r_hosts').value);
   if(!svc)return toast('Pick a service','err');if(!paths.length&&!methods.length&&!hosts.length)return toast('Enter at least a path','err');
   const body={strip_path:$('#r_strip').checked};if(paths.length)body.paths=paths;if(methods.length)body.methods=methods;if(hosts.length)body.hosts=hosts;
   try{await api('POST','/services/'+encodeURIComponent(svc)+'/routes',body);toast('Route added to '+svc,'ok');$('#r_paths').value=$('#r_methods').value=$('#r_hosts').value='';loadRoutes();}catch(e){toast('Error: '+e.message,'err');}}
 function editRoute(id){const r=_routes.find(x=>x.id===id);if(!r)return;_editRouteId=id;
   $('#re_name').textContent=r.name||id.slice(0,8);
-  $('#re_paths').value=(r.paths||[]).join(', ');$('#re_methods').value=(r.methods||[]).join(', ');$('#re_hosts').value=(r.hosts||[]).join(', ');$('#re_strip').checked=!!r.strip_path;
+  $('#re_paths').value=(r.paths||[]).join(', ');$('#re_methods').value=(r.methods||[]).join(', ');$('#re_hosts').value=(r.hosts||[]).join(', ');$('#re_tags').value=(r.tags||[]).join(', ');$('#re_strip').checked=!!r.strip_path;
   $('#r_editbox').classList.remove('hidden');$('#r_editbox').scrollIntoView({behavior:'smooth',block:'center'});}
-async function saveRoute(){if(!_editRouteId)return;const paths=csv($('#re_paths').value),methods=csv($('#re_methods').value).map(m=>m.toUpperCase()),hosts=csv($('#re_hosts').value);
+async function saveRoute(){if(!_editRouteId)return;const paths=csv($('#re_paths').value),methods=csv($('#re_methods').value).map(m=>m.toUpperCase()),hosts=csv($('#re_hosts').value),tags=csv($('#re_tags').value);
   if(!paths.length&&!methods.length&&!hosts.length)return toast('A route needs at least a path, method or host','err');
-  try{await api('PATCH','/routes/'+_editRouteId,{paths:paths.length?paths:null,methods:methods.length?methods:null,hosts:hosts.length?hosts:null,strip_path:$('#re_strip').checked});
+  try{await api('PATCH','/routes/'+_editRouteId,{paths:paths.length?paths:null,methods:methods.length?methods:null,hosts:hosts.length?hosts:null,tags,strip_path:$('#re_strip').checked});
     toast('Route saved','ok');$('#r_editbox').classList.add('hidden');loadRoutes();}catch(e){toast('Error: '+e.message,'err');}}
 async function delRoute(id,name){if(!confirm('Delete route '+name+'?'))return;try{await api('DELETE','/routes/'+id);toast('Deleted route','ok');loadRoutes();}catch(e){toast('Error: '+e.message,'err');}}
-let _editSvc=null,_editRoute=null;
+let _models=[],_editSvc=null,_editRoute=null;
 function editService(name,back,rid,path){_editSvc=name;_editRoute=rid||null;
   $('#me_name').textContent=name;$('#me_url').value=back;$('#me_path').value=(path||'').split(',')[0].trim();
+  const s=(_models||[]).find(x=>x.name===name);$('#me_tags').value=((s&&s.tags)||[]).join(', ');
   $('#m_editbox').classList.remove('hidden');$('#m_editbox').scrollIntoView({behavior:'smooth',block:'center'});}
 async function saveService(){if(!_editSvc)return;const url=$('#me_url').value.trim(),path=$('#me_path').value.trim();
   if(!url)return toast('Backend URL required','err');
-  try{await api('PATCH','/services/'+encodeURIComponent(_editSvc),{url});
+  const tags=csv($('#me_tags').value);
+  try{await api('PATCH','/services/'+encodeURIComponent(_editSvc),{url,tags});
     if(path){if(_editRoute){await api('PATCH','/routes/'+_editRoute,{paths:[path]});}
       else{await api('POST','/services/'+encodeURIComponent(_editSvc)+'/routes',{paths:[path],strip_path:false});}}
     toast('Saved '+_editSvc,'ok');$('#m_editbox').classList.add('hidden');loadModels();
