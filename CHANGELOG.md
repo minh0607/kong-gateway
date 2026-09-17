@@ -4,6 +4,19 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.4] — 2026-09-17
+
+### Added
+- **Custom date range on the Usage tab.** The Period selector gains a
+  **Custom…** option that reveals two date pickers (from → to, end day
+  inclusive); usage for that window is aggregated from the request log, same
+  as the presets. Defaults both dates to today when opened.
+
+### Changed
+- Usage tab subtitle no longer says "(Prometheus)" — the source now depends on
+  the selected period (Prometheus for All-time, request log for dated ranges),
+  which the per-view hint states explicitly.
+
 ## [1.7.3] — 2026-09-17
 
 ### Added
