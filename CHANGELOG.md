@@ -4,6 +4,18 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.6] — 2026-09-19
+
+### Added
+- **Key style selector when creating a consumer API key.** The *Create API key*
+  form (Consumers tab) gains a **Key style** dropdown — *Authorization: Bearer
+  (OpenAI-compatible)* (default) or *x-api-key (n8n / generic)*. OpenAI style
+  stores the credential as `Bearer <key>` so it matches an `Authorization`
+  header (auto-generating the token first when the key is left blank, and never
+  double-prefixing an existing `Bearer …`); x-api-key stores the raw key (or
+  lets Kong auto-generate). Matches the header convention already used by the
+  Wizard, so keys work against the model's key-auth without hand-editing.
+
 ## [1.7.5] — 2026-09-17
 
 ### Added
