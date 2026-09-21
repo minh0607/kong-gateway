@@ -4,6 +4,19 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.10] — 2026-09-21
+
+### Fixed
+- **Wizard now sets generous service timeouts** on new models
+  (`connect 60s / read 600s / write 600s`), matching the Models tab's Register.
+  Previously Wizard-created services used Kong's 60s default read timeout, which
+  caused **504s** on slow models (e.g. Whisper audio transcription of long files).
+
+### Added
+- **Warning when adding Request Size Limit** to a model: it now confirms first,
+  noting the 10 MB default rejects audio / file-upload models (e.g. Whisper
+  `/v1/audio/transcriptions`) with 413. Cancel leaves the model untouched.
+
 ## [1.7.9] — 2026-09-21
 
 ### Added

@@ -1284,7 +1284,7 @@ async function wCreate(){const pname=$('#w_pname').value.trim(),token=$('#w_toke
       header=$('#w_header').value;svc='svc-'+slug;acl='acl-'+slug;const pth=$('#w_path').value.trim();rp=pth[0]==='/'?pth:'/'+pth;
       const methods=csv($('#w_methods').value).map(m=>m.toUpperCase()),strip=$('#w_strip').checked;
       const tags=['env:pca','kind:vllm','cap:'+slug];if(box)tags.push('box:'+box);if(model)tags.push('model:'+model);
-      await api('PUT','/services/'+svc,{url,tags});ok('service '+svc);
+      await api('PUT','/services/'+svc,{url,connect_timeout:60000,read_timeout:600000,write_timeout:600000,tags});ok('service '+svc);
       await ensurePlugin(svc,'key-auth',{key_names:[header]});await ensurePlugin(svc,'acl',{allow:[acl]});ok('key-auth + acl ('+acl+')');
       const rbody={paths:[rp],strip_path:strip};if(methods.length)rbody.methods=methods;
       await api('POST','/services/'+svc+'/routes',rbody);ok('route '+rp);
@@ -1353,6 +1353,7 @@ function _addRow(name,svc){
     <button class="btn sm" onclick="addProtection('${esc(svc)}','${esc(name)}')">Add</button>
   </div>`;}
 async function addProtection(svc,name){const slug=svc.replace(/^svc-/,'');
+  if(name==='request-size-limiting'&&!confirm('Request Size Limit will reject any request bigger than 10 MB (you can raise it in Edit).\n\nNOT recommended for audio / file-upload models (e.g. Whisper /v1/audio/transcriptions) — recordings often exceed 10 MB and will get 413.\n\nAdd it anyway?'))return;
   const defs={'key-auth':{key_names:['Authorization']},'acl':{allow:['acl-'+slug]},'ip-restriction':{allow:['0.0.0.0/0']},'rate-limiting':{minute:60},'request-size-limiting':{allowed_payload_size:10},'bot-detection':{},'cors':{origins:['*']}};
   try{await api('POST','/services/'+encodeURIComponent(svc)+'/plugins',{name,config:defs[name]||{}});toast('Added '+pluginLabel(name)+' — click Edit to configure','ok');loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
 async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$('#pl_body');
