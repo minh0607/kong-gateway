@@ -60,7 +60,7 @@ many models. Routes belong to exactly one service (one-to-many).
 | **Backup** | Export the whole gateway config to JSON; restore it from a file (idempotent upsert by id, never deletes). |
 | **Users** | Portal / admin **login accounts**, folded into the portal (was a separate `/users/` page): add / delete users, promote / demote role, reset password, set email, toggle per-user MFA, and edit **SMTP** settings (host / port / auth / from / TLS) with a test-send. Calls the usermgmt app under `/users/api` with the same session; admin-only. |
 
-Tables on Models / Routes / Consumers / Projects / Topology have a quick client-side filter.
+Tables on Models / Routes / Consumers / Topology have a quick client-side filter.
 
 ## 4. Topology & client-access URLs
 
@@ -236,7 +236,7 @@ or data migration is involved — it is UI over the existing Admin API.
 | Every request 401s despite valid keys | A stray **global auth plugin** (e.g. `basic-auth`) — the Overview health strip flags it; delete it in Plugins. |
 | Can't grant a project to a legacy service | It has no ACL group (it's open). Use **Make managed** in the Models tab (or add key-auth + acl in Plugins) first. |
 | Client-access URL shows `localhost` | It reflects the host you opened the portal on. Open the portal via the PCA IP/hostname and the URLs read that host. |
-| Model created but 401 on the header | Project created with the wrong key header. OpenAI-compatible clients send `Authorization: Bearer` — create the project with the *Authorization* header (Wizard / Projects), or set the model's key-auth `key_names` accordingly. |
+| Model created but 401 on the header | Project created with the wrong key header. OpenAI-compatible clients send `Authorization: Bearer` — create the project with the *Authorization* header (Wizard, or the **Key style** picker in Consumers), or set the model's key-auth `key_names` accordingly. |
 | Test tab hangs / 502 | The model's backend is unreachable from Kong (expected on DEV where vLLM boxes aren't routable). |
 | Pre-existing config "missing" | It is shown — tick **Show all** on Models, or look in the Consumers tab; nothing is deleted. |
 | Real client IP shows the proxy | Behind an L4 proxy, set Kong `trusted_ips` + `real_ip_header=X-Forwarded-For`. |

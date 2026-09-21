@@ -4,6 +4,40 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.7] — 2026-09-21
+
+### Security
+- **Fixed a stored-XSS gap**: `esc()` now also escapes single quotes and
+  backticks (not just `& < > "`). Values interpolated into `onclick` handlers
+  inside single-quoted args (consumer usernames, key values, etc.) can no
+  longer break out and run script in the admin session.
+
+### Fixed
+- **Wizard no longer wipes tags or stacks duplicate keys** when run against an
+  existing project. It now preserves the consumer's existing tags, reuses an
+  existing API key instead of creating a second one, and adds an ACL group /
+  ip-restriction only if not already present (idempotent re-runs). A token is
+  required only when creating a *brand-new* project (`New model` mode).
+- **Editing a model to add a route** now creates it with `strip_path:true`,
+  matching Register (was `false`, which silently broke OpenAI-style `/v1` paths).
+- **`pca-deploy.sh` no longer prints a false green "Checksum OK"** after a
+  checksum mismatch or when verification was skipped (the unconditional line
+  after the check is removed).
+
+### Changed
+- **Usage dated ranges now warn on truncation**: if the selected window starts
+  before the oldest line in the retained request log, the tab shows a "range
+  starts before the retained log — totals are a lower bound" note instead of
+  silently under-reporting.
+
+### Removed
+- **Deleted the orphaned Projects tab** (unreachable — no nav item) and its
+  handlers/markup/listener; its correct tag-preserve logic was ported into the
+  Wizard first (see Fixed). Also removed two stale duplicate `portal.html`
+  files (`nginx/portal.html`, `offline-package/nginx/portal.html`) and the dead
+  `nginx/portal.html` bind-mount in docker-compose — only `portal/portal.html`
+  is served now.
+
 ## [1.7.6] — 2026-09-19
 
 ### Added

@@ -322,7 +322,6 @@ if [[ -n "$SHA256" ]]; then
 else
   log "No checksum file alongside tarball — skipping SHA verification."
 fi
-ok "Checksum OK"
 
 # Load base Docker images from sibling images/ if present and missing on host
 if [[ -d "$SCRIPT_DIR/images" ]]; then
