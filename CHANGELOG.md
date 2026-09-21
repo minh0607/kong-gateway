@@ -4,6 +4,17 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.9] — 2026-09-21
+
+### Added
+- **"Both" key style** in *Create API key* (Consumers). Picking *Both —
+  x-api-key + Authorization Bearer* issues two key-auth credentials from one
+  secret (`<secret>` and `Bearer <secret>`) in one click, so the same project
+  authenticates for OpenAI-compatible clients (`Authorization: Bearer`) and
+  generic clients (`x-api-key`). Set the model's key-auth `key_names` to both
+  headers to match. (Verified end-to-end against Kong: both headers pass, no
+  key is rejected.)
+
 ## [1.7.8] — 2026-09-21
 
 ### Added

@@ -377,7 +377,7 @@
           <h2><span class="cico amber"><svg viewBox="0 0 24 24"><path d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg></span>Create API key</h2>
           <p class="hint">Issue a <code>key-auth</code> credential. Leave the key blank to auto-generate a secure one.</p>
           <div class="fld"><label>Consumer</label><input list="dl_ksel" id="k_sel" placeholder="type to search…"/><datalist id="dl_ksel"></datalist></div>
-          <div class="fld"><label>Key style</label><select id="k_style"><option value="Authorization">Authorization: Bearer (OpenAI-compatible)</option><option value="x-api-key">x-api-key (n8n / generic)</option></select><span class="muted" style="font-size:11px">OpenAI style stores it as “Bearer &lt;key&gt;” so it matches an <code>Authorization</code> header. Pick the one that matches the model's key-auth.</span></div>
+          <div class="fld"><label>Key style</label><select id="k_style"><option value="Authorization">Authorization: Bearer (OpenAI-compatible)</option><option value="x-api-key">x-api-key (n8n / generic)</option><option value="both">Both — x-api-key + Authorization Bearer</option></select><span class="muted" style="font-size:11px">OpenAI style stores it as “Bearer &lt;key&gt;” so it matches an <code>Authorization</code> header. <b>Both</b> creates two credentials from one secret so the same project works for OpenAI <i>and</i> generic clients — set the model's key-auth <code>key_names</code> to both headers too.</span></div>
           <div class="fld"><label>Key <span class="muted">(blank = auto)</span></label>
             <div style="display:flex;gap:8px"><input id="k_key" placeholder="custom key, or Generate"/><button type="button" class="btn sec" style="white-space:nowrap" onclick="genKey()"><svg class="bico" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg> Generate</button></div>
           </div>
@@ -881,10 +881,21 @@ function _genKeyStr(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrs
 function genKey(){const s=_genKeyStr();const el=$('#k_key');el.value=s;el.focus();el.select();toast('Generated a 36-char secure key','ok');}
 async function addConsumerKey(){const c=$('#k_sel').value;let k=$('#k_key').value.trim();const style=$('#k_style')?$('#k_style').value:'x-api-key';
   if(!c)return toast('Pick a consumer','err');
-  let body;
-  if(style==='Authorization'){if(!k)k=_genKeyStr();const val=/^Bearer\s+/i.test(k)?k:('Bearer '+k);body={key:val};}
-  else{body=k?{key:k}:{};}
-  try{await api('POST','/consumers/'+encodeURIComponent(c)+'/key-auth',body);toast('API key created for '+c+(style==='Authorization'?' — Authorization: Bearer':' — x-api-key'),'ok');$('#k_key').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
+  try{
+    if(style==='both'){
+      const secret=(k&&k.replace(/^Bearer\s+/i,''))||_genKeyStr();
+      await api('POST','/consumers/'+encodeURIComponent(c)+'/key-auth',{key:secret});
+      await api('POST','/consumers/'+encodeURIComponent(c)+'/key-auth',{key:'Bearer '+secret});
+      toast('2 keys created for '+c+' — x-api-key + Authorization: Bearer (same secret)','ok');
+    }else{
+      let body;
+      if(style==='Authorization'){if(!k)k=_genKeyStr();const val=/^Bearer\s+/i.test(k)?k:('Bearer '+k);body={key:val};}
+      else{body=k?{key:k}:{};}
+      await api('POST','/consumers/'+encodeURIComponent(c)+'/key-auth',body);
+      toast('API key created for '+c+(style==='Authorization'?' — Authorization: Bearer':' — x-api-key'),'ok');
+    }
+    $('#k_key').value='';loadConsumers();
+  }catch(e){toast('Error: '+e.message,'err');}}
 async function delConsumerKey(c,id){if(!confirm('Delete this API key? Clients using it will stop working.'))return;try{await api('DELETE','/consumers/'+encodeURIComponent(c)+'/key-auth/'+id);toast('API key deleted','ok');loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
 async function addConsumer(){const n=$('#c_name').value.trim();if(!n)return toast('Enter a username','err');
   try{await api('PUT','/consumers/'+encodeURIComponent(n),{});toast('Created consumer '+n,'ok');$('#c_name').value='';loadConsumers();}catch(e){toast('Error: '+e.message,'err');}}
