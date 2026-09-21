@@ -4,6 +4,15 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.8] — 2026-09-21
+
+### Added
+- **Tags in the Topology map.** Each service card now shows its tags with an
+  **✎ tags** inline editor, and every route chip shows its tags with a 🏷
+  editor (and a tags tooltip). Editing PATCHes the object's `tags`; blank
+  clears them — same semantics as the Models/Routes tabs. (Models and Routes
+  tabs already showed and edited tags since 1.7.2; only Topology was missing.)
+
 ## [1.7.7] — 2026-09-21
 
 ### Security
