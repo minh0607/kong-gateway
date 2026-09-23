@@ -4,6 +4,19 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.11] — 2026-09-23
+
+### Added
+- **Tool access (function-calling) control** on the Plugins tab. For the
+  selected model it shows a **model-wide switch** (Tools ON / Block for all)
+  and a **per-project** Allow/Block row for every consumer in the model's ACL
+  groups. Blocking attaches a Kong `request-transformer` that strips the
+  request body's function-calling fields (`tools`, `tool_choice`, and the
+  legacy `functions`, `function_call`) at service scope (all) or service +
+  consumer scope (one project). Default is unchanged — every project may use
+  tools until you block it. (Verified end-to-end: a blocked project's upstream
+  request no longer contains `tools`/`functions`; an allowed one still does.)
+
 ## [1.7.10] — 2026-09-21
 
 ### Fixed

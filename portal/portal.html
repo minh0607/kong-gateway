@@ -1381,9 +1381,50 @@ async function loadModelProtections(){const svc=$('#pl_svc').value;const body=$(
         <div class="fld"><label>Plugin</label><select id="adv_plugin" onchange="advPluginFields('${esc(svc)}')" style="width:100%">${opts||'<option value="">(list unavailable)</option>'}</select></div>
         <div id="adv_form"><p class="muted">Pick a plugin, fill the fields, click Add.</p></div>
       </div>
-    </div>`;
+    </div>
+    <div id="tool_access" style="margin-top:14px"><div class="card muted">Loading tool access…</div></div>`;
     if($('#adv_plugin')&&$('#adv_plugin').value) advPluginFields(svc);
+    loadToolAccess(svc);
   }catch(e){body.innerHTML=`<div class="card" style="color:var(--red)">Error: ${esc(e.message)}</div>`;}}
+// ===== TOOL ACCESS (function-calling control via request-transformer body strip) =====
+function _isToolBlock(p){return p&&p.name==='request-transformer'&&p.config&&p.config.remove&&Array.isArray(p.config.remove.body)&&p.config.remove.body.indexOf('tools')>=0;}
+async function loadToolAccess(svc){const box=$('#tool_access');if(!box)return;
+  try{const pls=_modelPlugins||[];
+    const svcBlock=pls.find(p=>_isToolBlock(p)&&!p.consumer);            // blocks everyone on this model
+    const conBlock={};pls.forEach(p=>{if(_isToolBlock(p)&&p.consumer)conBlock[p.consumer.id]=p.id;});
+    const aclp=pls.find(p=>p.name==='acl');const groups=aclp?(aclp.config.allow||[]):[];
+    let members=[];
+    if(groups.length){const [acls,cons]=await Promise.all([api('GET','/acls?size=1000'),api('GET','/consumers?size=1000')]);
+      const byId=Object.fromEntries(cons.data.map(c=>[c.id,c.username]));const seen=new Set();
+      acls.data.forEach(a=>{if(a.consumer&&groups.indexOf(a.group)>=0&&!seen.has(a.consumer.id)){seen.add(a.consumer.id);members.push({id:a.consumer.id,username:byId[a.consumer.id]||a.consumer.id});}});
+      members.sort((x,y)=>x.username.localeCompare(y.username));}
+    const blockedAll=!!svcBlock;
+    const rows=members.map(m=>{const blocked=blockedAll||!!conBlock[m.id];
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+        <div style="flex:1;min-width:0"><b>${esc(m.username)}</b></div>
+        <span class="badge ${blocked?'off':'on'}">${blocked?'Tools blocked':'Tools allowed'}</span>
+        <button class="btn ${conBlock[m.id]?'gray':'red'} sm"${blockedAll?' disabled title="Model-wide block is on"':''} onclick="toolBlockConsumer('${esc(svc)}','${esc(m.id)}','${esc(m.username)}',${conBlock[m.id]?'false':'true'})">${conBlock[m.id]?'Allow':'Block'}</button>
+      </div>`;}).join('');
+    box.innerHTML=`<div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0"><span class="cico ${blockedAll?'amber':'violet'}"><svg viewBox="0 0 24 24"><path d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg></span>Tool access (function calling)</h2></div>
+      <p class="hint">By default every project may send <code>tools</code> (function calling). Blocking strips <code>tools</code>/<code>tool_choice</code> from the request (Kong <code>request-transformer</code>) so the model can't call tools. Whether tools actually work also depends on the vLLM model's tool parser.</p>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:2px solid var(--line)">
+        <div style="flex:1"><b>All projects on ${esc(svc)}</b><div class="muted" style="font-size:11.5px">Model-wide switch — overrides the per-project rows below.</div></div>
+        <span class="badge ${blockedAll?'off':'on'}">${blockedAll?'Tools OFF':'Tools ON'}</span>
+        <button class="btn ${blockedAll?'gray':'red'} sm" onclick="toolBlockModel('${esc(svc)}',${blockedAll?'false':'true'})">${blockedAll?'Enable tools':'Block for all'}</button>
+      </div>
+      ${members.length?rows:'<div class="muted" style="padding:10px 0">No projects are in this model\'s ACL groups yet.</div>'}
+    </div>`;
+  }catch(e){box.innerHTML=`<div class="card" style="color:var(--red)">Tool access error: ${esc(e.message)}</div>`;}}
+function _tbInst(s){return ('toolblock-'+s).replace(/[^a-zA-Z0-9_.~-]/g,'-').slice(0,128);}
+async function toolBlockModel(svc,block){
+  try{if(block){await api('POST','/services/'+encodeURIComponent(svc)+'/plugins',{name:'request-transformer',instance_name:_tbInst(svc),config:{remove:{body:['tools','tool_choice','functions','function_call']}}});toast('Tools blocked for all on '+svc,'ok');}
+    else{const p=(_modelPlugins||[]).find(x=>_isToolBlock(x)&&!x.consumer);if(p)await api('DELETE','/plugins/'+p.id);toast('Tools enabled for all on '+svc,'ok');}
+    loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
+async function toolBlockConsumer(svc,cid,uname,block){
+  try{if(block){await api('POST','/services/'+encodeURIComponent(svc)+'/plugins',{name:'request-transformer',consumer:{id:cid},instance_name:_tbInst(svc+'-'+uname),config:{remove:{body:['tools','tool_choice','functions','function_call']}}});toast('Tools blocked for '+uname,'ok');}
+    else{const p=(_modelPlugins||[]).find(x=>_isToolBlock(x)&&x.consumer&&x.consumer.id===cid);if(p)await api('DELETE','/plugins/'+p.id);toast('Tools enabled for '+uname,'ok');}
+    loadModelProtections();}catch(e){toast('Error: '+e.message,'err');}}
 // build a form from the plugin's real Kong schema — no JSON needed
 async function pluginSchema(name){try{const s=await api('GET','/schemas/plugins/'+encodeURIComponent(name));
   const cfg=(s.fields||[]).find(f=>f.config);if(!cfg||!cfg.config)return [];
