@@ -498,10 +498,16 @@
     <section id="tab-requests" class="hidden">
       <div class="card">
         <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-          <div><h2 style="margin:0">Recent requests</h2><p class="hint" style="margin:4px 0 0">Latest calls through the gateway — source IP, consumer, model and status (Kong access log).</p></div>
+          <div><h2 style="margin:0">Recent requests</h2><p class="hint" style="margin:4px 0 0">Latest calls through the gateway — source IP, consumer, model and status (Kong access log). <span id="rq_count" class="muted"></span></p></div>
           <div class="row" style="gap:10px;flex-wrap:wrap">
             <div class="row" style="gap:6px"><button class="btn sec sm" id="rqf_all" onclick="reqFilterStatus('all')">All</button><button class="btn sec sm" id="rqf_denied" onclick="reqFilterStatus('denied')">Denied 4xx</button><button class="btn sec sm" id="rqf_5xx" onclick="reqFilterStatus('5xx')">Errors 5xx</button></div>
-            <input id="rq_filter" placeholder="filter IP / consumer / model / path…" style="width:220px;padding:7px 10px" oninput="renderRequests()"/>
+            <select id="rq_range" onchange="renderRequests()" style="width:auto;padding:6px 8px" title="Time range">
+              <option value="all">Any time</option><option value="1h">Last 1h</option><option value="6h">Last 6h</option><option value="12h">Last 12h</option><option value="today">Today</option><option value="yesterday">Yesterday</option>
+            </select>
+            <select id="rq_fcon" onchange="renderRequests()" style="width:auto;padding:6px 8px" title="Filter by consumer"><option value="">All consumers</option></select>
+            <select id="rq_fmodel" onchange="renderRequests()" style="width:auto;padding:6px 8px" title="Filter by model"><option value="">All models</option></select>
+            <select id="rq_fip" onchange="renderRequests()" style="width:auto;padding:6px 8px" title="Filter by source IP"><option value="">All IPs</option></select>
+            <input id="rq_filter" placeholder="filter path / anything…" style="width:180px;padding:7px 10px" oninput="clearTimeout(window._rqT);window._rqT=setTimeout(renderRequests,150)"/>
             <button class="btn sec sm" onclick="requestsCSV()">⬇ CSV</button>
             <button class="btn sec sm" onclick="loadRequests()">↻ Refresh</button>
           </div>
@@ -1051,15 +1057,16 @@ function renderUsage(){const body=$('#usage_body');const named=$('#us_named')&&$
 
 // ===== REQUESTS (access log with source IP) =====
 let _reqRows=[];
-async function loadRequests(){const body=$('#requests_body');body.innerHTML='<tr><td colspan="6" class="muted">Loading…</td></tr>';
-  try{const r=await fetch(REQLOG,{headers:{'Range':'bytes=-262144'},credentials:'same-origin'});
-    if(r.status===404){_reqRows=[];body.innerHTML='<tr><td colspan="7" class="muted">No requests logged yet. Traffic through the gateway will appear here.</td></tr>';return;}
-    if(!r.ok&&r.status!==206)throw new Error('HTTP '+r.status);
+async function loadRequests(){const body=$('#requests_body');body.innerHTML='<tr><td colspan="7" class="muted">Loading…</td></tr>';
+  try{const r=await fetch(REQLOG,{credentials:'same-origin'});
+    // 404 = file-log not writing yet; 416 = log just rotated/empty — treat both as "no requests"
+    if(r.status===404||r.status===416){_reqRows=[];if($('#rq_count'))$('#rq_count').textContent='';body.innerHTML='<tr><td colspan="7" class="muted">No requests logged yet. Traffic through the gateway will appear here.</td></tr>';return;}
+    if(!r.ok)throw new Error('HTTP '+r.status);
     const txt=await r.text();const rows=[];
     txt.split('\n').forEach(ln=>{const s=ln.trim();if(!s||s[0]!=='{')return;let d;try{d=JSON.parse(s);}catch(e){return;}
       rows.push({t:d.started_at||0,ip:d.client_ip||'',consumer:(d.consumer&&d.consumer.username)||'',model:(d.service&&d.service.name)||'',status:(d.response&&d.response.status)||0,lat:(d.latencies&&d.latencies.request),path:(d.request&&(d.request.uri||d.request.url))||''});});
     rows.reverse();_reqRows=rows;renderRequests();
-  }catch(e){body.innerHTML=`<tr><td colspan="7" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;}}
+  }catch(e){if($('#rq_count'))$('#rq_count').textContent='';body.innerHTML=`<tr><td colspan="7" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;}}
 function _statusColor(s){if(s>=500)return 'var(--red)';if(s>=400)return '#b45309';if(s>=200&&s<300)return '#166534';return 'var(--sub)';}
 function sbadge(s){if(!s)return '<span class="muted">—</span>';const bg=s>=500?'#fee2e2':s>=400?'#fef3c7':(s>=200&&s<300)?'#dcfce7':'#eef2f7';return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-weight:700;font-size:11.5px;background:${bg};color:${_statusColor(s)}">${s}</span>`;}
 function _fmtTime(ms){if(!ms)return '—';const d=new Date(ms);const p=n=>String(n).padStart(2,'0');return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());}
@@ -1075,12 +1082,38 @@ function _reqReason(s,consumer){if(!s)return '';
 function reqFilterStatus(v){_reqStatus=v;
   [['rqf_all','all'],['rqf_denied','denied'],['rqf_5xx','5xx']].forEach(([id,k])=>{const el=$('#'+id);if(el){el.style.background=(k===v)?'var(--primary)':'';el.style.color=(k===v)?'#fff':'';}});
   renderRequests();}
-function renderRequests(){const body=$('#requests_body');const f=(($('#rq_filter')&&$('#rq_filter').value)||'').toLowerCase().trim();
-  let rows=_reqRows;
+// Resolve the Requests time dropdown to a [from,to) window (epoch ms). null = any time.
+function _reqRange(range){const now=Date.now(),H=3600000,s=new Date();s.setHours(0,0,0,0);const st=s.getTime(),DAY=86400000;
+  if(range==='1h')return{from:now-H};
+  if(range==='6h')return{from:now-6*H};
+  if(range==='12h')return{from:now-12*H};
+  if(range==='today')return{from:st};
+  if(range==='yesterday')return{from:st-DAY,to:st};
+  return null;}
+// status + time filtered set — the dropdowns are populated from this, and the pickers narrow it further.
+function _reqBase(){let rows=_reqRows;
   if(_reqStatus==='denied')rows=rows.filter(o=>o.status>=400&&o.status<500);
   else if(_reqStatus==='5xx')rows=rows.filter(o=>o.status>=500);
+  const win=_reqRange($('#rq_range')?$('#rq_range').value:'all');
+  if(win)rows=rows.filter(o=>o.t>=win.from&&(win.to?o.t<win.to:true));
+  return rows;}
+function _fillReqFilters(rows){
+  const fill=(sel,allLabel,vals)=>{if(!sel)return;const cur=sel.value;sel.innerHTML='<option value="">'+allLabel+'</option>'+vals.map(v=>`<option value="${esc(v.val)}">${esc(v.lab)}</option>`).join('');if([...sel.options].some(o=>o.value===cur))sel.value=cur;};
+  fill($('#rq_fcon'),'All consumers',[...new Set(rows.map(o=>o.consumer||''))].sort().map(c=>({val:c||'__anon__',lab:c||'(unauthenticated)'})));
+  fill($('#rq_fmodel'),'All models',[...new Set(rows.map(o=>o.model).filter(Boolean))].sort().map(m=>({val:m,lab:m})));
+  fill($('#rq_fip'),'All IPs',[...new Set(rows.map(o=>o.ip).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).map(i=>({val:i,lab:i})));}
+function _reqApplyPickers(rows){
+  const fc=$('#rq_fcon')?$('#rq_fcon').value:'',fm=$('#rq_fmodel')?$('#rq_fmodel').value:'',fi=$('#rq_fip')?$('#rq_fip').value:'';
+  const f=(($('#rq_filter')&&$('#rq_filter').value)||'').toLowerCase().trim();
+  if(fc)rows=rows.filter(o=>fc==='__anon__'?!o.consumer:o.consumer===fc);
+  if(fm)rows=rows.filter(o=>o.model===fm);
+  if(fi)rows=rows.filter(o=>o.ip===fi);
   if(f)rows=rows.filter(o=>(o.ip+' '+o.consumer+' '+o.model+' '+(o.path||'')).toLowerCase().includes(f));
-  const shown=rows.slice(0,300);
+  return rows;}
+function renderRequests(){const body=$('#requests_body');
+  const base=_reqBase();_fillReqFilters(base);let rows=_reqApplyPickers(base);
+  const shown=rows.slice(0,1000);
+  if($('#rq_count'))$('#rq_count').textContent=rows.length>shown.length?('showing latest '+shown.length+' of '+rows.length+' — narrow the filters or use CSV'):(rows.length+' request'+(rows.length===1?'':'s'));
   body.innerHTML=shown.length?shown.map(o=>{const denied=o.status>=400;const bg=o.status>=500?'#fef2f2':(o.status>=400?'#fffbeb':'');
     return `<tr${bg?' style="background:'+bg+'"':''}>
     <td class="muted" style="white-space:nowrap" title="${esc(new Date(o.t).toLocaleString())}${o.lat!=null?' · '+o.lat+' ms':''}">${_fmtTime(o.t)}</td>
@@ -1165,9 +1198,9 @@ let _auditRows=[];
 function _verb(m){return {POST:'Create',PUT:'Upsert',PATCH:'Update',DELETE:'Delete',GET:'Read'}[m]||m;}
 function _obj(path){return (path||'').replace(/^\/aigw/,'').replace(/^\/api\/?/,'').split('?')[0]||'/';}
 async function loadAudit(){const body=$('#audit_body');body.innerHTML='<tr><td colspan="6" class="muted">Loading…</td></tr>';
-  try{const r=await fetch(AUDIT,{headers:{'Range':'bytes=-262144'},credentials:'same-origin'});
-    if(r.status===404){_auditRows=[];body.innerHTML='<tr><td colspan="6" class="muted">No audit entries yet.</td></tr>';return;}
-    if(!r.ok&&r.status!==206)throw new Error('HTTP '+r.status);
+  try{const r=await fetch(AUDIT,{credentials:'same-origin'});
+    if(r.status===404||r.status===416){_auditRows=[];body.innerHTML='<tr><td colspan="6" class="muted">No audit entries yet.</td></tr>';return;}
+    if(!r.ok)throw new Error('HTTP '+r.status);
     const txt=await r.text();const rows=[];
     txt.split('\n').forEach(ln=>{const s=ln.trim();if(!s||s[0]!=='{')return;let d;try{d=JSON.parse(s);}catch(e){return;}
       const dt=d.details||{};rows.push({ts:d.ts,actor:d.actor||'',ip:d.ip||'',method:dt.method||'',path:dt.path||'',status:dt.status||0});});
@@ -1177,7 +1210,7 @@ function renderAudit(){const body=$('#audit_body');const mut=$('#au_mut')&&$('#a
   let rows=_auditRows;
   if(mut)rows=rows.filter(o=>o.method!=='GET'&&o.method!=='HEAD');
   if(f)rows=rows.filter(o=>(o.actor+' '+o.ip+' '+o.method+' '+o.path).toLowerCase().includes(f));
-  rows=rows.slice(0,400);
+  rows=rows.slice(0,1000);
   body.innerHTML=rows.length?rows.map(o=>{const col=o.status<300?'#166534':o.status<400?'var(--sub)':o.status<500?'#b45309':'var(--red)';
     return `<tr><td class="muted" style="white-space:nowrap" title="${esc(o.ts)}">${esc((o.ts||'').replace('T',' ').slice(5,19))}</td>
       <td><b>${esc(o.actor||'—')}</b></td><td><code>${esc(o.ip)}</code></td>
@@ -1197,9 +1230,9 @@ function usageCSV(){const named=$('#us_named')&&$('#us_named').checked;let rows=
   if(!rows.length)return toast('Nothing to export','err');
   downloadCSV('usage-'+new Date().toISOString().slice(0,10)+'.csv',['consumer','model','requests','errors_5xx','in_bytes','out_bytes'],
     rows.map(o=>[o.consumer||'(unauthenticated)',o.service,Math.round(o.req),Math.round(o.err),Math.round(o.ingress),Math.round(o.egress)]));toast('Usage exported','ok');}
-function requestsCSV(){if(!_reqRows.length)return toast('Nothing to export','err');
+function requestsCSV(){const rows=_reqApplyPickers(_reqBase());if(!rows.length)return toast('Nothing to export','err');
   downloadCSV('requests-'+new Date().toISOString().slice(0,10)+'.csv',['time','ip','consumer','model','status','latency_ms'],
-    _reqRows.map(o=>[new Date(o.t).toISOString(),o.ip,o.consumer||'(unauthenticated)',o.model,o.status,o.lat]));toast('Requests exported','ok');}
+    rows.map(o=>[new Date(o.t).toISOString(),o.ip,o.consumer||'(unauthenticated)',o.model,o.status,o.lat]));toast('Requests exported','ok');}
 // ===== table quick-filter =====
 function filterTable(inp,tbodyId){const f=(inp.value||'').toLowerCase();document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(f)?'':'none';});}
 

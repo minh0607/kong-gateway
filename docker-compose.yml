@@ -139,7 +139,7 @@ services:
       LOCKOUTS_FILE: /data/lockouts.json
       AUDIT_DIR: /data/audit
       SESSION_SECRET: ${SESSION_SECRET:?must be set}
-      SESSION_MAX_AGE: "1800"
+      SESSION_MAX_AGE: "10800"
 
       SMTP_HOST: ${SMTP_HOST:?must be set}
       SMTP_PORT: "587"

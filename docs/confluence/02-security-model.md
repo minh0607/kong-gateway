@@ -63,7 +63,7 @@ Because the key is bound to the consumer and the ACL group gates the service:
 
 The admin console sits behind the `kong-auth-proxy` (nginx) + `kong-usermgmt` (Flask).
 
-- **Login:** htpasswd-backed, with an HMAC-signed session cookie (`SESSION_MAX_AGE=1800`).
+- **Login:** htpasswd-backed, with an HMAC-signed session cookie (`SESSION_MAX_AGE=10800`, i.e. 3h; absolute — not extended by activity).
 - **Admin-only console (v1.0.3):** Kong Manager **and** the Admin API (`/api/`) are
   restricted to `admin`-role accounts. A `user`-role account can authenticate but is
   **403 on all console surfaces** — closing a prior RBAC gap where non-admins could

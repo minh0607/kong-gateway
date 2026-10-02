@@ -4,6 +4,31 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.12] — 2026-10-02
+
+### Fixed
+- **Requests/Audit tabs no longer error with HTTP 416.** They fetched the log
+  with a suffix `Range` header, which returns 416 when the log is empty (right
+  after a logrotate `copytruncate`, or before any traffic) — the tab showed
+  "HTTP 416 — is the file-log plugin enabled?" until a manual refresh. The
+  Range header is removed (the whole current log file is read instead), and a
+  416 is now treated as "empty log". This also shows **far more history** than
+  the old 256 KB tail (the full current file, logrotate-capped ~10 MB).
+
+### Added
+- **Time-range and dimension filters on the Requests tab.** A **time range**
+  dropdown (Any / Last 1h / 6h / 12h / Today / Yesterday) plus **Consumer**,
+  **Model** and **Source IP** dropdowns, all combining with the existing
+  Denied/Errors buttons and free-text filter — client-side. Dropdowns are
+  populated from the selected window and keep their pick across refreshes; the
+  count line and CSV export both respect the active filters. Display cap raised
+  300 → 1000 rows with a "showing latest N of M" note.
+
+### Changed
+- **Portal login session default raised 30 min → 3 h** (`SESSION_MAX_AGE`
+  1800 → 10800 in docker-compose). Still an absolute timeout (not extended by
+  activity). Override per-deployment by editing the env value.
+
 ## [1.7.11] — 2026-09-23
 
 ### Added
