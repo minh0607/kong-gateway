@@ -15,3 +15,6 @@ backups/
 release/v*/
 !.env.example
 !nginx/.htpasswd.example
+
+# Override chỉ dành cho máy dev (đổi cổng cục bộ) — không lên production
+docker-compose.override.yml
