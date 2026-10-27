@@ -4,7 +4,7 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
-## [Unreleased]
+## [1.7.13] — 2026-10-27
 
 ### Changed
 - **Vietnam time (UTC+7) for audit day-bucketing, exports and container logs**, to
