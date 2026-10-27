@@ -88,7 +88,9 @@ const limit = 200;
 let offset = 0;
 let total = 0;
 
-document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+// Default the date picker to the Vietnam (UTC+7) calendar day, not the viewer's
+// machine day or UTC — matches how the server now buckets audit files.
+document.getElementById('date').value = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
 
 async function load(off) {
   offset = Math.max(0, off);

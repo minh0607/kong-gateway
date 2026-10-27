@@ -64,9 +64,24 @@ def _audit_dir() -> str:
     return _cfg.audit_dir
 
 
+# Vietnam is a fixed UTC+7 offset with no DST, so a literal offset is exact and
+# needs no tzdata in the image. Audit files are bucketed by the VN calendar day
+# so the portal's default "today" view matches the operator's wall clock
+# (before this, 00:00-07:00 VN showed the previous UTC day's file). Entry
+# timestamps stay UTC "Z" (unambiguous; the browser renders them in local time).
+_VN_TZ = datetime.timezone(datetime.timedelta(hours=7))
+
+
+def _vn_now() -> datetime.datetime:
+    return datetime.datetime.now(_VN_TZ)
+
+
+def _vn_today() -> str:
+    return _vn_now().strftime("%Y-%m-%d")
+
+
 def _today_path() -> str:
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    return os.path.join(_audit_dir(), f"audit-{today}.jsonl")
+    return os.path.join(_audit_dir(), f"audit-{_vn_today()}.jsonl")
 
 
 def _now_iso_ms() -> str:
@@ -131,9 +146,7 @@ def rotate_nginx_access_log() -> None:
     current = os.path.join(_audit_dir(), "access-current.jsonl")
     if not os.path.exists(current):
         return
-    yesterday = (
-        datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
-    ).strftime("%Y-%m-%d")
+    yesterday = (_vn_now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     dated = os.path.join(_audit_dir(), f"access-{yesterday}.jsonl")
     try:
         os.replace(current, dated)
@@ -157,8 +170,8 @@ def start_housekeeping_thread() -> None:
         sweep_retention()
         last_rotation_day = None
         while True:
-            now = datetime.datetime.now(datetime.timezone.utc)
-            # Rotate once a day around 00:05 UTC
+            now = _vn_now()
+            # Rotate once a day around 00:05 VN time
             if now.hour == 0 and now.minute >= 5 and now.date() != last_rotation_day:
                 rotate_nginx_access_log()
                 last_rotation_day = now.date()
@@ -194,7 +207,7 @@ def _query(date: str, actor: str | None, event: str | None,
     access_today = os.path.join(_audit_dir(), "access-current.jsonl")
     access_dated = os.path.join(_audit_dir(), f"access-{date}.jsonl")
 
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    today = _vn_today()
     if date == today:
         paths = [audit_path, access_today, access_dated]
     else:
@@ -224,9 +237,7 @@ def api_logs():
 
     @require_admin
     def inner():
-        date = request.args.get("date") or datetime.datetime.now(
-            datetime.timezone.utc
-        ).strftime("%Y-%m-%d")
+        date = request.args.get("date") or _vn_today()
         actor = request.args.get("actor")
         event = request.args.get("event")
         limit = min(int(request.args.get("limit", "200")), 1000)

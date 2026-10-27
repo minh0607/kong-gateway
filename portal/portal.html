@@ -963,6 +963,9 @@ async function delUpstream(u){if(!confirm('Delete upstream '+u+' and its targets
 let _usageRows=[];
 function _parseLabels(s){const o={};s.replace(/(\w+)="([^"]*)"/g,(m,k,v)=>{o[k]=v;return m;});return o;}
 function fmtBytes(n){if(!n)return '0';const u=['B','KB','MB','GB','TB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++;}return n.toFixed(i?1:0)+' '+u[i];}
+// Vietnam (UTC+7, no DST) formatting for exports — independent of the viewer's machine timezone.
+function _vnDate(ms){return new Date((ms==null?Date.now():ms)+7*3600000).toISOString().slice(0,10);}
+function _vnDateTime(ms){return new Date((ms==null?Date.now():ms)+7*3600000).toISOString().slice(0,19).replace('T',' ')+'+07:00';}
 // Resolve the selected period to a [from,to) window in epoch-ms (local day boundaries).
 function _usageRange(range){const s=new Date();s.setHours(0,0,0,0);const startToday=s.getTime();const DAY=86400000;
   if(range==='today')return{from:startToday,to:Date.now(),label:'today'};
@@ -1171,7 +1174,7 @@ async function loadBackup(){const el=$('#bk_counts');if(!el)return;el.innerHTML=
 async function exportConfig(){try{const c=await gatherConfig();
     const data=Object.assign({_meta:{exported_at:new Date().toISOString(),tool:'SEHC AIGW Portal'}},c);
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='kong-config-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='kong-config-'+_vnDate()+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
     toast('Config exported','ok');
   }catch(e){toast('Error: '+e.message,'err');}}
 function _clean(o){const c=Object.assign({},o);['created_at','updated_at','ws_id'].forEach(k=>delete c[k]);return c;}
@@ -1228,11 +1231,11 @@ function usageCSV(){const named=$('#us_named')&&$('#us_named').checked;let rows=
   if(fc)rows=rows.filter(o=>fc==='__anon__'?!o.consumer:o.consumer===fc);
   if(fm)rows=rows.filter(o=>o.service===fm);
   if(!rows.length)return toast('Nothing to export','err');
-  downloadCSV('usage-'+new Date().toISOString().slice(0,10)+'.csv',['consumer','model','requests','errors_5xx','in_bytes','out_bytes'],
+  downloadCSV('usage-'+_vnDate()+'.csv',['consumer','model','requests','errors_5xx','in_bytes','out_bytes'],
     rows.map(o=>[o.consumer||'(unauthenticated)',o.service,Math.round(o.req),Math.round(o.err),Math.round(o.ingress),Math.round(o.egress)]));toast('Usage exported','ok');}
 function requestsCSV(){const rows=_reqApplyPickers(_reqBase());if(!rows.length)return toast('Nothing to export','err');
-  downloadCSV('requests-'+new Date().toISOString().slice(0,10)+'.csv',['time','ip','consumer','model','status','latency_ms'],
-    rows.map(o=>[new Date(o.t).toISOString(),o.ip,o.consumer||'(unauthenticated)',o.model,o.status,o.lat]));toast('Requests exported','ok');}
+  downloadCSV('requests-'+_vnDate()+'.csv',['time','ip','consumer','model','status','latency_ms'],
+    rows.map(o=>[_vnDateTime(o.t),o.ip,o.consumer||'(unauthenticated)',o.model,o.status,o.lat]));toast('Requests exported','ok');}
 // ===== table quick-filter =====
 function filterTable(inp,tbodyId){const f=(inp.value||'').toLowerCase();document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(f)?'':'none';});}
 

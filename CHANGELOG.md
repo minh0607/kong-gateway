@@ -4,6 +4,33 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [Unreleased]
+
+### Changed
+- **Vietnam time (UTC+7) for audit day-bucketing, exports and container logs**, to
+  stop the recurring "wrong day" confusion (PCA and DEV are both in HCM). No DST
+  in Vietnam, so a fixed +7 offset is exact and needs no tzdata.
+  - **usermgmt audit** (`audit.py`): audit files are now bucketed by the VN
+    calendar day, and the viewer's default "today" (server + `logs.html` picker)
+    is the VN day — before, 00:00–07:00 VN showed the previous UTC day's file.
+    Rotation runs at VN 00:05. Entry `ts` stays UTC `Z` (unambiguous; the browser
+    renders it in local time). Retention is unchanged (mtime-based, already
+    timezone-agnostic).
+  - **Portal exports** (`portal.html`): CSV/JSON download filenames and the
+    Requests CSV `time` column are now VN date/time (`…+07:00`), independent of
+    the viewer's machine timezone. The Requests/Usage time *filters* already used
+    the viewer's local day and are unchanged.
+  - **Container logs**: `TZ=ICT-7` (POSIX UTC+7, no tzdata) on `kong` and
+    `kong-auth-proxy` so Kong/nginx log timestamps print VN time.
+  - **Unchanged on purpose**: `kong-database` stays UTC (DB correctness); app
+    logic keeps explicit UTC; `kong-usermgmt` env TZ is a no-op (code uses
+    explicit UTC) so it was left as-is — the real fix is the bucketing code above.
+  - **Not covered (Kong limitation)**: if PCA runs `rate-limiting`/quota plugins
+    with day/month windows, Kong computes those in UTC (reset at 07:00 VN); TZ env
+    cannot change that. DEV has no such plugins — verify on PCA separately.
+
+
+
 ## [1.7.12] — 2026-10-02
 
 ### Fixed
