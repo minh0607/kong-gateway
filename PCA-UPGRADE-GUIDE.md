@@ -8,7 +8,8 @@
 
 ## When to use this guide
 
-You have a new release tarball from the DEV team (e.g. `kong-deploy-v1.0.3.tar.gz`)
+You have a new release tarball from the DEV team (e.g. `kong-deploy-vX.Y.Z.tar.gz`,
+where `X.Y.Z` is the version shown in `README.txt` / the GitHub Release)
 and want to upgrade the production Kong stack on PCA without losing:
 
 - Existing users in `nginx/.htpasswd`
@@ -25,8 +26,8 @@ From the DEV box, copy **three files** to your transfer medium (USB / file share
 
 | File | Where to find it on DEV |
 |---|---|
-| `kong-deploy-v1.0.3.tar.gz` | `/DATA/kong/release/v1.0.3/` |
-| `kong-deploy-v1.0.3.sha256.txt` | `/DATA/kong/release/v1.0.3/` |
+| `kong-deploy-vX.Y.Z.tar.gz` | `/DATA/kong/release/vX.Y.Z/` |
+| `kong-deploy-vX.Y.Z.sha256.txt` | `/DATA/kong/release/vX.Y.Z/` |
 | `pca-deploy.sh` | `/DATA/kong/` |
 
 Drop all three into the same directory on PCA (e.g. `~/transfer/`).
@@ -40,12 +41,12 @@ Drop all three into the same directory on PCA (e.g. `~/transfer/`).
 
 ```bash
 cd ~/transfer
-sha256sum -c kong-deploy-v1.0.3.sha256.txt
+sha256sum -c kong-deploy-vX.Y.Z.sha256.txt
 ```
 
 **Expected output:**
 ```
-kong-deploy-v1.0.3.tar.gz: OK
+kong-deploy-vX.Y.Z.tar.gz: OK
 ```
 
 If it says `FAILED` — copy the files again. Do not proceed.
@@ -78,7 +79,7 @@ If any container is unhealthy or missing, fix that first — don't upgrade on to
 **One command. That's the whole upgrade:**
 
 ```bash
-sudo ./pca-deploy.sh kong-deploy-v1.0.3.tar.gz
+sudo ./pca-deploy.sh kong-deploy-vX.Y.Z.tar.gz
 ```
 
 The script will:
@@ -173,7 +174,7 @@ Then import `zabbix/template_kong_http.xml` and create the Kong host — see
 
 ---
 
-## What's new in v1.0.3 (verify after upgrade)
+## Key capabilities to verify after upgrade
 
 | Change | Check |
 |---|---|
@@ -211,7 +212,7 @@ If you accidentally changed it, set it back to `kong_pass` and `docker compose u
 You forgot `sudo`:
 
 ```bash
-sudo ./pca-deploy.sh kong-deploy-v1.0.3.tar.gz
+sudo ./pca-deploy.sh kong-deploy-vX.Y.Z.tar.gz
 ```
 
 ### Admin account locked out / forgot password
@@ -267,9 +268,9 @@ The backup directory stays on disk under `<install>/backups/pre-upgrade-*` — y
 
 ```
 1. cd ~/transfer
-2. sha256sum -c kong-deploy-v1.0.3.sha256.txt    →  must say OK
+2. sha256sum -c kong-deploy-vX.Y.Z.sha256.txt    →  must say OK
 3. docker ps                                      →  all 4 services healthy
-4. sudo ./pca-deploy.sh kong-deploy-v1.0.3.tar.gz
+4. sudo ./pca-deploy.sh kong-deploy-vX.Y.Z.tar.gz
 5. docker compose ps                              →  all 4 services healthy
 6. curl http://localhost:8002/auth/login | grep SEHC AI GATEWAY
 7. Browser login as kong / your-password         →  Kong Manager dashboard
