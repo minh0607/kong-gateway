@@ -1,7 +1,8 @@
 # Design: Per-request token accounting at the Kong gateway
 
 - **Date:** 2026-11-27
-- **Status:** Draft — awaiting user approval + 3 decisions below
+- **Status:** Approved — 3 decisions resolved (below). Build pending the user's
+  go + a streaming validation spike.
 - **Relation:** Separate feature from the A+C Requests live/detail work
   (branch `feat/requests-live-detail`). This is its own, later version.
 
@@ -72,20 +73,18 @@ the client is byte-identical / not delayed. If the chunk-scan proves fragile,
 fallback = buffer **only** non-stream responses (detected via the request
 `stream` flag in `access`), and accept "—" for streams.
 
-## Decisions for the user (change what gets built)
+## Decisions (resolved with the user)
 
-1. **Usage-tab aggregation** — include now (tokens per consumer/model totals) or
-   Requests-tab only for v1? *(Rec: Requests-tab + detail first; Usage
-   aggregation as a fast follow.)*
-2. **Streaming tokens** — Kong **auto-injects** `stream_options.include_usage=
-   true` on `stream:true` chat requests (via request-transformer/pre-function)
-   so EVERY stream reports tokens — vs **passive** (tokens only when the client
-   already opted in; other streams show "—"). Auto-inject gives full coverage
-   but mutates the client request (the extra end chunk is standard OpenAI, but a
-   strict client could notice). *(Rec: config toggle, default **passive**; turn
-   on auto-inject if full coverage is wanted.)*
-3. **Plugin scope** — global vs only the LLM service/routes (avoids running the
-   body-scan on non-LLM traffic). *(Rec: scope to the LLM services/routes.)*
+1. **Usage-tab aggregation — IN SCOPE for v1.** Ship the Requests Tokens column
+   + detail AND the Usage-tab aggregation (tokens per consumer/model) together.
+2. **Streaming — passive by default, with a config toggle.** Kong does NOT
+   mutate requests by default: streams report tokens only when the client
+   already sent `stream_options.include_usage=true`; others show "—". A config
+   toggle enables auto-inject (Kong adds `include_usage` on `stream:true`
+   requests) for full coverage — turned on only after validating that real
+   clients (Dify, Claude Code, internal apps) don't break.
+3. **Plugin scope — LLM services/routes only** (not global); the body-scan runs
+   only on model traffic.
 
 ## Portal changes (frontend, `portal.html`)
 
