@@ -1,8 +1,8 @@
 # Design: Per-request token accounting at the Kong gateway
 
 - **Date:** 2026-11-27
-- **Status:** Approved — 3 decisions resolved (below). Build pending the user's
-  go + a streaming validation spike.
+- **Status:** Approved — decisions resolved; **streaming spike PASSED
+  (2026-11-27)**. Ready to build on the user's go.
 - **Relation:** Separate feature from the A+C Requests live/detail work
   (branch `feat/requests-live-detail`). This is its own, later version.
 
@@ -72,6 +72,27 @@ with `include_usage`; confirm the plugin reads tokens AND the stream reaching
 the client is byte-identical / not delayed. If the chunk-scan proves fragile,
 fallback = buffer **only** non-stream responses (detected via the request
 `stream` flag in `access`), and accept "—" for streams.
+
+### Spike result — 2026-11-27 (PASS)
+
+Validated on the dev stack against a mock OpenAI endpoint (non-stream JSON +
+SSE stream with a final `usage` chunk), using a `post-function` whose
+`body_filter` accumulates chunks and extracts `usage` with the Lua balanced
+pattern `'"usage"%s*:%s*(%b{})'`, then `kong.log.set_serialize_value(...)`:
+
+- **Non-stream:** client received `usage`; the access-log line carried
+  `tokens_total=1290` (prompt 1234 / completion 56).
+- **Stream (SSE):** the client received every delta chunk + the `usage` chunk +
+  `[DONE]` **intact and in order** (no `enable_buffering`, so chunks pass
+  through as they arrive); the access-log line carried `tokens_total=9120`
+  (8700 / 420) parsed from the final SSE `usage` chunk.
+- **Attribution:** token fields landed on the **same** log line as `client_ip`,
+  `consumer` and `request.uri` — no correlation id needed.
+
+Conclusion: the primary approach works. The remaining unknown a mock cannot
+settle is per-chunk timing under real vLLM load, but since buffering is never
+enabled the mechanism is correct. Validate once against a real vLLM in the
+build phase.
 
 ## Decisions (resolved with the user)
 
