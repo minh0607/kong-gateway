@@ -4,6 +4,27 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.14] — 2026-11-27
+
+### Added
+- **Requests tab — live auto-refresh.** The Requests view updates itself every
+  10s with an "updated Ns ago" indicator and a ⏸ Live / ▶ Paused toggle. It
+  re-renders only when new rows arrive (no flicker or lost scroll/filters) and
+  pauses when the tab is hidden, the browser tab is backgrounded, or a detail
+  panel is open.
+- **Requests tab — per-request detail panel.** Click any request row for status
+  + reason, consumer, model, route, method + full path, client IP, a latency
+  breakdown (total / Kong / upstream / receive) that flags the slower side when a
+  call is slow (≥1s) or errored, request/response size, the upstream actually
+  tried (ip:port), and Copy-as-JSON. All from fields already in the Kong access
+  log — no backend change.
+
+### Changed
+- **PCA upgrade guide is version-agnostic.** `PCA-UPGRADE-GUIDE.md` no longer
+  hard-codes `v1.0.3` in its examples (uses `vX.Y.Z` placeholders), so it stops
+  going stale each release; the feature-verification checks are unchanged.
+
+
 ## [1.7.13] — 2026-10-27
 
 ### Changed
