@@ -488,8 +488,8 @@
         </div>
         <div id="usage_stats" class="stats" style="margin-top:16px"></div>
         <div style="overflow:auto;margin-top:8px">
-          <table><thead><tr><th>Consumer</th><th>Model(s)</th><th style="text-align:right">Requests</th><th style="text-align:right">Errors (5xx)</th><th style="text-align:right">In</th><th style="text-align:right">Out</th></tr></thead>
-            <tbody id="usage_body"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody></table>
+          <table><thead><tr><th>Consumer</th><th>Model(s)</th><th style="text-align:right">Requests</th><th style="text-align:right">Errors (5xx)</th><th style="text-align:right">In</th><th style="text-align:right">Out</th><th style="text-align:right">Tokens</th></tr></thead>
+            <tbody id="usage_body"><tr><td colspan="7" class="muted">Loading…</td></tr></tbody></table>
         </div>
       </div>
     </section>
@@ -514,8 +514,8 @@
           </div>
         </div>
         <div style="overflow:auto;margin-top:14px">
-          <table><thead><tr><th>Time</th><th>Source IP</th><th>Consumer</th><th>Model</th><th>Path</th><th style="text-align:right">Status</th><th>Why blocked</th></tr></thead>
-            <tbody id="requests_body"><tr><td colspan="7" class="muted">Loading…</td></tr></tbody></table>
+          <table><thead><tr><th>Time</th><th>Source IP</th><th>Consumer</th><th>Model</th><th style="text-align:right">Tokens</th><th>Path</th><th style="text-align:right">Status</th><th>Why blocked</th></tr></thead>
+            <tbody id="requests_body"><tr><td colspan="8" class="muted">Loading…</td></tr></tbody></table>
         </div>
       </div>
       <div id="rq_detail" style="position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:50;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto" onclick="if(event.target===this)reqDetailClose()">
@@ -991,10 +991,10 @@ function usRangeChange(){const v=$('#us_range').value,box=$('#us_custom');
   if(box)box.style.display=(v==='custom')?'inline-flex':'none';
   if(v==='custom'&&$('#us_from')&&!$('#us_from').value){const iso=_isoLocal(new Date());$('#us_from').value=iso;$('#us_to').value=iso;}
   loadUsage();}
-async function loadUsage(){const body=$('#usage_body');body.innerHTML='<tr><td colspan="6" class="muted">Loading…</td></tr>';
+async function loadUsage(){const body=$('#usage_body');body.innerHTML='<tr><td colspan="7" class="muted">Loading…</td></tr>';
   const range=$('#us_range')?$('#us_range').value:'all';
   const win=range==='custom'?_usageCustom():_usageRange(range);
-  if(range==='custom'&&!win){if($('#us_hint'))$('#us_hint').textContent='Pick a start and end date to see usage for that range.';body.innerHTML='<tr><td colspan="6" class="muted">Select a date range above.</td></tr>';$('#usage_stats').innerHTML='';return;}
+  if(range==='custom'&&!win){if($('#us_hint'))$('#us_hint').textContent='Pick a start and end date to see usage for that range.';body.innerHTML='<tr><td colspan="7" class="muted">Select a date range above.</td></tr>';$('#usage_stats').innerHTML='';return;}
   if(win)return loadUsageLog(win);
   if($('#us_hint'))$('#us_hint').textContent='Cumulative counters since Kong last (re)started. Only authenticated (key-auth) traffic is attributed to a consumer.';
   try{const r=await fetch(METRICS,{credentials:'same-origin'});if(!r.ok)throw new Error('metrics HTTP '+r.status);const txt=await r.text();
@@ -1010,7 +1010,7 @@ async function loadUsage(){const body=$('#usage_body');body.innerHTML='<tr><td c
         if(l.direction==='ingress')o.ingress+=v;else if(l.direction==='egress')o.egress+=v;}});
     _usageRows=Object.values(agg).filter(o=>o.req>0||o.ingress>0||o.egress>0);
     renderUsage();
-  }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)} — is the Prometheus plugin enabled?</td></tr>`;$('#usage_stats').innerHTML='';}}
+  }catch(e){body.innerHTML=`<tr><td colspan="7" style="color:var(--red)">Error: ${esc(e.message)} — is the Prometheus plugin enabled?</td></tr>`;$('#usage_stats').innerHTML='';}}
 // Time-windowed usage, aggregated from the request log (has per-request started_at + sizes).
 async function loadUsageLog(win){const body=$('#usage_body');
   if($('#us_hint'))$('#us_hint').textContent='Requests for '+win.label+', computed from the gateway request log (kept up to ~10 MB of recent traffic). Rows without a consumer are unauthenticated calls.';
@@ -1022,14 +1022,14 @@ async function loadUsageLog(win){const body=$('#usage_body');
       const t=d.started_at||0;if(t&&t<earliest)earliest=t;
       if(t<win.from||t>=win.to)return;
       const consumer=(d.consumer&&d.consumer.username)||'',service=(d.service&&d.service.name)||'';
-      const k=consumer+'|'+service,o=agg[k]||(agg[k]={consumer,service,req:0,err:0,ingress:0,egress:0});
+      const k=consumer+'|'+service,o=agg[k]||(agg[k]={consumer,service,req:0,err:0,ingress:0,egress:0,tokens:0});
       o.req+=1;const st=(d.response&&d.response.status)||0;if(st>=500)o.err+=1;
-      o.ingress+=(d.request&&d.request.size)||0;o.egress+=(d.response&&d.response.size)||0;});
+      o.ingress+=(d.request&&d.request.size)||0;o.egress+=(d.response&&d.response.size)||0;o.tokens+=(d.tokens_total)||0;});
     _usageRows=Object.values(agg);
     if(earliest!==Infinity&&win.from<earliest&&$('#us_hint'))
       $('#us_hint').innerHTML='⚠ <b>Range starts before the retained log</b> — the request log only reaches back to '+esc(new Date(earliest).toLocaleString())+', so totals for <b>'+esc(win.label)+'</b> are a <b>lower bound</b> (older entries rotated out at ~10&nbsp;MB). Use Grafana for full history.';
     renderUsage();
-  }catch(e){body.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;$('#usage_stats').innerHTML='';}}
+  }catch(e){body.innerHTML=`<tr><td colspan="7" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;$('#usage_stats').innerHTML='';}}
 function _short(n){n=Math.round(n);return n>=1000?(n/1000).toFixed(n>=10000?0:1)+'k':String(n);}
 // Rebuild the consumer/model filter dropdowns from the period's rows, preserving the current pick.
 function _fillUsageFilters(rows){
@@ -1047,14 +1047,14 @@ function renderUsage(){const body=$('#usage_body');const named=$('#us_named')&&$
   if(fc)rows=rows.filter(o=>fc==='__anon__'?!o.consumer:o.consumer===fc);
   if(fm)rows=rows.filter(o=>o.service===fm);
   const cons=new Set(rows.map(o=>o.consumer||'(anon)')),models=new Set(rows.map(o=>o.service).filter(Boolean));
-  const treq=rows.reduce((a,o)=>a+o.req,0),terr=rows.reduce((a,o)=>a+o.err,0),tbw=rows.reduce((a,o)=>a+o.ingress+o.egress,0);
-  $('#usage_stats').innerHTML=stat(cons.size,'Consumers')+stat(models.size,'Models used')+stat(Math.round(treq).toLocaleString(),'Requests')+stat(Math.round(terr),'5xx errors')+stat(fmtBytes(tbw),'Bandwidth');
+  const treq=rows.reduce((a,o)=>a+o.req,0),terr=rows.reduce((a,o)=>a+o.err,0),tbw=rows.reduce((a,o)=>a+o.ingress+o.egress,0),ttok=rows.reduce((a,o)=>a+(o.tokens||0),0);
+  $('#usage_stats').innerHTML=stat(cons.size,'Consumers')+stat(models.size,'Models used')+stat(Math.round(treq).toLocaleString(),'Requests')+stat(Math.round(terr),'5xx errors')+stat(fmtBytes(tbw),'Bandwidth')+(ttok?stat(Math.round(ttok).toLocaleString(),'Tokens'):'');
   if(grouped){
-    const g={};rows.forEach(o=>{const k=o.consumer||'(unauthenticated)';const e=g[k]||(g[k]={consumer:k,req:0,err:0,ingress:0,egress:0,models:[]});e.req+=o.req;e.err+=o.err;e.ingress+=o.ingress;e.egress+=o.egress;if(o.service)e.models.push({s:o.service,req:o.req});});
+    const g={};rows.forEach(o=>{const k=o.consumer||'(unauthenticated)';const e=g[k]||(g[k]={consumer:k,req:0,err:0,ingress:0,egress:0,tokens:0,models:[]});e.req+=o.req;e.err+=o.err;e.ingress+=o.ingress;e.egress+=o.egress;e.tokens+=(o.tokens||0);if(o.service)e.models.push({s:o.service,req:o.req});});
     const list=Object.values(g).sort((a,b)=>b.req-a.req);
     body.innerHTML=list.length?list.map(o=>{const mc=o.models.sort((a,b)=>b.req-a.req).map(m=>`<span class="pill" title="${Math.round(m.req).toLocaleString()} requests">${esc(m.s)} <b>${_short(m.req)}</b></span>`).join('')||'<span class="muted">—</span>';
-      return `<tr><td><b>${esc(o.consumer)}</b> <span class="muted" style="font-size:11px">· ${o.models.length} model${o.models.length!==1?'s':''}</span></td><td>${mc}</td><td style="text-align:right"><b>${Math.round(o.req).toLocaleString()}</b></td><td style="text-align:right">${o.err?('<span style="color:var(--red)">'+Math.round(o.err)+'</span>'):'0'}</td><td style="text-align:right">${fmtBytes(o.ingress)}</td><td style="text-align:right">${fmtBytes(o.egress)}</td></tr>`;}).join('')
-      :`<tr><td colspan="6" class="muted">No ${named?'authenticated ':''}traffic recorded yet. Metrics accrue as requests flow through the gateway.</td></tr>`;
+      return `<tr><td><b>${esc(o.consumer)}</b> <span class="muted" style="font-size:11px">· ${o.models.length} model${o.models.length!==1?'s':''}</span></td><td>${mc}</td><td style="text-align:right"><b>${Math.round(o.req).toLocaleString()}</b></td><td style="text-align:right">${o.err?('<span style="color:var(--red)">'+Math.round(o.err)+'</span>'):'0'}</td><td style="text-align:right">${fmtBytes(o.ingress)}</td><td style="text-align:right">${fmtBytes(o.egress)}</td><td style="text-align:right">${o.tokens?'<b>'+Math.round(o.tokens).toLocaleString()+'</b>':'<span class="muted">—</span>'}</td></tr>`;}).join('')
+      :`<tr><td colspan="7" class="muted">No ${named?'authenticated ':''}traffic recorded yet. Metrics accrue as requests flow through the gateway.</td></tr>`;
     return;}
   rows.sort((a,b)=>b.req-a.req);
   body.innerHTML=rows.length?rows.map(o=>`<tr>
@@ -1063,13 +1063,14 @@ function renderUsage(){const body=$('#usage_body');const named=$('#us_named')&&$
     <td style="text-align:right">${Math.round(o.req).toLocaleString()}</td>
     <td style="text-align:right">${o.err?('<span style="color:var(--red)">'+Math.round(o.err)+'</span>'):'0'}</td>
     <td style="text-align:right">${fmtBytes(o.ingress)}</td>
-    <td style="text-align:right">${fmtBytes(o.egress)}</td></tr>`).join('')
-    :`<tr><td colspan="6" class="muted">No ${named?'authenticated ':''}traffic recorded yet. Metrics accrue as requests flow through the gateway.</td></tr>`;}
+    <td style="text-align:right">${fmtBytes(o.egress)}</td>
+    <td style="text-align:right">${o.tokens?Math.round(o.tokens).toLocaleString():'<span class="muted">—</span>'}</td></tr>`).join('')
+    :`<tr><td colspan="7" class="muted">No ${named?'authenticated ':''}traffic recorded yet. Metrics accrue as requests flow through the gateway.</td></tr>`;}
 
 // ===== REQUESTS (access log with source IP) =====
 let _reqRows=[];
 async function loadRequests(silent){const body=$('#requests_body');
-  if(!silent)body.innerHTML='<tr><td colspan="7" class="muted">Loading…</td></tr>';
+  if(!silent)body.innerHTML='<tr><td colspan="8" class="muted">Loading…</td></tr>';
   try{const r=await fetch(REQLOG,{credentials:'same-origin'});
     let rows=[];
     // 404 = file-log not writing yet; 416 = log just rotated/empty — treat both as "no requests"
@@ -1078,7 +1079,7 @@ async function loadRequests(silent){const body=$('#requests_body');
       const txt=await r.text();
       txt.split('\n').forEach(ln=>{const s=ln.trim();if(!s||s[0]!=='{')return;let d;try{d=JSON.parse(s);}catch(e){return;}
         const lt=d.latencies||{},rq=d.request||{},rs=d.response||{};
-        rows.push({t:d.started_at||0,ip:d.client_ip||'',consumer:(d.consumer&&d.consumer.username)||'',model:(d.service&&d.service.name)||'',status:rs.status||0,lat:lt.request,path:rq.uri||rq.url||'',method:rq.method||'',kongLat:lt.kong,proxyLat:lt.proxy,recvLat:lt.receive,reqSize:rq.size,respSize:rs.size,route:(d.route&&(d.route.name||d.route.id))||'',tries:(d.tries||[]).map(x=>x&&x.ip?(x.ip+(x.port?(':'+x.port):'')):'').filter(Boolean)});});
+        rows.push({t:d.started_at||0,ip:d.client_ip||'',consumer:(d.consumer&&d.consumer.username)||'',model:(d.service&&d.service.name)||'',status:rs.status||0,lat:lt.request,path:rq.uri||rq.url||'',method:rq.method||'',kongLat:lt.kong,proxyLat:lt.proxy,recvLat:lt.receive,reqSize:rq.size,respSize:rs.size,route:(d.route&&(d.route.name||d.route.id))||'',tries:(d.tries||[]).map(x=>x&&x.ip?(x.ip+(x.port?(':'+x.port):'')):'').filter(Boolean),tt:d.tokens_total,tp:d.tokens_prompt,tc:d.tokens_completion});});
       rows.reverse();
     }
     _reqLastFetch=Date.now();
@@ -1086,7 +1087,7 @@ async function loadRequests(silent){const body=$('#requests_body');
     _reqRows=rows;_reqLastTs=newTs;
     if(!silent||changed)renderRequests();
     reqAgo();
-  }catch(e){if(!silent){if($('#rq_count'))$('#rq_count').textContent='';body.innerHTML=`<tr><td colspan="7" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;}reqAgo();}}
+  }catch(e){if(!silent){if($('#rq_count'))$('#rq_count').textContent='';body.innerHTML=`<tr><td colspan="8" style="color:var(--red)">Error: ${esc(e.message)} — is the file-log plugin enabled?</td></tr>`;}reqAgo();}}
 function _statusColor(s){if(s>=500)return 'var(--red)';if(s>=400)return '#b45309';if(s>=200&&s<300)return '#166534';return 'var(--sub)';}
 function sbadge(s){if(!s)return '<span class="muted">—</span>';const bg=s>=500?'#fee2e2':s>=400?'#fef3c7':(s>=200&&s<300)?'#dcfce7':'#eef2f7';return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-weight:700;font-size:11.5px;background:${bg};color:${_statusColor(s)}">${s}</span>`;}
 function _fmtTime(ms){if(!ms)return '—';const d=new Date(ms);const p=n=>String(n).padStart(2,'0');return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());}
@@ -1140,10 +1141,11 @@ function renderRequests(){const body=$('#requests_body');
     <td><code>${esc(o.ip||'—')}</code></td>
     <td>${o.consumer?('<b>'+esc(o.consumer)+'</b>'):'<span class="muted">(unauthenticated)</span>'}</td>
     <td>${o.model?esc(o.model):'<span class="muted">—</span>'}</td>
+    <td style="text-align:right">${o.tt!=null?('<b title="prompt '+(o.tp||0)+' · completion '+(o.tc||0)+'">'+o.tt.toLocaleString()+'</b>'):'<span class="muted">—</span>'}</td>
     <td><code style="font-size:11px">${esc((o.path||'—').slice(0,44))}</code></td>
     <td style="text-align:right">${sbadge(o.status)}</td>
     <td class="muted" style="font-size:11.5px;color:${denied?(o.status>=500?'var(--red)':'#b45309'):'var(--sub)'}">${esc(_reqReason(o.status,o.consumer))}</td></tr>`;}).join('')
-    :`<tr><td colspan="7" class="muted">${_reqRows.length?'No matching requests'+(_reqStatus!=='all'?' ('+_reqStatus+')':'')+'.':'No requests logged yet.'}</td></tr>`;}
+    :`<tr><td colspan="8" class="muted">${_reqRows.length?'No matching requests'+(_reqStatus!=='all'?' ('+_reqStatus+')':'')+'.':'No requests logged yet.'}</td></tr>`;}
 
 // ===== Requests: live auto-refresh (A) + per-request detail (C) =====
 let _reqShown=[],_reqPoll=null,_reqLive=true,_reqLastTs=0,_reqLastFetch=0,_reqTickN=0;
@@ -1187,6 +1189,10 @@ function reqDetailShow(i){const o=_reqShown[i];if(!o)return;
     <tr><td colspan="2" style="padding-top:10px;font-weight:700;color:var(--sub)">Size</td></tr>
     ${row('Request',o.reqSize!=null?fmtBytes(o.reqSize):'<span class="muted">—</span>')}
     ${row('Response',o.respSize!=null?fmtBytes(o.respSize):'<span class="muted">—</span>')}
+    <tr><td colspan="2" style="padding-top:10px;font-weight:700;color:var(--sub)">Tokens</td></tr>
+    ${row('Total',o.tt!=null?('<b>'+o.tt.toLocaleString()+'</b>'):'<span class="muted">— (not reported)</span>')}
+    ${row('Prompt',o.tp!=null?o.tp.toLocaleString():'<span class="muted">—</span>')}
+    ${row('Completion',o.tc!=null?o.tc.toLocaleString():'<span class="muted">—</span>')}
     ${o.tries&&o.tries.length?('<tr><td colspan="2" style="padding-top:10px;font-weight:700;color:var(--sub)">Upstream tried</td></tr>'+o.tries.map(t=>row('','<code>'+esc(t)+'</code>')).join('')):''}
   </table>
   <div style="margin-top:12px"><button class="btn sec sm" onclick='reqDetailCopy(${i})'>Copy as JSON</button></div>`;
@@ -1303,8 +1309,8 @@ function usageCSV(){const named=$('#us_named')&&$('#us_named').checked;let rows=
   downloadCSV('usage-'+_vnDate()+'.csv',['consumer','model','requests','errors_5xx','in_bytes','out_bytes'],
     rows.map(o=>[o.consumer||'(unauthenticated)',o.service,Math.round(o.req),Math.round(o.err),Math.round(o.ingress),Math.round(o.egress)]));toast('Usage exported','ok');}
 function requestsCSV(){const rows=_reqApplyPickers(_reqBase());if(!rows.length)return toast('Nothing to export','err');
-  downloadCSV('requests-'+_vnDate()+'.csv',['time','ip','consumer','model','status','latency_ms'],
-    rows.map(o=>[_vnDateTime(o.t),o.ip,o.consumer||'(unauthenticated)',o.model,o.status,o.lat]));toast('Requests exported','ok');}
+  downloadCSV('requests-'+_vnDate()+'.csv',['time','ip','consumer','model','status','latency_ms','tokens_total','prompt_tokens','completion_tokens'],
+    rows.map(o=>[_vnDateTime(o.t),o.ip,o.consumer||'(unauthenticated)',o.model,o.status,o.lat,o.tt,o.tp,o.tc]));toast('Requests exported','ok');}
 // ===== table quick-filter =====
 function filterTable(inp,tbodyId){const f=(inp.value||'').toLowerCase();document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(f)?'':'none';});}
 

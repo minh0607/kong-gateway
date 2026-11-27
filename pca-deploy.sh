@@ -148,6 +148,46 @@ enable_filelog_plugin() {
   fi
 }
 
+# token-accounting plugin (global post-function) → reads the LLM response `usage`
+# (prompt/completion/total tokens) and writes it into the access log, attributed
+# to the consumer/IP already logged. Global scope: in this gateway every Kong
+# service is an LLM model and the proxy carries only model traffic, so global ==
+# model-scope here. Passive: it never mutates the request, so a streaming call
+# reports tokens only when the client already sent stream_options.include_usage.
+enable_tokenlog_plugin() {
+  local admin="http://localhost:8001"
+  if curl -sf "$admin/plugins" 2>/dev/null | grep -q '"name":"post-function"'; then
+    ok "token-accounting plugin already enabled"
+    return 0
+  fi
+  local lua
+  lua="$(cat <<'LUA'
+local c=ngx.arg[1]; local eof=ngx.arg[2]
+local p=kong.ctx.plugin
+p.buf=(p.buf or "")..(c or "")
+if eof then
+  local u=p.buf:match('"usage"%s*:%s*(%b{})')
+  if u then
+    local pt=tonumber(u:match('"prompt_tokens"%s*:%s*(%d+)'))
+    local ct=tonumber(u:match('"completion_tokens"%s*:%s*(%d+)'))
+    local tt=tonumber(u:match('"total_tokens"%s*:%s*(%d+)'))
+    if tt then kong.log.set_serialize_value("tokens_total", tt) end
+    if pt then kong.log.set_serialize_value("tokens_prompt", pt) end
+    if ct then kong.log.set_serialize_value("tokens_completion", ct) end
+  end
+end
+LUA
+)"
+  log "Enabling token-accounting plugin (post-function, access-log token counts) ..."
+  if curl -sf -X POST "$admin/plugins" \
+       -d name=post-function \
+       --data-urlencode "config.body_filter[1]=$lua" >/dev/null 2>&1; then
+    ok "token-accounting plugin enabled"
+  else
+    warn "Could not enable token-accounting plugin — enable it manually via Admin API"
+  fi
+}
+
 # Shared request-log dir (Kong writes as uid 1001; auth-proxy reads) + host
 # logrotate so the JSON access log cannot fill the disk.
 ensure_reqlog() {
@@ -426,6 +466,8 @@ EOF
   enable_prometheus_plugin
   # Enable file-log access log for the portal Requests tab
   enable_filelog_plugin
+  # Enable token-accounting (post-function) for per-request token counts
+  enable_tokenlog_plugin
 
   # Save admin password to a guarded file
   PASS_FILE="$INSTALL/.first-install-admin-password.txt"
@@ -568,6 +610,8 @@ done
 enable_prometheus_plugin
 # Ensure file-log access log stays enabled (no-op if already in DB)
 enable_filelog_plugin
+# Ensure token-accounting post-function stays enabled (no-op if already in DB)
+enable_tokenlog_plugin
 
 # Quick smoke test
 if curl -sf http://localhost:8002/auth/login | grep -qi "SEHC AI Gateway"; then
