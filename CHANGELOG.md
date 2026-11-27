@@ -4,6 +4,24 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.15] — 2026-11-27
+
+### Added
+- **Per-request token accounting.** A global `post-function` plugin reads the LLM
+  response `usage` and records `tokens_total` / `tokens_prompt` /
+  `tokens_completion` into the Kong access log, attributed to the consumer and
+  source IP already logged — no correlation id, no request mutation.
+  - **Requests tab:** new **Tokens** column; the detail panel shows prompt /
+    completion / total; token columns added to the Requests CSV.
+  - **Usage tab:** the time-windowed views (today / yesterday / 7 days / custom,
+    computed from the request log) aggregate tokens per consumer/model and show a
+    **Tokens** total. The cumulative "Any time" view (Prometheus) has no token
+    data and shows "—".
+  - **Streaming:** passive — a streaming call reports tokens only when the client
+    sent `stream_options.include_usage=true`; Kong never alters requests.
+  - Enabled on deploy by `pca-deploy.sh` alongside file-log.
+
+
 ## [1.7.14] — 2026-11-27
 
 ### Added
