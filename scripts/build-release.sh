@@ -6,8 +6,10 @@
 #
 # The kong-usermgmt image is built locally and embedded in the tarball as
 # images/kong-usermgmt.tar so deployments are fully self-contained (air-gap safe).
-# Base images (kong:3.9, postgres:15-alpine, nginx:alpine) are NOT shipped —
-# they are assumed to be present on the target host from the original offline install.
+# CVE-patched base images (kong:3.9.5, nginx:1.30.7-alpine) ARE shipped as
+# images/*.tar when their tars sit at the project root, so an air-gapped PCA can
+# load the fixed images without internet (NGINX2Root CVE-2026-123007/123633).
+# postgres:15-alpine is unchanged and assumed already present on the target host.
 #
 # Safe to run on DEV — creates files only, never touches the running stack.
 set -euo pipefail
@@ -204,12 +206,16 @@ ok "pca-deploy.sh + PCA-UPGRADE-GUIDE.md copied alongside tarball"
 BASE_IMAGES_DIR="$RELEASE_DIR/images"
 mkdir -p "$BASE_IMAGES_DIR"
 
-for src in kong-oss-3.9.tar postgres-15-alpine.tar nginx-alpine.tar; do
+for src in kong-oss-3.9.5.tar nginx-1.30.7-alpine.tar postgres-15-alpine.tar; do
   if [[ -f "$src" ]]; then
     cp -f "$src" "$BASE_IMAGES_DIR/$src"
     ok "Included $src ($(du -sh "$BASE_IMAGES_DIR/$src" | cut -f1))"
+  elif [[ "$src" == "postgres-15-alpine.tar" ]]; then
+    printf '  [WARN] base image %s not found at project root — skipping (unchanged; PCA already has it)\n' "$src"
   else
-    printf '  [WARN] base image %s not found at project root — skipping (PCA must already have it loaded)\n' "$src"
+    # CVE-patched images are the whole point of this release — refuse to ship a
+    # bundle that an air-gapped PCA could not bring up.
+    die "required CVE-patched base image '$src' not found at project root. Create it with: docker save <image> -o $src"
   fi
 done
 
@@ -228,10 +234,9 @@ Files in this directory:
   kong-deploy-v${VERSION}.sha256.txt   Checksum
   pca-deploy.sh                         One-shot deploy script — RUN THIS
   PCA-UPGRADE-GUIDE.md                  Operator guide
-  images/                               Base Docker images
-    kong-oss-3.9.tar
-    postgres-15-alpine.tar
-    nginx-alpine.tar
+  images/                               CVE-patched base Docker images
+    kong-oss-3.9.5.tar
+    nginx-1.30.7-alpine.tar
   README.txt                            This file
 
 On PCA, from this directory, ONE command does everything:

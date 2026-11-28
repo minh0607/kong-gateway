@@ -21,9 +21,8 @@
 #     ├── kong-deploy-vX.Y.Z.tar.gz
 #     ├── kong-deploy-vX.Y.Z.sha256.txt
 #     └── images/
-#         ├── kong-oss-3.9.tar
-#         ├── postgres-15-alpine.tar
-#         └── nginx-alpine.tar
+#         ├── kong-oss-3.9.5.tar        (CVE-patched)
+#         └── nginx-1.30.7-alpine.tar   (CVE-patched)
 #
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -371,8 +370,10 @@ if [[ -d "$SCRIPT_DIR/images" ]]; then
     fname=$(basename "$img_tar")
     [[ "$fname" == "kong-usermgmt.tar" ]] && continue
     case "$fname" in
+      kong-oss-3.9.5.tar)      IMG="kong:3.9.5" ;;
       kong-oss-3.9.tar)        IMG="kong:3.9" ;;
       postgres-15-alpine.tar)  IMG="postgres:15-alpine" ;;
+      nginx-1.30.7-alpine.tar) IMG="nginx:1.30.7-alpine" ;;
       nginx-alpine.tar)        IMG="nginx:alpine" ;;
       *)                       IMG="" ;;
     esac
@@ -385,6 +386,15 @@ if [[ -d "$SCRIPT_DIR/images" ]]; then
   done
   shopt -u nullglob
 fi
+
+# Preflight: the CVE-patched images MUST be on the host now (NGINX2Root fix).
+# An air-gapped PCA cannot pull, so a missing images/ dir or a failed load would
+# otherwise abort mid-upgrade — after the backup and the compose overwrite — in an
+# inconsistent state. Fail fast here instead, before anything is touched.
+for _req in kong:3.9.5 nginx:1.30.7-alpine; do
+  docker image inspect "$_req" >/dev/null 2>&1 || \
+    die "required image '$_req' not loaded. Copy the WHOLE release directory (with its images/ folder) to this host and re-run — an air-gapped box cannot pull it."
+done
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FRESH INSTALL

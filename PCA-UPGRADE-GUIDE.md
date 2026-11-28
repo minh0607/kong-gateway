@@ -182,6 +182,7 @@ Then import `zabbix/template_kong_http.xml` and create the Kong host — see
 | **Metrics** on `:8100` | `curl -s http://localhost:8100/metrics \| grep -c '^kong_'` > 0 |
 | **Admin-only RBAC** | a `user`-role account now gets **403** on Kong Manager / `/api/` — only `admin` can use the console. Check your PCA user roles before upgrading so you don't lock out a non-admin who needs access. |
 | **Per-request tokens** | Requests tab shows a **Tokens** column; Usage (Today / 7 days) shows token totals per consumer. Exact for non-stream calls; streaming only when the client sends `stream_options.include_usage`. |
+| **NGINX2Root patch** (CVE-2026-123007 / CVE-2026-123633) | `docker exec kong kong version` → **3.9.5**; `docker exec kong-auth-proxy nginx -v` → **1.30.7**. The deploy auto-loads `images/kong-oss-3.9.5.tar` + `images/nginx-1.30.7-alpine.tar` (air-gap, no internet). No DB migration. HTTP/2 stays off (`curl --http2 http://localhost:8000/` reports `1.1`). |
 
 ---
 

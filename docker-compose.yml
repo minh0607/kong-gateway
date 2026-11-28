@@ -33,7 +33,7 @@ services:
       retries: 10
 
   kong-bootstrap:
-    image: kong:3.9
+    image: kong:3.9.5
     container_name: kong-bootstrap
     networks:
       - kong-net
@@ -46,7 +46,7 @@ services:
     command: kong migrations bootstrap
 
   kong:
-    image: kong:3.9
+    image: kong:3.9.5
     container_name: kong
     restart: unless-stopped
     depends_on:
@@ -108,7 +108,7 @@ services:
       retries: 10
 
   kong-auth-proxy:
-    image: nginx:alpine
+    image: nginx:1.30.7-alpine
     container_name: kong-auth-proxy
     restart: unless-stopped
     depends_on:

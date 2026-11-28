@@ -4,6 +4,30 @@ All notable changes to the SEHC AI Gateway are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/); this project uses
 semantic-ish versioning.
 
+## [1.7.16] — 2026-11-28
+
+### Security
+- **Patched NGINX2Root (CVE-2026-123007 / CVE-2026-123633).** Upgraded Kong
+  `3.9.1` → **`3.9.5`** and the auth-proxy nginx `1.29.8` → **`1.30.7-alpine`**,
+  which carry the upstream nginx fixes for the two unauthenticated HTTP/2 RCE
+  flaws (CVSS 4.0 9.2). HTTP/2 is **off** on this stack (proxy, admin, and
+  auth-proxy all negotiate HTTP/1.1), so the flaws were **not exploitable** here —
+  patched regardless because the versions were in the vulnerable range and to
+  stop floating image tags (`kong:3.9`, `nginx:alpine`) from drifting. Kong 3.9.5
+  also rolls up the other 3.9.2–3.9.4 fixes (incl. CVE-2026-1907 clustering-RPC
+  SQL injection). **No database migration** (3.9.x is a patch series — schema
+  unchanged). No portal/feature change; token accounting (v1.7.15) verified intact
+  on 3.9.5.
+
+### Changed
+- **`docker-compose.yml`** now pins `kong:3.9.5` and `nginx:1.30.7-alpine` (was the
+  floating `kong:3.9` / `nginx:alpine` tags).
+- **Air-gap delivery.** The release bundle now ships the CVE-patched base images
+  (`images/kong-oss-3.9.5.tar`, `images/nginx-1.30.7-alpine.tar`); `pca-deploy.sh`
+  `docker load`s them before recreating the stack, so an offline PCA gets the
+  fixed images without internet. `postgres:15-alpine` is unchanged and not shipped.
+
+
 ## [1.7.15] — 2026-11-27
 
 ### Added
